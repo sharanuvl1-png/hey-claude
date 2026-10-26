@@ -1,0 +1,25 @@
+name: Wake word check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq espeak-ng sox > /dev/null
+          pip install -q vosk
+          curl -sSL -o model.zip https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
+          unzip -q model.zip
+      - name: Run check
+        run: python tools/wakecheck/check.py vosk-model-small-en-us-0.15 | tee wakecheck.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wakecheck
+          path: wakecheck.txt

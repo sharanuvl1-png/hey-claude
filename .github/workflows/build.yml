@@ -7,6 +7,7 @@ on:
       - "tools/**"
       - ".github/workflows/chart.yml"
       - ".github/workflows/scan.yml"
+      - ".github/workflows/wakecheck.yml"
   workflow_dispatch:
 
 permissions:
