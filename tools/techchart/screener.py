@@ -27,6 +27,8 @@ INDICES = [
 ]
 SOURCES = ["https://www.niftyindices.com/IndexConstituent/", "https://archives.nseindia.com/content/indices/"]
 MIN_TURNOVER_CR = 5      # skip stocks trading under ₹5 crore a day
+MIN_TECH_SCORE = 3       # at least a "buy on dip" setup
+MAX_RISK = 0.12          # entry-to-stop distance above 12% is too wide for a swing trade
 SHORTLIST = 12           # best technical setups per index checked for fundamentals
 PICKS = 5
 
@@ -74,7 +76,9 @@ def tech_score(frame):
     rec, conf, grade, reasons, nxt, score = tc.verdict(d, "n/a", pats, divs, cands, setup)
     last = d["df"].iloc[-1]
     turnover = float((d["df"]["Close"] * d["df"]["Volume"]).iloc[-20:].mean() / 1e7)
-    return {"score": score, "rec": rec, "close": float(last["Close"]), "turnover": turnover}
+    mid = sum(setup["entry"]) / 2
+    return {"score": score, "rec": rec, "close": float(last["Close"]), "turnover": turnover,
+            "risk": (mid - setup["stop_cons"]) / mid}
 
 
 def fundamentals(symbol):
@@ -107,7 +111,7 @@ def fundamentals(symbol):
 
 
 def pct(v):
-    return "n/a" if v is None else f"{100 * v:.0f}%"
+    return "n/a" if v is None else ">500%" if v > 5 else f"{100 * v:.0f}%"
 
 
 def num(v, fmt="{:.0f}"):
@@ -116,7 +120,9 @@ def num(v, fmt="{:.0f}"):
 
 def setup_cells(r):
     s = r["setup"]
-    return f"₹{s['entry'][0]:.1f}–{s['entry'][1]:.1f} | ₹{s['stop_cons']:.1f} | ₹{s['targets'][0]:.1f}"
+    mid = sum(s["entry"]) / 2
+    return (f"₹{s['entry'][0]:.1f}–{s['entry'][1]:.1f} | ₹{s['stop_cons']:.1f} ({100 * (mid - s['stop_cons']) / mid:.0f}%) | "
+            f"₹{s['targets'][0]:.1f}")
 
 
 def main():
@@ -136,7 +142,7 @@ def main():
     if not watch:
         lines += ["Watchlist is empty. Tell Mehitha which stocks to track.", ""]
     else:
-        lines += ["| Stock | Close | Verdict | Grade | Entry | Stop-loss | Target 1 | Chart |", "|---|---|---|---|---|---|---|---|"]
+        lines += ["| Stock | Close | Verdict | Grade | Entry | Stop-loss (risk) | Target 1 | Chart |", "|---|---|---|---|---|---|---|---|"]
         for w in watch:
             try:
                 symbol, name = tc.resolve_symbol(w)
@@ -164,7 +170,7 @@ def main():
                 t = tech_score(frame)
             except Exception:
                 continue
-            if t["turnover"] >= MIN_TURNOVER_CR and "AVOID" not in t["rec"]:
+            if t["turnover"] >= MIN_TURNOVER_CR and t["score"] >= MIN_TECH_SCORE and t["risk"] <= MAX_RISK:
                 scored.append((s, t))
         scored.sort(key=lambda x: -x[1]["score"])
         picks = []
@@ -178,7 +184,7 @@ def main():
         if not picks:
             lines += ["No stock passed both the technical and fundamental filters today.", ""]
             continue
-        lines += ["| # | Stock | Close | Verdict | Entry | Stop-loss | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |",
+        lines += ["| # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |",
                   "|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for i, (_, s, t, f) in enumerate(picks, 1):
             try:
@@ -188,7 +194,7 @@ def main():
                 verdict_cell, cells = t["rec"], "– | – | –"
             lines.append(f"| {i} | {f['name']} ({s[:-3]}) | ₹{t['close']:.1f} | {verdict_cell} | {cells} | {pct(f['roe'])} | "
                          f"{num(None if f['de'] is None else f['de'] / 100, '{:.2f}')} | {pct(f['eg'])} | {pct(f['rg'])} | {num(f['pe'])} |")
-        lines += ["", f"Scanned {len(prices)} stocks; {len(scored)} had a tradable setup and ₹{MIN_TURNOVER_CR} cr+ daily turnover.", ""]
+        lines += ["", f"Scanned {len(prices)} stocks; {len(scored)} had a buy setup with risk under {100 * MAX_RISK:.0f}% and ₹{MIN_TURNOVER_CR} cr+ daily turnover.", ""]
 
     os.makedirs(os.path.join(args.out, "daily"), exist_ok=True)
     path = os.path.join(args.out, "daily", f"{today}.md")
