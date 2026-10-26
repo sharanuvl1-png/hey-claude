@@ -165,7 +165,7 @@ class WakeWordService : Service(), RecognitionListener {
             PendingIntent.FLAG_IMMUTABLE
         )
         return Notification.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+            .setSmallIcon(R.drawable.ic_stat_mehitha)
             .setContentTitle("Hi Mehitha")
             .setContentText(text)
             .setContentIntent(open)

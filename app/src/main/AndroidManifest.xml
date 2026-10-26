@@ -20,9 +20,9 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@android:drawable/ic_btn_speak_now"
+        android:icon="@drawable/ic_mehitha"
         android:label="Hi Mehitha"
-        android:theme="@android:style/Theme.Material.Light">
+        android:theme="@android:style/Theme.Material.NoActionBar">
 
         <activity
             android:name=".MainActivity"
