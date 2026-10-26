@@ -35,9 +35,25 @@ class WakeWordService : Service(), RecognitionListener {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    // Checks for "fetch this file" requests often, so they arrive within minutes.
+    private val requestPoller = Thread {
+        while (!Thread.currentThread().isInterrupted) {
+            try {
+                PhoneSync.handleRequests(this)
+                Thread.sleep(REQUEST_POLL_MS)
+            } catch (e: InterruptedException) {
+                break
+            } catch (e: Exception) {
+                Log.w(TAG, "Request check failed", e)
+                try { Thread.sleep(REQUEST_POLL_MS) } catch (ie: InterruptedException) { break }
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         createChannel()
+        requestPoller.start()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -58,6 +74,7 @@ class WakeWordService : Service(), RecognitionListener {
 
     override fun onDestroy() {
         isRunning = false
+        requestPoller.interrupt()
         handler.removeCallbacksAndMessages(null)
         stopListening()
         model?.close()
@@ -169,6 +186,7 @@ class WakeWordService : Service(), RecognitionListener {
         private const val SAMPLE_RATE = 16000f
         private const val RETRY_MS = 5_000L
         private const val RESUME_AFTER_TRIGGER_MS = 60_000L
+        private const val REQUEST_POLL_MS = 3 * 60_000L
 
         // "Mehitha" is not in the offline English vocabulary, so listen for
         // the English word sequences it sounds like instead.
