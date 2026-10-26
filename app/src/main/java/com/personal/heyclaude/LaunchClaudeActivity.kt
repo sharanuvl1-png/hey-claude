@@ -29,10 +29,24 @@ class LaunchClaudeActivity : Activity() {
         }
     }
 
+    /**
+     * Prefer Claude's voice entry points so the mic is already listening,
+     * then fall back to simply opening the app.
+     */
     private fun openClaude() {
-        val launch = packageManager.getLaunchIntentForPackage(CLAUDE_PACKAGE)
+        val voiceFirst = listOf(
+            Intent(Intent.ACTION_VOICE_COMMAND).setPackage(CLAUDE_PACKAGE),
+            Intent(Intent.ACTION_ASSIST).setPackage(CLAUDE_PACKAGE),
+        )
+        val launch = voiceFirst.firstOrNull { it.resolveActivity(packageManager) != null }
+            ?: packageManager.getLaunchIntentForPackage(CLAUDE_PACKAGE)
             ?: Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$CLAUDE_PACKAGE"))
-        startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        try {
+            startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (e: Exception) {
+            packageManager.getLaunchIntentForPackage(CLAUDE_PACKAGE)
+                ?.let { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        }
         finish()
     }
 
