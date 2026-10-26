@@ -71,7 +71,7 @@ class VoiceHelper : AccessibilityService() {
             Regex("(?i)\\bvoice\\b"),
             Regex("(?i)dictat|microphone|\\bmic\\b|speak|record"),
         )
-        private val NEW_CHAT = Regex("(?i)new chat|start (a )?new chat|^chat$")
+        private val NEW_CHAT = Regex("(?i)new chat|start (a )?new chat|^chat$|^chats$|new conversation")
         private const val ARM_MS = 8_000L
         @Volatile private var openedNewChat = false
 

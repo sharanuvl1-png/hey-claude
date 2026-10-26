@@ -75,10 +75,18 @@ class LaunchClaudeActivity : Activity() {
      */
     private fun openClaude() {
         VoiceHelper.arm()
-        val launch = packageManager.getLaunchIntentForPackage(CLAUDE_PACKAGE)
-            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        // Claude restores its last screen by itself, so ask it for a new chat by link
+        // when it handles claude.ai links; otherwise start it fresh.
+        val newChat = NEW_CHAT_LINKS.map {
+            Intent(Intent.ACTION_VIEW, Uri.parse(it)).setPackage(CLAUDE_PACKAGE)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }.firstOrNull { it.resolveActivity(packageManager) != null }
+        val launch = newChat
+            ?: packageManager.getLaunchIntentForPackage(CLAUDE_PACKAGE)
+                ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             ?: Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$CLAUDE_PACKAGE"))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        lastLaunch = if (newChat != null) "new chat link" else "app launch"
         try {
             startActivity(launch)
         } catch (e: Exception) {
@@ -91,6 +99,8 @@ class LaunchClaudeActivity : Activity() {
 
     companion object {
         const val CLAUDE_PACKAGE = "com.anthropic.claude"
+        private val NEW_CHAT_LINKS = listOf("https://claude.ai/new", "claude://claude.ai/new", "claude://new")
+        @Volatile var lastLaunch: String? = null
         private const val SHEET_MS = 450L
     }
 }

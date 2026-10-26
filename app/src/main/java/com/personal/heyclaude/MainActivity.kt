@@ -210,6 +210,7 @@ class MainActivity : Activity() {
         voiceRow.set(VoiceHelper.isEnabled(this), "On: taps Claude's voice button for you",
             "Turn on \"Mehitha voice button\" in Accessibility. If it's greyed out: App info → ⋮ → Allow restricted settings")
         voiceDebug.text = listOfNotNull(
+            LaunchClaudeActivity.lastLaunch?.let { "Claude opened by: $it" },
             VoiceHelper.lastTapped?.let { "Last tapped in Claude: $it" },
             VoiceHelper.seenButtons(this)?.let { "Claude buttons seen: $it" },
         ).joinToString("\n")
