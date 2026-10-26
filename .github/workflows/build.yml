@@ -31,6 +31,12 @@ jobs:
           mv vosk-model-small-en-us-0.15 app/src/main/assets/model-en-us
           echo "small-en-us-0.15" > app/src/main/assets/model-en-us/uuid
 
+      - name: Show which wake word sounds the model knows
+        run: |
+          for w in hi hey hello me may hit heat eat a mehta meta mahita mehitha; do
+            if grep -qx "$w" app/src/main/assets/model-en-us/graph/words.txt 2>/dev/null || grep -q "^$w " app/src/main/assets/model-en-us/graph/words.txt 2>/dev/null; then echo "known: $w"; else echo "UNKNOWN: $w"; fi
+          done
+
       - name: Build APK
         run: gradle :app:assembleDebug --no-daemon
 
@@ -46,6 +52,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Hey Claude build ${{ github.run_number }}
+          name: Hi Mehitha build ${{ github.run_number }}
           files: hey-claude.apk
           make_latest: true

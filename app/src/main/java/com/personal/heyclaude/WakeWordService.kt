@@ -13,6 +13,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
+import org.json.JSONArray
 import org.json.JSONObject
 import org.vosk.Model
 import org.vosk.Recognizer
@@ -21,7 +22,7 @@ import org.vosk.android.SpeechService
 import org.vosk.android.StorageService
 
 /**
- * Listens on the microphone, fully offline, for "Hey Claude" and opens the Claude app.
+ * Listens on the microphone, fully offline, for "Hi Mehitha" and opens the Claude app.
  * After a trigger it releases the microphone for a while so Claude can use it.
  */
 class WakeWordService : Service(), RecognitionListener {
@@ -44,7 +45,7 @@ class WakeWordService : Service(), RecognitionListener {
             stopSelf()
             return START_NOT_STICKY
         }
-        val notification = buildNotification("Listening for \"Hey Claude\"")
+        val notification = buildNotification("Listening for \"Hi Mehitha\"")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
         } else {
@@ -83,7 +84,7 @@ class WakeWordService : Service(), RecognitionListener {
             // Restricting the vocabulary keeps it light and cuts false triggers.
             val r = Recognizer(m, SAMPLE_RATE, GRAMMAR).also { recognizer = it }
             speechService = SpeechService(r, SAMPLE_RATE).also { it.startListening(this) }
-            updateNotification("Listening for \"Hey Claude\"")
+            updateNotification("Listening for \"Hi Mehitha\"")
         } catch (e: Exception) {
             Log.e(TAG, "Could not start the microphone", e)
             updateNotification("Microphone unavailable, retrying soon")
@@ -148,7 +149,7 @@ class WakeWordService : Service(), RecognitionListener {
         )
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
-            .setContentTitle("Hey Claude")
+            .setContentTitle("Hi Mehitha")
             .setContentText(text)
             .setContentIntent(open)
             .setOngoing(true)
@@ -169,10 +170,15 @@ class WakeWordService : Service(), RecognitionListener {
         private const val RETRY_MS = 5_000L
         private const val RESUME_AFTER_TRIGGER_MS = 60_000L
 
-        // "cloud" is how the small English model often hears "Claude".
-        private val WAKE_PHRASES = listOf("hey claude", "hey cloud", "hi claude", "hi cloud")
-        private const val GRAMMAR =
-            "[\"hey claude\", \"hey cloud\", \"hi claude\", \"hi cloud\", \"[unk]\"]"
+        // "Mehitha" is not in the offline English vocabulary, so listen for
+        // the English word sequences it sounds like instead.
+        private val GREETINGS = listOf("hi", "hey", "hello")
+        private val NAME_SOUNDS = listOf(
+            "me hit a", "may hit a", "me heat a", "may heat a", "me eat a",
+            "mehta", "meta", "mahita", "mehitha"
+        )
+        private val WAKE_PHRASES = GREETINGS.flatMap { g -> NAME_SOUNDS.map { "$g $it" } }
+        private val GRAMMAR = JSONArray(WAKE_PHRASES + "[unk]").toString()
 
         @Volatile
         var isRunning = false

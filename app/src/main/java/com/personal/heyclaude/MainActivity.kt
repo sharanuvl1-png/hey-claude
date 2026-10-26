@@ -32,7 +32,7 @@ class MainActivity : Activity() {
             setPadding(pad, pad * 2, pad, pad)
         }
         layout.addView(TextView(this).apply {
-            text = "Say \"Hey Claude\" to open Claude.\n\nGrant the three permissions below once, then tap Start."
+            text = "Say \"Hi Mehitha\" to open Claude.\n\nGrant the three permissions below once, then tap Start."
             textSize = 16f
             setPadding(0, 0, 0, pad)
         })
@@ -102,7 +102,7 @@ class MainActivity : Activity() {
             appendLine(if (overlay) "✓ Can open Claude from the background" else "✗ Background opening not allowed yet")
             appendLine(if (battery) "✓ No battery limits" else "• Battery limits on (it may stop when idle)")
             appendLine(if (claudeInstalled) "✓ Claude app found" else "✗ Claude app not installed")
-            if (WakeWordService.isRunning) append("\nListening. Say \"Hey Claude\".")
+            if (WakeWordService.isRunning) append("\nListening. Say \"Hi Mehitha\".")
         }
     }
 }

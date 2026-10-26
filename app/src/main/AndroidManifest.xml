@@ -16,7 +16,7 @@
     <application
         android:allowBackup="false"
         android:icon="@android:drawable/ic_btn_speak_now"
-        android:label="Hey Claude"
+        android:label="Hi Mehitha"
         android:theme="@android:style/Theme.Material.Light">
 
         <activity
