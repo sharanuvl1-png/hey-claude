@@ -1,0 +1,3 @@
+symbol=PCJEWELLER.NS
+png=out/PCJEWELLER/2026-10-26.png
+md=out/PCJEWELLER/2026-10-26.md
