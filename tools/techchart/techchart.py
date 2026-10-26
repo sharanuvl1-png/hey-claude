@@ -51,8 +51,11 @@ def fetch(symbol):
         if isinstance(frame.columns, pd.MultiIndex):
             frame.columns = frame.columns.get_level_values(0)
     daily = daily[["Open", "High", "Low", "Close", "Volume"]].dropna()
-    if daily.empty:
-        raise SystemExit(f"No price data found for {symbol}")
+    if daily.empty or len(daily) < 60:
+        raise SystemExit(f"DATA ERROR: no usable price history found for '{symbol}'. Check the company name or give the NSE symbol.")
+    age = (pd.Timestamp.now().normalize() - daily.index[-1].tz_localize(None).normalize()).days
+    if age > 6:
+        raise SystemExit(f"DATA ERROR: latest price for {symbol} is from {daily.index[-1]:%d %b %Y} ({age} days old); refusing to analyse stale data.")
     return daily, to_h4(hourly)
 
 
@@ -190,7 +193,7 @@ def detect_patterns(df, highs, lows):
     if len(ph) >= 2:
         a, b = ph[-2], ph[-1]
         ha, hb = df["High"].iloc[a], df["High"].iloc[b]
-        if b - a >= 10 and abs(ha - hb) / ha < 0.03:
+        if b - a >= 10 and b >= n - 40 and abs(ha - hb) / ha < 0.03 and close < max(ha, hb):
             neck = df["Low"].iloc[a:b + 1].min()
             state = "confirmed (closed below neckline)" if close < neck else "forming"
             found.append({"name": "Double Top", "detail": f"tops near ₹{ha:.1f}/₹{hb:.1f}, neckline ₹{neck:.1f}, {state}",
@@ -198,7 +201,7 @@ def detect_patterns(df, highs, lows):
     if len(pl) >= 2:
         a, b = pl[-2], pl[-1]
         la, lb = df["Low"].iloc[a], df["Low"].iloc[b]
-        if b - a >= 10 and abs(la - lb) / la < 0.03:
+        if b - a >= 10 and b >= n - 40 and abs(la - lb) / la < 0.03 and close > min(la, lb):
             neck = df["High"].iloc[a:b + 1].max()
             state = "confirmed (closed above neckline)" if close > neck else "forming"
             found.append({"name": "Double Bottom", "detail": f"bottoms near ₹{la:.1f}/₹{lb:.1f}, neckline ₹{neck:.1f}, {state}",
@@ -268,7 +271,7 @@ def detect_patterns(df, highs, lows):
 
 
 def candle_signals(df):
-    o, h, l, c = (df[k].values for k in ("Open", "High", "Low", "Close"))
+    o, h, l, c, atr = (df[k].values for k in ("Open", "High", "Low", "Close", "ATR"))
     out = []
     i = len(df) - 1
     for j in range(i - 2, i + 1):
@@ -282,6 +285,11 @@ def candle_signals(df):
             out.append((j, "Bullish Engulfing", f"{date}: buyers fully reversed the prior red candle", "bull"))
         elif c[j] < o[j] and c[j - 1] > o[j - 1] and o[j] >= c[j - 1] and c[j] <= o[j - 1] and body > pb:
             out.append((j, "Bearish Engulfing", f"{date}: sellers fully reversed the prior green candle", "bear"))
+        elif body >= 0.6 * rng and body >= atr[j]:
+            if c[j] > o[j]:
+                out.append((j, "Strong Bullish Candle", f"{date}: wide-range green candle, buyers in control", "bull"))
+            else:
+                out.append((j, "Strong Bearish Candle", f"{date}: wide-range red candle, sellers in control", "bear"))
         elif body <= 0.1 * rng:
             out.append((j, "Doji", f"{date}: indecision; wait for the next candle to confirm direction", "neutral"))
         elif lower >= 2 * body and upper <= 0.3 * rng:
@@ -317,9 +325,10 @@ def key_levels(df, highs, lows):
     close, atr = df["Close"].iloc[-1], df["ATR"].iloc[-1]
     recent_l = [df["Low"].iloc[i] for i in lows if i >= len(df) - 250]
     recent_h = [df["High"].iloc[i] for i in highs if i >= len(df) - 250]
+    recent_h.append(df["High"].iloc[-10:].max())  # latest swing high, not yet confirmed as a pivot
     pad = 0.25 * atr
-    sup = [(a - pad, b + pad, k) for a, b, k in cluster(recent_l, 0.6 * atr) if b < close]
-    res = [(a - pad, b + pad, k) for a, b, k in cluster(recent_h, 0.6 * atr) if a > close]
+    sup = [(max(a, b - atr) - pad, b + pad, k) for a, b, k in cluster(recent_l, 0.6 * atr) if b < close]
+    res = [(a - pad, min(b, a + atr) + pad, k) for a, b, k in cluster(recent_h, 0.6 * atr) if a > close]
 
     imm = max(sup, key=lambda z: z[1]) if sup else (close - 1.5 * atr, close - 0.5 * atr, 0)
     deeper = [z for z in sup if z[1] < imm[0]]
@@ -394,6 +403,10 @@ def verdict(d, h4t, pats, divs, cands, setup):
         reasons.append(f"RSI {rsi:.0f} is stretched; chasing here is risky")
     elif rsi < 40:
         score -= 1
+    peak = d["df"]["High"].iloc[-10:].max()
+    if last["Close"] < peak * 0.9:
+        score -= 2
+        reasons.insert(0, f"Sharp pullback: {100 * (1 - last['Close'] / peak):.0f}% below the recent ₹{peak:.1f} high")
     if h4t == "Uptrend":
         score += 1
     elif h4t == "Downtrend":
@@ -483,7 +496,7 @@ def render(path, name, symbol, d, h4t, lv, setup, pats, divs, cands, rec, conf, 
     ax.text(xr - 0.5, setup["stop_cons"], f"Stop-Loss ₹{setup['stop_cons']:.1f}", color=RED, fontsize=9, fontweight="bold", ha="right", va="top")
     e_lo, e_hi = setup["entry"]
     ax.add_patch(Rectangle((len(df) + 1, e_lo), 8, e_hi - e_lo, color=GREEN, alpha=0.25))
-    ax.annotate(f"Entry ₹{e_lo:.1f}–₹{e_hi:.1f}", xy=(len(df) - 0.5, (e_lo + e_hi) / 2), xytext=(len(df) + 2, e_lo - 1.2 * last["ATR"]),
+    ax.annotate(f"Entry ₹{e_lo:.1f}–₹{e_hi:.1f}", xy=(len(df) - 0.5, (e_lo + e_hi) / 2), xytext=(len(df) + 1, e_hi + 0.4 * last["ATR"]),
                 color=GREEN, fontsize=9, fontweight="bold", arrowprops=dict(arrowstyle="->", color=GREEN, lw=1.8))
     ax.axhline(close, color=GREEN if close >= df["Open"].iloc[-1] else RED, linestyle=":", linewidth=0.8)
     ax.text(xr + 0.3, close, f"₹{close:.2f}", fontsize=9, color="white", va="center",
