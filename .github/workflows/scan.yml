@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "40 10 * * 1-5"   # 16:10 IST, after the NSE close
   workflow_dispatch:
+    inputs:
+      refresh:
+        description: "Rebuild the automatic watchlist now"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -26,7 +31,10 @@ jobs:
         run: pip install -q yfinance matplotlib pandas numpy
 
       - name: Scan watchlist and indices
-        run: python tools/techchart/screener.py --out out | tee result.txt
+        run: |
+          mkdir -p out
+          git fetch origin charts 2>/dev/null && git show origin/charts:watchlist_auto.txt > out/watchlist_auto.txt 2>/dev/null || rm -f out/watchlist_auto.txt
+          python tools/techchart/screener.py --out out ${{ inputs.refresh == true && '--refresh-watchlist' || '' }} | tee result.txt
 
       - name: Save to the charts branch
         run: |
