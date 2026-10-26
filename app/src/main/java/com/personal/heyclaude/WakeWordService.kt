@@ -202,10 +202,10 @@ class WakeWordService : Service(), RecognitionListener {
 
         // "Mehitha" is not in the offline English vocabulary, so listen for
         // the English word sequences it sounds like instead.
-        private val GREETINGS = listOf("hi", "hey", "hello", "high", "hay")
+        private val GREETINGS = listOf("hi", "hey", "hello", "high")
         private val NAME_SOUNDS = listOf(
-            "me hit a", "may hit a", "me heat a", "may heat a", "me eat a", "may eat a",
-            "me hit the", "me eat the", "me that", "mehta", "meta", "mita", "meet a", "mahita", "mehitha"
+            "me hit a", "may hit a", "me heat a", "may heat a", "me hit the", "may hit the",
+            "me heat the", "mahita", "mehitha"
         )
         private val WAKE_PHRASES = GREETINGS.flatMap { g -> NAME_SOUNDS.map { "$g $it" } }
         private val GRAMMAR = JSONArray(WAKE_PHRASES + "[unk]").toString()

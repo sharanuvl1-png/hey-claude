@@ -34,7 +34,8 @@ def heard(wav_path):
 
 positives = ["Hi Mehitha", "Hey Mehitha", "Hi Meh-hee-tha", "Hello Mehitha", "Hi Mehita"]
 negatives = ["Hi, how are you", "Hey, what is the time", "Meta stock is up today", "Hello mother",
-             "I hit a ball", "Hey Google", "Hi Bixby", "Please call Mehta tomorrow"]
+             "I hit a ball", "Hey Google", "Hi Bixby", "Please call Mehta tomorrow",
+             "Hi there", "Hey listen to this", "He hit the ball hard", "Hello Mitha"]
 voices = ["en-us", "en-gb", "en-in" if subprocess.run(["espeak-ng", "-v", "en-in", "x", "-w", "/dev/null"]).returncode == 0 else "en",
           "en-us+f3", "en-gb+m3"]
 speeds = [140, 175]
