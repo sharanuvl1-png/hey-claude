@@ -1,0 +1,2 @@
+# One stock per line: NSE symbol (e.g. PCJEWELLER.NS) or company name
+PCJEWELLER.NS

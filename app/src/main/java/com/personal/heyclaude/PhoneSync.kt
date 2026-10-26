@@ -16,6 +16,7 @@ import java.util.Locale
  * Copies phone data into the Dropbox app folder so Claude (through the Dropbox
  * connector) can search it:
  *   /sms/YYYY-MM.md             text messages, one file per month
+ *   /expenses/YYYY-MM.csv       debits read from bank and UPI SMS
  *   /notifications/DATE.txt     WhatsApp and other app messages, from notifications
  *   /files/index.tsv            every file under the main folders (path, size, date)
  *   /files/docs/...             documents from Download, Documents and WhatsApp Documents
@@ -80,6 +81,8 @@ object PhoneSync {
         val time = SimpleDateFormat("HH:mm", Locale.US)
         var lastDay = ""
         var count = 0
+        val expenses = sortedMapOf<String, MutableList<String>>()
+        var spends = 0
         ctx.contentResolver.query(
             Telephony.Sms.CONTENT_URI,
             arrayOf(Telephony.Sms.DATE, Telephony.Sms.ADDRESS, Telephony.Sms.BODY, Telephony.Sms.TYPE),
@@ -97,10 +100,64 @@ object PhoneSync {
                 val dir = if (c.getInt(3) == Telephony.Sms.MESSAGE_TYPE_SENT) "to" else "from"
                 sb.append("- ${time.format(date)} $dir $who: $body\n")
                 count++
+                if (dir == "from") expenseRow(date, address, body)?.let { row ->
+                    val rows = expenses.getOrPut(month.format(date)) { mutableListOf() }
+                    if (row !in rows) { rows += row; spends++ }
+                }
             }
         }
         months.forEach { (m, text) -> box.upload("/sms/$m.md", text.toString()) }
-        return "$count messages in ${months.size} month file(s)"
+        expenses.forEach { (m, rows) -> box.upload("/expenses/$m.csv", (listOf(EXPENSE_HEADER) + rows).joinToString("\n") + "\n") }
+        return "$count messages in ${months.size} month file(s), $spends spends found"
+    }
+
+    // ------------------------------------------------------- expenses
+
+    private const val EXPENSE_HEADER = "Date,Amount (INR),Category,Description,Paid via,Notes"
+    private val AMOUNT = Regex("(?i)(?:rs\\.?|inr|₹|debited (?:by|for|with))\\s*(?:rs\\.?|inr|₹)?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)")
+    private val DEBIT = Regex("(?i)\\b(debited|spent|paid|sent|withdrawn|purchase|debit of|txn of|transaction of)\\b")
+    private val NOT_SPEND = Regex("(?i)\\b(will be debited|due|requested|request|declined|failed|reversed|refund(ed)?|cashback|statement|min(imum)? amount|auto ?pay set|mandate|emi of .* is due|credited to your a/c)\\b")
+    private val MERCHANT = listOf(
+        Regex("(?i)\\b(?:to|trf to|towards)\\s+(?:vpa\\s+)?([A-Za-z0-9@._&' -]{2,40}?)\\s*(?:\\bon\\b|\\bref|\\bupi|\\bvia\\b|\\(|\\.(?:\\s|$)|,|-\\s|$)"),
+        Regex("(?i)\\bat\\s+([A-Za-z0-9@._&' -]{2,40}?)\\s*(?:\\bon\\b|\\bfrom\\b|\\bref|\\bvia\\b|\\(|\\.(?:\\s|$)|,|$)"),
+        Regex("(?i)\\binfo:?\\s*([A-Za-z0-9@._&/' -]{2,40})"),
+        Regex("(?i)\\bon\\s+([A-Za-z][A-Za-z0-9@._&' -]{2,40}?)\\s*(?:\\.(?:\\s|$)|\\bavl|\\bref|,|$)"),
+    )
+    private val CATEGORIES = listOf(
+        "Food" to Regex("(?i)swiggy|zomato|restaurant|cafe|hotel|bakery|food|dominos|pizza|kfc|mcdonald|starbucks"),
+        "Groceries" to Regex("(?i)bigbasket|blinkit|zepto|dmart|instamart|grocer|supermarket|kirana|more retail|reliance fresh"),
+        "Shopping" to Regex("(?i)amazon|flipkart|myntra|ajio|meesho|nykaa|croma|reliance digital|decathlon"),
+        "Travel" to Regex("(?i)uber|ola|rapido|irctc|redbus|makemytrip|goibibo|indigo|air ?india|metro|fastag"),
+        "Fuel" to Regex("(?i)petrol|fuel|hpcl|iocl|indian oil|bharat petroleum|bpcl|shell"),
+        "Bills" to Regex("(?i)airtel|jio|vodafone|\\bvi\\b|bescom|electricity|broadband|act fibernet|gas|water|recharge|dth|tata ?play"),
+        "Health" to Regex("(?i)pharma|medical|hospital|clinic|apollo|medplus|1mg|pharmeasy|netmeds|diagnostic"),
+        "Entertainment" to Regex("(?i)netflix|hotstar|prime video|spotify|bookmyshow|pvr|inox|youtube"),
+        "Investments" to Regex("(?i)zerodha|groww|upstox|mutual fund|\\bsip\\b|nps|ppf"),
+        "Cash" to Regex("(?i)\\batm\\b|withdrawn|cash"),
+    )
+
+    /** One CSV row for a debit SMS from a bank or UPI sender, or null if it isn't a spend. */
+    fun expenseRow(date: Date, sender: String, body: String): String? {
+        if (sender.count { it.isLetter() } < 3 || !DEBIT.containsMatchIn(body) || NOT_SPEND.containsMatchIn(body)) return null
+        if (Regex("(?i)\\bcredited\\b").containsMatchIn(body) && !Regex("(?i)\\bdebited\\b").containsMatchIn(body)) return null
+        val amount = AMOUNT.find(body)?.groupValues?.get(1)?.replace(",", "")?.toDoubleOrNull() ?: return null
+        if (amount <= 0) return null
+        val merchant = MERCHANT.firstNotNullOfOrNull { it.find(body)?.groupValues?.get(1)?.trim() }
+            ?.takeIf { m -> m.any { it.isLetter() } && !Regex("(?i)^(your|a/c|ac|account|card)\\b").containsMatchIn(m) }
+            ?: "Unknown"
+        val category = CATEGORIES.firstOrNull { (_, re) -> re.containsMatchIn(merchant) || re.containsMatchIn(body) }?.first ?: "Other"
+        val via = when {
+            Regex("(?i)\\bupi\\b|vpa").containsMatchIn(body) -> "UPI"
+            Regex("(?i)credit card").containsMatchIn(body) -> "Credit card"
+            Regex("(?i)debit card|\\bcard\\b").containsMatchIn(body) -> "Card"
+            Regex("(?i)\\batm\\b").containsMatchIn(body) -> "ATM"
+            Regex("(?i)neft|imps|rtgs|net ?banking").containsMatchIn(body) -> "Bank transfer"
+            else -> "Bank"
+        }
+        val bank = sender.substringAfterLast('-').trim()
+        val day = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(date)
+        fun csv(v: String) = "\"" + v.replace("\"", "\"\"") + "\""
+        return listOf(day, "%.2f".format(Locale.US, amount), category, merchant, via, "from SMS ($bank)").joinToString(",") { csv(it) }
     }
 
     private fun contactName(ctx: Context, number: String): String? {

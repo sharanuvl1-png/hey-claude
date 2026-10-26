@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - "tools/**"
       - ".github/workflows/chart.yml"
+      - ".github/workflows/scan.yml"
   workflow_dispatch:
 
 permissions:

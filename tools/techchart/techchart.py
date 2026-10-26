@@ -661,13 +661,8 @@ def analyse(frame):
     return {"df": df, "highs": highs, "lows": lows, "trend": trend_of(df, highs, lows), "ema": ema_alignment(df.iloc[-1])}
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("stock")
-    ap.add_argument("--out", default="charts")
-    args = ap.parse_args()
-
-    symbol, name = resolve_symbol(args.stock)
+def run(symbol, name, out):
+    """Full analysis of one stock: writes the chart and report, returns the key results."""
     daily, h4raw = fetch(symbol)
     d = analyse(daily)
     h4 = {"df": None, "pats": [], "divs": []}
@@ -684,17 +679,29 @@ def main():
     pats = detect_patterns(d["df"], d["highs"], d["lows"])
     divs = divergence(d["df"], d["highs"], d["lows"])
     cands = candle_signals(d["df"])
-    rec, conf, grade, reasons, nxt, _ = verdict(d, h4t, pats, divs, cands, setup)
+    rec, conf, grade, reasons, nxt, score = verdict(d, h4t, pats, divs, cands, setup)
 
     stamp = d["df"].index[-1].strftime("%Y-%m-%d")
     base = symbol.replace(".NS", "").replace(".BO", "")
-    os.makedirs(os.path.join(args.out, base), exist_ok=True)
-    png = os.path.join(args.out, base, f"{stamp}.png")
-    md = os.path.join(args.out, base, f"{stamp}.md")
+    os.makedirs(os.path.join(out, base), exist_ok=True)
+    png = os.path.join(out, base, f"{stamp}.png")
+    md = os.path.join(out, base, f"{stamp}.md")
     render(png, name, symbol, d, h4t, lv, setup, pats, divs, cands, rec, conf, grade)
     with open(md, "w", encoding="utf-8") as f:
         f.write(report(name, symbol, d, h4, lv, setup, pats, divs, cands, rec, conf, grade, reasons, nxt, f"{stamp}.png"))
-    print(f"symbol={symbol}\npng={png}\nmd={md}")
+    return {"symbol": symbol, "name": name, "date": stamp, "close": float(d["df"]["Close"].iloc[-1]),
+            "rec": rec, "conf": conf, "grade": grade, "score": score, "reasons": reasons, "next": nxt,
+            "setup": setup, "png": png, "md": md}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("stock")
+    ap.add_argument("--out", default="charts")
+    args = ap.parse_args()
+    symbol, name = resolve_symbol(args.stock)
+    r = run(symbol, name, args.out)
+    print(f"symbol={symbol}\npng={r['png']}\nmd={r['md']}")
 
 
 if __name__ == "__main__":
