@@ -48,11 +48,12 @@ jobs:
           fi
 
       - name: Build APKs
-        run: gradle :app:assembleCoreDebug :app:assembleFullDebug --no-daemon
+        run: gradle :app:assembleCoreDebug :app:assembleVoiceDebug :app:assembleFullDebug --no-daemon
 
       - name: Rename APKs
         run: |
           cp app/build/outputs/apk/core/debug/app-core-debug.apk hey-claude.apk
+          cp app/build/outputs/apk/voice/debug/app-voice-debug.apk hey-claude-voice.apk
           cp app/build/outputs/apk/full/debug/app-full-debug.apk hey-claude-full.apk
 
       - uses: actions/upload-artifact@v4
@@ -60,6 +61,7 @@ jobs:
           name: hey-claude
           path: |
             hey-claude.apk
+            hey-claude-voice.apk
             hey-claude-full.apk
 
       - name: Publish as a release for easy phone download
@@ -69,5 +71,6 @@ jobs:
           name: Hi Mehitha build ${{ github.run_number }}
           files: |
             hey-claude.apk
+            hey-claude-voice.apk
             hey-claude-full.apk
           make_latest: true

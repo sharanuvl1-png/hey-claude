@@ -129,7 +129,7 @@ class MainActivity : Activity() {
         })
         page.addView(data)
         val build = try { packageManager.getPackageInfo(packageName, 0).longVersionCode } catch (e: Exception) { 0L }
-        page.addView(Ui.text(this, "Mehitha build $build" + if (hasService(VoiceHelper::class.java)) " (full)" else " (basic)", 11.5f, Ui.MUTED).apply {
+        page.addView(Ui.text(this, "Mehitha build $build" + if (hasService(VoiceHelper::class.java)) (if (declares(Manifest.permission.READ_SMS)) " (full)" else " (voice)") else " (basic)", 11.5f, Ui.MUTED).apply {
             gravity = Gravity.CENTER; setPadding(0, Ui.dp(this@MainActivity, 20), 0, 0)
         })
 
