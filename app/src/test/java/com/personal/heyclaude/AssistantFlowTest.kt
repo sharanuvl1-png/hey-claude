@@ -198,6 +198,7 @@ class AssistantFlowTest {
         val a = start(key = "")
         assertEquals("How can I help you today?", spoken().first())
         ask("when is my bus")
+        waitFor("the hand-off") { a.isFinishing }
         assertEquals("when is my bus", VoiceHelper.pending)
         assertEquals("Asking Claude.", spoken().last())
         val opened = shadowOf(app).nextStartedActivity
@@ -206,8 +207,9 @@ class AssistantFlowTest {
     }
 
     @Test fun noKeyAndNoHelperCopiesQuestion() {
-        start(key = "")
+        val a = start(key = "")
         ask("when is my bus")
+        waitFor("the hand-off") { a.isFinishing }
         val clip = app.getSystemService(android.content.ClipboardManager::class.java).primaryClip
         assertEquals("when is my bus", clip!!.getItemAt(0).text.toString())
         assertTrue(spoken().last().startsWith("I copied your question. To let me type it into Claude"))
