@@ -102,29 +102,30 @@ class AskJobTest {
         assertEquals("good morning", j.label)
     }
 
-    @Test fun doesNotKeepRetypingWhenClaudeMakesTheTextAnAttachment() {
+    @Test fun keepsTypingWhileTheNewChatIsStillLoading() {
+        // Build 25 gave up after two tries; the new chat ignored them and nothing was sent.
         val j = job()
-        val empty = chat("", home[2])
-        assertEquals(ScreenAction.Type(3), j.step(empty, 0))
-        // Claude turned the text into an attachment: the box stays empty.
+        val loading = chat("", home[2]).filter { !it.text.startsWith("Send") }
+        repeat(20) { assertEquals(ScreenAction.Type(3), j.step(loading, it * 600L)) }
+        val typed = chat(j.question, home[2])
+        assertEquals(ScreenAction.Tap(4), j.step(typed, 13_000))
+    }
+
+    @Test fun pressesSendWhenTheBoxNeverShowsTheText() {
+        // E.g. the Claude app turned the text into an attachment: the box is empty but Send shows.
+        val j = job()
         val attached = chat("", home[2], ScreenText("Pasted text", clickable = true))
-        assertEquals(ScreenAction.Type(4), j.step(attached, 600))
-        // Second try didn't show either: press send instead of typing again.
-        assertEquals(ScreenAction.Tap(5), j.step(attached, 1_200))
+        var t = 0L
+        var action: ScreenAction
+        do { action = j.step(attached, t); t += 600 } while (action == ScreenAction.Type(4) && t < 20_000)
+        assertEquals(ScreenAction.Tap(5), action)
+        assertTrue(t <= 8_000)
         // Sent: the Send button became Stop and Claude is writing.
         val writing = home.take(2) + listOf(ScreenText("Pasted text", clickable = true), ScreenText("Your bus leaves at 6:30 PM."),
             ScreenText("", editable = true), ScreenText("Stop", clickable = true))
-        assertEquals(ScreenAction.Wait, j.step(writing, 1_800))
+        assertEquals(ScreenAction.Wait, j.step(writing, t))
         val done = writing.dropLast(1) + ScreenText("Voice mode", clickable = true)
-        j.step(done, 2_400)
-        assertEquals(ScreenAction.Done("Your bus leaves at 6:30 PM.", "got the reply"), j.step(done, 2_400 + AskJob.SETTLE_MS))
-    }
-
-    @Test fun typesOnlyTwiceBeforeTryingSend() {
-        val j = job()
-        val stuck = chat("", home[2])
-        assertEquals(ScreenAction.Type(3), j.step(stuck, 0))
-        assertEquals(ScreenAction.Type(3), j.step(stuck, 600))
-        assertEquals(ScreenAction.Tap(4), j.step(stuck, 1_200))
+        j.step(done, t + 600)
+        assertEquals(ScreenAction.Done("Your bus leaves at 6:30 PM.", "got the reply"), j.step(done, t + 600 + AskJob.SETTLE_MS))
     }
 }

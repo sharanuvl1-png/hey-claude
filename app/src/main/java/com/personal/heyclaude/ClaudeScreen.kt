@@ -45,12 +45,15 @@ class AskJob(val spoken: String, private val startedAt: Long, val label: String 
                     if (!newChatTapped && chat >= 0) { newChatTapped = true; return ScreenAction.Tap(chat) }
                     return ScreenAction.Wait
                 }
-                // The Claude app may turn long text into an attachment, so the box never shows
-                // the question: after a couple of tries, move on to sending instead of typing again.
+                // Type until the box shows the question; the Claude app can ignore typing while a
+                // new chat is still loading. If the box never shows it (the app made it an
+                // attachment), stop retyping after a few seconds and press send.
                 if (!same(items[input].text, question)) {
                     if (typeTries == 0) before = items.filter { !it.editable }.map { it.text.trim() }.toSet()
-                    if (++typeTries <= MAX_TYPE_TRIES) return ScreenAction.Type(input)
-                } else if (typeTries == 0) {
+                    if (++typeTries <= MAX_TYPE_TRIES || items.none { it.clickable && SEND.containsMatchIn(it.text) }) {
+                        return ScreenAction.Type(input)
+                    }
+                } else {
                     before = items.filter { !it.editable }.map { it.text.trim() }.toSet()
                 }
                 phase = Phase.SEND
@@ -123,7 +126,7 @@ class AskJob(val spoken: String, private val startedAt: Long, val label: String 
         const val TIMEOUT_MS = 150_000L
         const val SETTLE_MS = 2_500L
         private const val MAX_SEND_TAPS = 4
-        private const val MAX_TYPE_TRIES = 2
+        private const val MAX_TYPE_TRIES = 10
         private val SEND = Regex("(?i)\\bsend\\b|\\bsubmit\\b")
         private val STOP = Regex("(?i)\\bstop\\b")
         private val MORE = Regex("(show|see|read) (more|less)")

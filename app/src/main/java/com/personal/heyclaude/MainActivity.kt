@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.os.Environment
 import android.os.PowerManager
 import android.provider.Settings
@@ -63,7 +64,9 @@ class MainActivity : Activity() {
         page.addView(headline)
         page.addView(subline)
         toggle = Ui.gradientButton(this, "") {
-            if (WakeWordService.isRunning) WakeWordService.stop(this) else WakeWordService.start(this)
+            val on = !WakeWordService.isRunning
+            getSharedPreferences(PREFS_MAIN, MODE_PRIVATE).edit().putBoolean(KEY_LISTEN, on).apply()
+            if (on) WakeWordService.start(this) else WakeWordService.stop(this)
             toggle.postDelayed({ refresh() }, 300)
         }
         page.addView(toggle)
@@ -159,6 +162,12 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        // Installing an update stops the listener: start it again unless you switched it off.
+        if (!WakeWordService.isRunning && granted(Manifest.permission.RECORD_AUDIO) &&
+            getSharedPreferences(PREFS_MAIN, MODE_PRIVATE).getBoolean(KEY_LISTEN, true)) {
+            try { WakeWordService.start(this) } catch (e: Exception) { Log.w("HeyClaude", "Could not start listening", e) }
+            toggle.postDelayed({ refresh() }, 300)
+        }
         refresh()
     }
 
@@ -245,5 +254,10 @@ class MainActivity : Activity() {
         filesRow.set(files, "Indexed", "Allow to find documents and photos", required = false)
         notifRow.set(notif, "Capturing new messages", "Allow to save WhatsApp messages", required = false)
         syncStatus.text = PhoneSync.lastStatus(this)
+    }
+
+    companion object {
+        private const val PREFS_MAIN = "main"
+        private const val KEY_LISTEN = "listen"
     }
 }
