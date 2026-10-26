@@ -1,0 +1,31 @@
+# Strongest stocks by trend, fundamentals and 6-month performance
+# generated 2026-10-26
+Nifty 50|HCLTECH.NS|HCL Technologies Limited
+Nifty 50|TECHM.NS|Tech Mahindra Limited
+Nifty 50|TCS.NS|Tata Consultancy Services Limited
+Nifty 50|BHARTIARTL.NS|Bharti Airtel Limited
+Nifty 50|ICICIBANK.NS|ICICI Bank Limited
+Nifty 50|KOTAKBANK.NS|Kotak Mahindra Bank Limited
+Nifty 50|BSE.NS|BSE Limited
+Nifty 50|ADANIPORTS.NS|Adani Ports and Special Economic Zone Limited
+Nifty 50|INFY.NS|Infosys Limited
+Nifty 50|JSWSTEEL.NS|JSW Steel Limited
+Midcap 150|INDHOTEL.NS|The Indian Hotels Company Limited
+Midcap 150|PERSISTENT.NS|Persistent Systems Limited
+Midcap 150|CRISIL.NS|CRISIL Limited
+Midcap 150|COFORGE.NS|Coforge Limited
+Midcap 150|MPHASIS.NS|Mphasis Limited
+Midcap 150|IPCALAB.NS|Ipca Laboratories Limited
+Midcap 150|LAURUSLABS.NS|Laurus Labs Limited
+Midcap 150|HEXT.NS|Hexaware Technologies Limited
+Midcap 150|LTTS.NS|L&T Technology Services Limited
+Midcap 150|BHARTIHEXA.NS|Bharti Hexacom Limited
+Smallcap 100|CHENNPETRO.NS|Chennai Petroleum Corporation Limited
+Smallcap 100|ANANDRATHI.NS|Anand Rathi Wealth Limited
+Smallcap 100|SAGILITY.NS|Sagility Limited
+Smallcap 100|GESHIP.NS|The Great Eastern Shipping Company Limited
+Smallcap 100|STLTECH.NS|Sterlite Technologies Limited
+Smallcap 100|SONACOMS.NS|Sona BLW Precision Forgings Limited
+Smallcap 100|ACUTAAS.NS|Acutaas Chemicals Limited
+Smallcap 100|GLAND.NS|Gland Pharma Limited
+Smallcap 100|WELCORP.NS|Welspun Corp Limited
