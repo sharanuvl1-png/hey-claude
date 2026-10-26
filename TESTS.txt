@@ -1,4 +1,5 @@
-58 passed, 0 failed
+63 passed, 0 failed
+PASS AskJobTest.typesOnlyTwiceBeforeTryingSend
 PASS AskJobTest.givesUpAfterTimeoutWithReason
 PASS AskJobTest.findsQuestionEvenWhenCutShortOnScreen
 PASS AskJobTest.opensNewChatWhenNoMessageBox
@@ -7,6 +8,7 @@ PASS AskJobTest.waitsWhileClaudeIsStillWriting
 PASS AskJobTest.typesSendsAndReadsTheReply
 PASS AskJobTest.stopsIfSendNeverWorks
 PASS AskJobTest.usesLastCopyOfQuestionInOldChat
+PASS AskJobTest.doesNotKeepRetypingWhenClaudeMakesTheTextAnAttachment
 PASS AssistantBrainTest.refusalGivesPoliteLine
 PASS AssistantBrainTest.followUpKeepsConversation
 PASS AssistantBrainTest.pauseTurnIsResumed
@@ -15,6 +17,7 @@ PASS AssistantBrainTest.runsToolsThenAnswers
 PASS AssistantFlowTest.claudeAppReplyIsOfferedThenRead
 PASS AssistantFlowTest.remembersAndRecalls
 PASS AssistantFlowTest.noKeySendsTheFullPromptButShowsWhatYouSaid
+PASS AssistantFlowTest.noKeySpendingQuestionStaysShortEnoughToSend
 PASS AssistantFlowTest.answersThenReadsWhenToldYes
 PASS AssistantFlowTest.asksAgainWhenReplyIsUnclear
 PASS AssistantFlowTest.saysWhenTheKeyIsWrong
@@ -50,9 +53,11 @@ PASS MoneyTest.findsSubscriptions
 PASS MoneyTest.flagsUnusualCategorySpend
 PASS MoneyTest.readsTheRowsPhoneSyncWrites
 PASS MoneyTest.flagsDoubleAndLargeCharges
+PASS MoneyTest.summaryStartsWithTodayAndTheWeek
 PASS MoneyTest.summaryHasTotalsAndMatchingSpends
 PASS MoneyTest.readsBillDueDates
 PASS PromptsTest.remindLinesBecomeReminders
+PASS PromptsTest.promptsStayShortEnoughToSendAsAMessage
 PASS PromptsTest.promptsAreOneLineWithDateAndRules
 PASS PromptsTest.recallAnswersFromNotes
 PASS PromptsTest.scanForFindsByNameOrSymbol
