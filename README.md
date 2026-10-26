@@ -9,7 +9,7 @@ A small personal Android app that listens for **"Hi Mehitha"** and opens the Cla
 
 ## Install
 
-1. Every push to `main` builds the app. Open the repository's **Releases** page on your phone and download `hey-claude.apk` from the latest build.
+1. Every push to `main` builds the app. Open the repository's **Releases** page on your phone and download `hey-claude-buildN.apk` from the latest build (N is the build number, e.g. `hey-claude-full-build27.apk`).
 2. Open the file and allow "Install unknown apps" for your browser or Files app when asked.
 3. Open **Hi Mehitha** and tap the three setup buttons (microphone, background opening, battery), then **Start listening**.
 

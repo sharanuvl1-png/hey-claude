@@ -80,17 +80,19 @@ jobs:
 
       - name: Rename APKs
         run: |
-          cp app/build/outputs/apk/core/debug/app-core-debug.apk hey-claude.apk
-          cp app/build/outputs/apk/voice/debug/app-voice-debug.apk hey-claude-voice.apk
-          cp app/build/outputs/apk/full/debug/app-full-debug.apk hey-claude-full.apk
+          # The build number is in each file name, so you can tell versions apart on the phone.
+          n=${{ github.run_number }}
+          cp app/build/outputs/apk/core/debug/app-core-debug.apk hey-claude-build$n.apk
+          cp app/build/outputs/apk/voice/debug/app-voice-debug.apk hey-claude-voice-build$n.apk
+          cp app/build/outputs/apk/full/debug/app-full-debug.apk hey-claude-full-build$n.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: hey-claude
           path: |
-            hey-claude.apk
-            hey-claude-voice.apk
-            hey-claude-full.apk
+            hey-claude-build${{ github.run_number }}.apk
+            hey-claude-voice-build${{ github.run_number }}.apk
+            hey-claude-full-build${{ github.run_number }}.apk
 
       - name: Publish as a release for easy phone download
         uses: softprops/action-gh-release@v2
@@ -98,7 +100,7 @@ jobs:
           tag_name: build-${{ github.run_number }}
           name: Hi Mehitha build ${{ github.run_number }}
           files: |
-            hey-claude.apk
-            hey-claude-voice.apk
-            hey-claude-full.apk
+            hey-claude-build${{ github.run_number }}.apk
+            hey-claude-voice-build${{ github.run_number }}.apk
+            hey-claude-full-build${{ github.run_number }}.apk
           make_latest: true
