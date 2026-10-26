@@ -148,14 +148,13 @@ def perf_points(ret6m):
 
 
 def strongest(scored, n):
-    """The n stocks with the best mix of trend, fundamentals and 6-month performance."""
-    pool = sorted(scored, key=lambda x: -(x[1]["score"] + perf_points(x[1]["ret6m"])))[:max(40, 2 * n)]
+    """The n stocks with the best mix of trend, fundamentals and 6-month performance.
+    Stocks whose fundamentals can't be fetched are left out rather than guessed."""
+    pool = sorted(scored, key=lambda x: -(x[1]["score"] + perf_points(x[1]["ret6m"])))[:max(40, 3 * n)]
     ranked = []
     for s, t in pool:
-        if t["score"] < 1:
-            continue
         f = fundamentals(s)
-        if f is None or f["score"] < 2:
+        if f is None:
             continue
         ranked.append((t["score"] + f["score"] + perf_points(t["ret6m"]), s, f["name"]))
     ranked.sort(key=lambda x: -x[0])
@@ -221,7 +220,7 @@ def main():
                 continue
             best = strongest(scored, keep)
             if len(best) < keep:
-                notes.append(f"{title}: only {len(best)} stocks passed the strength filters (wanted {keep}).")
+                notes.append(f"{title}: only {len(best)} stocks had fundamentals data (wanted {keep}).")
             fresh += [(title, s, name) for _, s, name in best]
         auto = fresh
         made = today
