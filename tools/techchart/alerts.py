@@ -82,7 +82,7 @@ def results_and_news(today, day):
                 if start <= d <= start + dt.timedelta(days=2):
                     when = "tomorrow" if d == start + dt.timedelta(days=1) else ("today" if d == start else d.strftime("%-d %b"))
                     out.append({"id": f"results:{sym}:{d}", "title": f"{name} results {when}",
-                                "text": f"{name} reports quarterly results {when} ({d.strftime('%-d %b')})."})
+                                "text": f"{name} reports quarterly results {when}" + (f" ({d.strftime('%-d %b')})." if when in ("today", "tomorrow") else ".")})
                     break
         except Exception as e:  # one stock's missing data must not stop the rest
             print(f"calendar {sym}: {e}", file=sys.stderr)
