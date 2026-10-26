@@ -1,0 +1,25 @@
+{
+ "date": "2026-10-26",
+ "alerts": [
+  {
+   "id": "results:ADANIPORTS:2026-10-28",
+   "title": "Adani Ports and Special Economic Zone results 28 Oct",
+   "text": "Adani Ports and Special Economic Zone reports quarterly results 28 Oct (28 Oct)."
+  },
+  {
+   "id": "results:CIPLA:2026-10-27",
+   "title": "Cipla results tomorrow",
+   "text": "Cipla reports quarterly results tomorrow (27 Oct)."
+  },
+  {
+   "id": "results:BAJAJ-AUTO:2026-10-27",
+   "title": "Bajaj Auto results tomorrow",
+   "text": "Bajaj Auto reports quarterly results tomorrow (27 Oct)."
+  },
+  {
+   "id": "results:SONACOMS:2026-10-26",
+   "title": "Sona BLW Precision Forgings results today",
+   "text": "Sona BLW Precision Forgings reports quarterly results today (26 Oct)."
+  }
+ ]
+}
