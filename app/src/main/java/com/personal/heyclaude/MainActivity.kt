@@ -32,6 +32,9 @@ class MainActivity : Activity() {
     private lateinit var batteryRow: Ui.Row
     private lateinit var claudeRow: Ui.Row
     private lateinit var voiceRow: Ui.Row
+    private lateinit var apiRow: Ui.Row
+    private lateinit var apiBox: LinearLayout
+    private lateinit var apiField: EditText
     private lateinit var voiceDebug: TextView
     private lateinit var dropboxRow: Ui.Row
     private lateinit var smsRow: Ui.Row
@@ -67,9 +70,19 @@ class MainActivity : Activity() {
         page.addView(Ui.spacer(this, 24))
 
         // Card 1: voice setup.
-        val voice = Ui.card(this, "Voice assistant", "Needed once so Mehitha can listen and open Claude.")
+        val voice = Ui.card(this, "Voice assistant", "Needed once so Mehitha can listen and answer.")
+        apiRow = Ui.Row(this, "Claude API key", "Add") { apiBox.visibility = View.VISIBLE }
+        apiBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
+        apiField = Ui.field(this, "Paste the key (starts with sk-ant-)")
+        apiBox.addView(apiField)
+        apiBox.addView(Ui.spacer(this, 8))
+        apiBox.addView(Ui.pill(this, "Save key") {
+            val k = apiField.text.toString().trim()
+            if (!k.startsWith("sk-ant-")) toast("That doesn't look like a Claude API key. It starts with sk-ant-")
+            else { AssistantActivity.saveApiKey(this, k); apiField.setText(""); apiBox.visibility = View.GONE; toast("Key saved"); refresh() }
+        })
         micRow = Ui.Row(this, "Microphone", "Allow") { requestMic() }
-        overlayRow = Ui.Row(this, "Open Claude in background", "Allow") {
+        overlayRow = Ui.Row(this, "Pop up over other apps", "Allow") {
             startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
         }
         batteryRow = Ui.Row(this, "Always on", "Allow") {
@@ -82,9 +95,11 @@ class MainActivity : Activity() {
             toast("Tap \"Installed apps\" → \"Mehitha voice button\" → turn it on")
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
+        voice.addView(apiRow.view)
+        voice.addView(apiBox)
         listOf(micRow, overlayRow, batteryRow, claudeRow, voiceRow).forEach { voice.addView(it.view) }
         if (!hasService(VoiceHelper::class.java)) voiceRow.view.visibility = View.GONE
-        voice.addView(Ui.pill(this, "Test now") { startActivity(Intent(this, LaunchClaudeActivity::class.java)) })
+        voice.addView(Ui.pill(this, "Test now") { startActivity(Intent(this, AssistantActivity::class.java)) })
         voiceDebug = Ui.text(this, "", 11.5f, Ui.MUTED).apply { setPadding(0, Ui.dp(this@MainActivity, 8), 0, 0) }
         voice.addView(voiceDebug)
         page.addView(voice)
@@ -195,18 +210,21 @@ class MainActivity : Activity() {
         headline.text = if (listening) "Hi, I'm Mehitha" else "Mehitha is paused"
         subline.text = when {
             !mic || !overlay -> "Finish the setup below to start"
-            listening -> "Say \"Hi Mehitha\" anytime to talk to Claude"
+            listening -> "Say \"Hi Mehitha\" anytime and ask me anything"
             else -> "Tap Start to listen for \"Hi Mehitha\""
         }
         toggle.text = if (listening) "Pause listening" else "Start listening"
         toggle.isEnabled = mic && overlay
         toggle.alpha = if (toggle.isEnabled) 1f else 0.4f
 
+        val hasKey = AssistantActivity.apiKey(this).isNotBlank()
+        apiRow.set(hasKey, "Saved. Tap to replace", "Needed so Mehitha can answer. Get it at console.anthropic.com")
+        apiRow.view.setOnClickListener { apiBox.visibility = View.VISIBLE }
         micRow.set(mic, "Allowed", "Needed to hear \"Hi Mehitha\"")
-        overlayRow.set(overlay, "Allowed", "Lets Mehitha bring Claude to the front")
+        overlayRow.set(overlay, "Allowed", "Lets Mehitha appear when you say \"Hi Mehitha\"")
         batteryRow.set(battery, "No battery limits",
             "Needed so it hears you every time. On Samsung also add Hi Mehitha to Battery → Never sleeping apps")
-        claudeRow.set(claude, "Installed", "Install the Claude app")
+        claudeRow.set(claude, "Installed", "For the \"Open in Claude app\" button", required = false)
         voiceRow.set(VoiceHelper.isEnabled(this), "On: taps Claude's voice button for you",
             "Turn on \"Mehitha voice button\" in Accessibility. If it's greyed out: App info → ⋮ → Allow restricted settings")
         voiceDebug.text = listOfNotNull(

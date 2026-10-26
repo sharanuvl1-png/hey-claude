@@ -51,6 +51,17 @@ android {
         jvmTarget = "17"
     }
     // The speech model is already compressed; keep it as-is in the APK.
+    // Robolectric runs the assistant's conversation tests on the build machine.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+    // The Claude SDK's libraries each ship the same licence files.
+    packaging {
+        resources {
+            excludes += listOf("META-INF/LICENSE*", "META-INF/NOTICE*", "META-INF/DEPENDENCIES",
+                "META-INF/versions/9/previous-compilation-data.bin")
+        }
+    }
     androidResources {
         noCompress += listOf("mdl", "fst", "conf", "int", "mat", "carpa", "txt")
     }
@@ -60,4 +71,7 @@ dependencies {
     implementation("com.alphacephei:vosk-android:0.3.75@aar")
     implementation("net.java.dev.jna:jna:5.18.1@aar")
     implementation("androidx.work:work-runtime:2.9.1")
+    implementation("com.anthropic:anthropic-java:3.3.0")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.13")
 }

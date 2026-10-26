@@ -48,6 +48,33 @@ jobs:
             done
           fi
 
+      - name: Run tests
+        id: tests
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          gradle :app:testVoiceDebugUnitTest --no-daemon 2>&1 | tee tests.log
+
+      - name: Save test results to the charts branch
+        if: always()
+        run: |
+          python3 tools/tests_summary.py app/build/test-results/testVoiceDebugUnitTest tests.log > TESTS.txt || true
+          cat TESTS.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin charts
+          git worktree add charts-wt origin/charts
+          git -C charts-wt checkout -B charts
+          cp TESTS.txt charts-wt/TESTS.txt
+          git -C charts-wt add -A
+          git -C charts-wt commit -m "Tests: $(head -1 TESTS.txt)" || true
+          git -C charts-wt push origin charts || true
+          git worktree remove --force charts-wt
+
+      - name: Stop if a test failed
+        if: steps.tests.outcome == 'failure'
+        run: exit 1
+
       - name: Build APKs
         run: gradle :app:assembleCoreDebug :app:assembleVoiceDebug :app:assembleFullDebug --no-daemon
 

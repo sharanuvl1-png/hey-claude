@@ -23,8 +23,8 @@ import org.vosk.android.SpeechService
 import org.vosk.android.StorageService
 
 /**
- * Listens on the microphone, fully offline, for "Hi Mehitha" and opens the Claude app.
- * After a trigger it releases the microphone for a while so Claude can use it.
+ * Listens on the microphone, fully offline, for "Hi Mehitha" and opens the assistant.
+ * After a trigger it releases the microphone until the assistant hands it back.
  */
 class WakeWordService : Service(), RecognitionListener {
 
@@ -62,6 +62,13 @@ class WakeWordService : Service(), RecognitionListener {
         if (intent?.action == ACTION_STOP) {
             stopSelf()
             return START_NOT_STICKY
+        }
+        if (intent?.action == ACTION_RESUME && model != null) {
+            // The assistant sheet closed: listen again right away (or after the given delay).
+            handler.removeCallbacksAndMessages(null)
+            val delay = intent.getLongExtra(EXTRA_DELAY, 0L)
+            if (delay > 0) handler.postDelayed({ startListening() }, delay) else startListening()
+            return START_STICKY
         }
         val notification = buildNotification("Listening for \"Hi Mehitha\"")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -133,12 +140,13 @@ class WakeWordService : Service(), RecognitionListener {
         if (now - lastTriggerAt < COOLDOWN_MS) return
         lastTriggerAt = now
         stopListening()
-        updateNotification("Opened Claude. Listening again in a few seconds")
+        updateNotification("Mehitha is answering. Listening again when it closes")
         startActivity(
-            Intent(this, LaunchClaudeActivity::class.java)
+            Intent(this, AssistantActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
         )
-        handler.postDelayed({ startListening() }, RESUME_AFTER_TRIGGER_MS)
+        // The assistant hands the mic back when it closes; this is only a safety net.
+        handler.postDelayed({ startListening() }, ASSISTANT_TIMEOUT_MS)
     }
 
     private fun handle(json: String) {
@@ -196,7 +204,10 @@ class WakeWordService : Service(), RecognitionListener {
         private const val ACTION_STOP = "com.personal.heyclaude.STOP"
         private const val SAMPLE_RATE = 16000f
         private const val RETRY_MS = 5_000L
-        private const val RESUME_AFTER_TRIGGER_MS = 8_000L
+        const val RESUME_AFTER_TRIGGER_MS = 8_000L
+        private const val ASSISTANT_TIMEOUT_MS = 5 * 60_000L
+        private const val ACTION_RESUME = "com.personal.heyclaude.RESUME"
+        private const val EXTRA_DELAY = "delay"
         private const val COOLDOWN_MS = 4_000L
         private const val REQUEST_POLL_MS = 3 * 60_000L
 
@@ -215,6 +226,17 @@ class WakeWordService : Service(), RecognitionListener {
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, WakeWordService::class.java))
+        }
+
+        /** Starts listening again after the assistant has finished with the mic. */
+        fun resume(context: Context, delayMs: Long = 0L) {
+            if (!isRunning) return
+            try {
+                context.startService(Intent(context, WakeWordService::class.java)
+                    .setAction(ACTION_RESUME).putExtra(EXTRA_DELAY, delayMs))
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not resume listening; the safety net will", e)
+            }
         }
 
         fun stop(context: Context) {
