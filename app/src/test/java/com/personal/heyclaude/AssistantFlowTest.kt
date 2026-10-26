@@ -203,7 +203,7 @@ class AssistantFlowTest {
         hear("when is my bus")
         val clip = app.getSystemService(android.content.ClipboardManager::class.java).primaryClip
         assertEquals("when is my bus", clip!!.getItemAt(0).text.toString())
-        assertEquals("I copied your question. Paste it in Claude.", spoken().last())
+        assertTrue(spoken().last().startsWith("I copied your question. To let me type it into Claude"))
     }
 
     private fun startWithReply(reply: String?): AssistantActivity {

@@ -138,7 +138,10 @@ class AssistantActivity : Activity() {
         } else {
             // Without the helper Mehitha can't type into Claude, so copy the question instead.
             getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Question", question))
-            say("I copied your question. Paste it in Claude.") { LaunchClaudeActivity.openNewChat(this); finish() }
+            status.text = "Question copied. Turn on \"Let Mehitha use the Claude app\" in Hi Mehitha so I can type it for you."
+            say("I copied your question. To let me type it into Claude for you, turn on Let Mehitha use the Claude app, in the Mehitha app.") {
+                LaunchClaudeActivity.openNewChat(this); finish()
+            }
         }
     }
 
