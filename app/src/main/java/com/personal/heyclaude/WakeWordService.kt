@@ -204,7 +204,8 @@ class WakeWordService : Service(), RecognitionListener {
         // the English word sequences it sounds like instead.
         private val GREETINGS = listOf("hi", "hey", "hello", "high")
         private val NAME_SOUNDS = listOf(
-            "me hit a", "may hit a", "me heat a", "may heat a", "me heat the", "mahita", "mehitha"
+            "me hit a", "may hit a", "me heat a", "may heat a", "me heat the",
+            "may a", "may the a", "mahita", "mehitha"
         )
         private val WAKE_PHRASES = GREETINGS.flatMap { g -> NAME_SOUNDS.map { "$g $it" } }
         private val GRAMMAR = JSONArray(WAKE_PHRASES + "[unk]").toString()
