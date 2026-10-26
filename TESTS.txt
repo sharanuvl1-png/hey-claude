@@ -1,7 +1,8 @@
-34 passed, 0 failed
+57 passed, 1 failed
 PASS AskJobTest.givesUpAfterTimeoutWithReason
 PASS AskJobTest.findsQuestionEvenWhenCutShortOnScreen
 PASS AskJobTest.opensNewChatWhenNoMessageBox
+PASS AskJobTest.longPromptShownInPiecesIsNotPartOfTheReply
 PASS AskJobTest.waitsWhileClaudeIsStillWriting
 PASS AskJobTest.typesSendsAndReadsTheReply
 PASS AskJobTest.stopsIfSendNeverWorks
@@ -12,6 +13,8 @@ PASS AssistantBrainTest.pauseTurnIsResumed
 PASS AssistantBrainTest.toolFailureIsReportedNotThrown
 PASS AssistantBrainTest.runsToolsThenAnswers
 PASS AssistantFlowTest.claudeAppReplyIsOfferedThenRead
+PASS AssistantFlowTest.remembersAndRecalls
+PASS AssistantFlowTest.noKeySendsTheFullPromptButShowsWhatYouSaid
 PASS AssistantFlowTest.answersThenReadsWhenToldYes
 PASS AssistantFlowTest.asksAgainWhenReplyIsUnclear
 PASS AssistantFlowTest.saysWhenTheKeyIsWrong
@@ -19,11 +22,29 @@ PASS AssistantFlowTest.staysQuietWhenToldNo
 PASS AssistantFlowTest.noKeyAndNoHelperCopiesQuestion
 PASS AssistantFlowTest.pauseInTheMiddleKeepsListening
 PASS AssistantFlowTest.claudeAppReplyMissingSaysSo
+PASS AssistantFlowTest.briefingIncludesBillsAndScan
+PASS AssistantFlowTest.reminderFromClaudeIsSet
+PASS AssistantFlowTest.moneyQuestionSendsPhoneFacts
 PASS AssistantFlowTest.retriesOnceWhenNothingHeard
+PASS AssistantFlowTest.alertsAreListedAndTapOpensTheAnswer
 PASS AssistantFlowTest.followUpKeepsTheConversation
 PASS AssistantFlowTest.readsTheCasualGistNotTheWholeText
+PASS AssistantFlowTest.stockAlertsFileIsRead
 PASS AssistantFlowTest.greetsThenListensInIndianEnglish
-PASS AssistantFlowTest.noKeyHandsQuestionToClaudeApp
+PASS AssistantFlowTest.stockCheckUsesScanAndWeb
+FAIL AssistantFlowTest.noKeyHandsQuestionToClaudeApp
+      java.lang.AssertionError: expected:<when is my bus> but was:<null>
+      	at org.junit.Assert.fail(Assert.java:89)
+      	at org.junit.Assert.failNotEquals(Assert.java:835)
+      	at org.junit.Assert.assertEquals(Assert.java:120)
+      	at org.junit.Assert.assertEquals(Assert.java:146)
+      	at com.personal.heyclaude.AssistantFlowTest.noKeyHandsQuestionToClaudeApp(AssistantFlowTest.kt:201)
+      	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+      	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+      	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+      	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+      	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+      	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
 PASS AssistantFlowTest.sendsAfterNoMoreSpeech
 PASS AssistantTextTest.yesMeansRead
 PASS AssistantTextTest.gistFallsBackToFirstTwoSentences
@@ -33,3 +54,18 @@ PASS AssistantTextTest.gistComesFromSpokenLine
 PASS AssistantTextTest.unclearAsksAgain
 PASS AssistantTextTest.bestLinesRankByMatches
 PASS AssistantTextTest.keywordsDropFillerWords
+PASS CommandsTest.everythingElse
+PASS CommandsTest.stocks
+PASS CommandsTest.money
+PASS CommandsTest.briefing
+PASS MoneyTest.findsSubscriptions
+PASS MoneyTest.flagsUnusualCategorySpend
+PASS MoneyTest.readsTheRowsPhoneSyncWrites
+PASS MoneyTest.flagsDoubleAndLargeCharges
+PASS MoneyTest.summaryHasTotalsAndMatchingSpends
+PASS MoneyTest.readsBillDueDates
+PASS PromptsTest.remindLinesBecomeReminders
+PASS PromptsTest.promptsAreOneLineWithDateAndRules
+PASS PromptsTest.recallAnswersFromNotes
+PASS PromptsTest.scanForFindsByNameOrSymbol
+PASS PromptsTest.scanSummaryPutsBuysFirst
