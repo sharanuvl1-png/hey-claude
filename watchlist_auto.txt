@@ -6,10 +6,20 @@ Nifty 50|TCS.NS|Tata Consultancy Services Limited
 Nifty 50|BHARTIARTL.NS|Bharti Airtel Limited
 Nifty 50|ICICIBANK.NS|ICICI Bank Limited
 Nifty 50|KOTAKBANK.NS|Kotak Mahindra Bank Limited
+Nifty 50|ETERNAL.NS|Eternal Limited
 Nifty 50|BSE.NS|BSE Limited
 Nifty 50|ADANIPORTS.NS|Adani Ports and Special Economic Zone Limited
 Nifty 50|INFY.NS|Infosys Limited
+Nifty 50|DRREDDY.NS|Dr. Reddy's Laboratories Limited
 Nifty 50|JSWSTEEL.NS|JSW Steel Limited
+Nifty 50|ULTRACEMCO.NS|UltraTech Cement Limited
+Nifty 50|EICHERMOT.NS|Eicher Motors Limited
+Nifty 50|SUNPHARMA.NS|Sun Pharmaceutical Industries Limited
+Nifty 50|GRASIM.NS|Grasim Industries Limited
+Nifty 50|CIPLA.NS|Cipla Limited
+Nifty 50|APOLLOHOSP.NS|Apollo Hospitals Enterprise Limited
+Nifty 50|BAJAJ-AUTO.NS|Bajaj Auto Limited
+Nifty 50|TRENT.NS|Trent Limited
 Midcap 150|INDHOTEL.NS|The Indian Hotels Company Limited
 Midcap 150|PERSISTENT.NS|Persistent Systems Limited
 Midcap 150|CRISIL.NS|CRISIL Limited
@@ -25,7 +35,8 @@ Smallcap 100|ANANDRATHI.NS|Anand Rathi Wealth Limited
 Smallcap 100|SAGILITY.NS|Sagility Limited
 Smallcap 100|GESHIP.NS|The Great Eastern Shipping Company Limited
 Smallcap 100|STLTECH.NS|Sterlite Technologies Limited
+Smallcap 100|ATHERENERG.NS|Ather Energy Limited
 Smallcap 100|SONACOMS.NS|Sona BLW Precision Forgings Limited
+Smallcap 100|FSL.NS|Firstsource Solutions Limited
 Smallcap 100|ACUTAAS.NS|Acutaas Chemicals Limited
-Smallcap 100|GLAND.NS|Gland Pharma Limited
-Smallcap 100|WELCORP.NS|Welspun Corp Limited
+Smallcap 100|MRPL.NS|Mangalore Refinery and Petrochemicals Limited

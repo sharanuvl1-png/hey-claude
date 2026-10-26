@@ -15,10 +15,20 @@ Your own stocks plus the strongest 20 Nifty 50, 10 Midcap 150, 10 Smallcap 100 s
 | Nifty 50 | Bharti Airtel Limited | ₹1917.5 | 🟡 BUY ON DIP | A | ₹1830.9–1850.5 | ₹1745.4 (5%) | ₹1995.0 | BHARTIARTL/2026-10-26.png |
 | Nifty 50 | ICICI Bank Limited | ₹1403.0 | 🟢 BUY NOW | A | ₹1385.1–1397.9 | ₹1284.6 (8%) | ₹1551.8 | ICICIBANK/2026-10-26.png |
 | Nifty 50 | Kotak Mahindra Bank Limited | ₹440.8 | 🟡 BUY ON DIP | A | ₹420.8–432.6 | ₹392.2 (8%) | ₹478.5 | KOTAKBANK/2026-10-26.png |
+| Nifty 50 | Eternal Limited | ₹325.5 | 🟡 BUY ON DIP | A | ₹304.6–320.9 | ₹299.4 (4%) | ₹332.8 | ETERNAL/2026-10-26.png |
 | Nifty 50 | BSE Limited | ₹3359.0 | 🟡 BUY ON DIP | B | ₹3195.3–3294.8 | ₹2972.3 (8%) | ₹3542.3 | BSE/2026-10-26.png |
 | Nifty 50 | Adani Ports and Special Economic Zone Limited | ₹1752.5 | 🟡 BUY ON DIP | B | ₹1658.4–1750.1 | ₹1634.9 (4%) | ₹1810.2 | ADANIPORTS/2026-10-26.png |
 | Nifty 50 | Infosys Limited | ₹1166.0 | 🟡 BUY ON DIP | B | ₹1139.1–1164.3 | ₹969.7 (16%) | ₹1366.2 | INFY/2026-10-26.png |
+| Nifty 50 | Dr. Reddy's Laboratories Limited | ₹1310.9 | 🟡 BUY ON DIP | A | ₹1247.2–1268.9 | ₹1159.2 (8%) | ₹1367.9 | DRREDDY/2026-10-26.png |
 | Nifty 50 | JSW Steel Limited | ₹1260.0 | 🟠 WAIT | C | ₹1209.7–1260.0 | ₹1149.4 (7%) | ₹1368.1 | JSWSTEEL/2026-10-26.png |
+| Nifty 50 | UltraTech Cement Limited | ₹11180.0 | 🟠 WAIT | C | ₹10660.9–10895.7 | ₹10361.1 (4%) | ₹11500.1 | ULTRACEMCO/2026-10-26.png |
+| Nifty 50 | Eicher Motors Limited | ₹7099.5 | 🔴 AVOID | C | ₹6900.7–7099.5 | ₹6725.7 (4%) | ₹7393.7 | EICHERMOT/2026-10-26.png |
+| Nifty 50 | Sun Pharmaceutical Industries Limited | ₹1740.0 | 🔴 AVOID | C | ₹1673.5–1740.0 | ₹1656.9 (3%) | ₹1769.7 | SUNPHARMA/2026-10-26.png |
+| Nifty 50 | Grasim Industries Limited | ₹2950.0 | 🔴 AVOID | C | ₹2837.5–2950.0 | ₹2805.6 (3%) | ₹3026.1 | GRASIM/2026-10-26.png |
+| Nifty 50 | Cipla Limited | ₹1355.0 | 🔴 AVOID | C | ₹1302.3–1340.0 | ₹1285.4 (3%) | ₹1374.7 | CIPLA/2026-10-26.png |
+| Nifty 50 | Apollo Hospitals Enterprise Limited | ₹7844.0 | 🔴 AVOID | C | ₹7761.8–7844.0 | ₹7554.8 (3%) | ₹8175.1 | APOLLOHOSP/2026-10-26.png |
+| Nifty 50 | Bajaj Auto Limited | ₹10071.0 | 🔴 AVOID | C | ₹9835.9–10071.0 | ₹9570.9 (4%) | ₹10432.9 | BAJAJ-AUTO/2026-10-26.png |
+| Nifty 50 | Trent Limited | ₹2754.0 | 🔴 AVOID | C | ₹2634.7–2754.0 | ₹2526.7 (6%) | ₹2979.6 | TRENT/2026-10-26.png |
 | Midcap 150 | The Indian Hotels Company Limited | ₹795.5 | 🟢 BUY NOW | A | ₹779.2–795.5 | ₹702.7 (11%) | ₹914.3 | INDHOTEL/2026-10-26.png |
 | Midcap 150 | Persistent Systems Limited | ₹5850.0 | 🟡 BUY ON DIP | A | ₹5649.5–5748.5 | ₹5442.5 (5%) | ₹6083.8 | PERSISTENT/2026-10-26.png |
 | Midcap 150 | CRISIL Limited | ₹4777.8 | 🟡 BUY ON DIP | A | ₹4444.0–4583.7 | ₹4303.3 (5%) | ₹4829.6 | CRISIL/2026-10-26.png |
@@ -34,13 +44,11 @@ Your own stocks plus the strongest 20 Nifty 50, 10 Midcap 150, 10 Smallcap 100 s
 | Smallcap 100 | Sagility Limited | ₹44.5 | 🟢 BUY NOW | A | ₹43.1–44.4 | ₹41.7 (5%) | ₹46.8 | SAGILITY/2026-10-26.png |
 | Smallcap 100 | The Great Eastern Shipping Company Limited | ₹1532.4 | 🟡 BUY ON DIP | A | ₹1448.8–1508.3 | ₹1426.5 (4%) | ₹1553.8 | GESHIP/2026-10-26.png |
 | Smallcap 100 | Sterlite Technologies Limited | ₹867.5 | 🟠 WAIT | C | ₹769.6–867.5 | ₹742.2 (9%) | ₹933.2 | STLTECH/2026-10-26.png |
+| Smallcap 100 | Ather Energy Limited | ₹1575.0 | 🟡 BUY ON DIP | A | ₹1424.7–1472.1 | ₹1349.8 (7%) | ₹1596.2 | ATHERENERG/2026-10-26.png |
 | Smallcap 100 | Sona BLW Precision Forgings Limited | ₹781.9 | 🟠 WAIT | C | ₹752.8–781.9 | ₹740.2 (4%) | ₹806.9 | SONACOMS/2026-10-26.png |
+| Smallcap 100 | Firstsource Solutions Limited | ₹292.2 | 🟡 BUY ON DIP | A | ₹269.4–277.4 | ₹244.1 (11%) | ₹317.3 | FSL/2026-10-26.png |
 | Smallcap 100 | Acutaas Chemicals Limited | ₹3348.8 | 🟡 BUY ON DIP | B | ₹3315.3–3348.8 | ₹2998.4 (10%) | ₹3667.3 | ACUTAAS/2026-10-26.png |
-| Smallcap 100 | Gland Pharma Limited | ₹2843.9 | 🟠 WAIT | C | ₹2751.0–2843.9 | ₹2700.9 (3%) | ₹2982.9 | GLAND/2026-10-26.png |
-| Smallcap 100 | Welspun Corp Limited | ₹2342.6 | 🟠 WAIT | C | ₹2206.0–2342.6 | ₹2137.7 (6%) | ₹2479.4 | WELCORP/2026-10-26.png |
-
-- Nifty 50: only 10 stocks passed the strength filters (wanted 20).
-- Smallcap 100: only 9 stocks passed the strength filters (wanted 10).
+| Smallcap 100 | Mangalore Refinery and Petrochemicals Limited | ₹182.6 | 🟡 BUY ON DIP | A | ₹164.1–176.2 | ₹159.2 (6%) | ₹186.6 | MRPL/2026-10-26.png |
 
 ## Top 5 buy setups today: Nifty 50
 
