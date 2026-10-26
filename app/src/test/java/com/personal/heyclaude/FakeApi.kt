@@ -1,28 +1,30 @@
 package com.personal.heyclaude
 
-import com.sun.net.httpserver.HttpServer
-import java.net.InetSocketAddress
+import okhttp3.mockwebserver.Dispatcher
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import java.util.Collections
 
 /** A stand-in for the Claude API: replays scripted replies and keeps every request body. */
 class FakeApi(private val script: List<Pair<Int, String>>) {
     val requests: MutableList<String> = Collections.synchronizedList(mutableListOf())
-    private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-    val url get() = "http://127.0.0.1:${server.address.port}"
+    private val server = MockWebServer()
+    val url: String
 
     init {
-        server.createContext("/v1/messages") { ex ->
-            requests += ex.requestBody.readBytes().decodeToString()
-            val (code, body) = script[minOf(requests.size - 1, script.size - 1)]
-            val bytes = body.toByteArray()
-            ex.responseHeaders.add("content-type", "application/json")
-            ex.sendResponseHeaders(code, bytes.size.toLong())
-            ex.responseBody.use { it.write(bytes) }
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                requests += request.body.readUtf8()
+                val (code, body) = script[minOf(requests.size - 1, script.size - 1)]
+                return MockResponse().setResponseCode(code).setHeader("content-type", "application/json").setBody(body)
+            }
         }
         server.start()
+        url = server.url("/").toString().trimEnd('/')
     }
 
-    fun stop() = server.stop(0)
+    fun stop() = server.shutdown()
 
     companion object {
         fun ok(vararg replies: String) = FakeApi(replies.map { 200 to it })
