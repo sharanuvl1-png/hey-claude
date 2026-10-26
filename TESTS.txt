@@ -1,4 +1,4 @@
-29 passed, 0 failed
+34 passed, 0 failed
 PASS AskJobTest.givesUpAfterTimeoutWithReason
 PASS AskJobTest.findsQuestionEvenWhenCutShortOnScreen
 PASS AskJobTest.opensNewChatWhenNoMessageBox
@@ -17,14 +17,19 @@ PASS AssistantFlowTest.asksAgainWhenReplyIsUnclear
 PASS AssistantFlowTest.saysWhenTheKeyIsWrong
 PASS AssistantFlowTest.staysQuietWhenToldNo
 PASS AssistantFlowTest.noKeyAndNoHelperCopiesQuestion
+PASS AssistantFlowTest.pauseInTheMiddleKeepsListening
 PASS AssistantFlowTest.claudeAppReplyMissingSaysSo
 PASS AssistantFlowTest.retriesOnceWhenNothingHeard
 PASS AssistantFlowTest.followUpKeepsTheConversation
+PASS AssistantFlowTest.readsTheCasualGistNotTheWholeText
 PASS AssistantFlowTest.greetsThenListensInIndianEnglish
 PASS AssistantFlowTest.noKeyHandsQuestionToClaudeApp
+PASS AssistantFlowTest.sendsAfterNoMoreSpeech
 PASS AssistantTextTest.yesMeansRead
+PASS AssistantTextTest.gistFallsBackToFirstTwoSentences
 PASS AssistantTextTest.noMeansDontRead
 PASS AssistantTextTest.speechChunksKeepEverything
+PASS AssistantTextTest.gistComesFromSpokenLine
 PASS AssistantTextTest.unclearAsksAgain
 PASS AssistantTextTest.bestLinesRankByMatches
 PASS AssistantTextTest.keywordsDropFillerWords
