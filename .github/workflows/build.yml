@@ -47,21 +47,27 @@ jobs:
             done
           fi
 
-      - name: Build APK
-        run: gradle :app:assembleDebug --no-daemon
+      - name: Build APKs
+        run: gradle :app:assembleCoreDebug :app:assembleFullDebug --no-daemon
 
-      - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk hey-claude.apk
+      - name: Rename APKs
+        run: |
+          cp app/build/outputs/apk/core/debug/app-core-debug.apk hey-claude.apk
+          cp app/build/outputs/apk/full/debug/app-full-debug.apk hey-claude-full.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: hey-claude
-          path: hey-claude.apk
+          path: |
+            hey-claude.apk
+            hey-claude-full.apk
 
       - name: Publish as a release for easy phone download
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
           name: Hi Mehitha build ${{ github.run_number }}
-          files: hey-claude.apk
+          files: |
+            hey-claude.apk
+            hey-claude-full.apk
           make_latest: true

@@ -25,6 +25,15 @@ android {
         }
     }
 
+    // "core" leaves out SMS, notification access and accessibility, which Google
+    // Play Protect blocks for apps installed outside the Play Store in India.
+    // "full" has everything and needs Play Protect scanning off to install.
+    flavorDimensions += "features"
+    productFlavors {
+        create("core") { dimension = "features" }
+        create("full") { dimension = "features" }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false

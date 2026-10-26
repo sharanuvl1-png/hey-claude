@@ -83,6 +83,7 @@ class MainActivity : Activity() {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
         listOf(micRow, overlayRow, batteryRow, claudeRow, voiceRow).forEach { voice.addView(it.view) }
+        if (!hasService(VoiceHelper::class.java)) voiceRow.view.visibility = View.GONE
         voice.addView(Ui.pill(this, "Test now") { startActivity(Intent(this, LaunchClaudeActivity::class.java)) })
         voiceDebug = Ui.text(this, "", 11.5f, Ui.MUTED).apply { setPadding(0, Ui.dp(this@MainActivity, 8), 0, 0) }
         voice.addView(voiceDebug)
@@ -118,6 +119,9 @@ class MainActivity : Activity() {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
         }
         listOf(smsRow, filesRow, notifRow).forEach { data.addView(it.view) }
+        // The basic build leaves these out so Play Protect lets it install.
+        if (!declares(Manifest.permission.READ_SMS)) smsRow.view.visibility = View.GONE
+        if (!hasService(NotificationCatcher::class.java)) notifRow.view.visibility = View.GONE
         syncStatus = Ui.text(this, "", 12.5f, Ui.MUTED).apply { setPadding(0, Ui.dp(this@MainActivity, 8), 0, Ui.dp(this@MainActivity, 10)) }
         data.addView(syncStatus)
         data.addView(Ui.pill(this, "Sync now") {
@@ -125,7 +129,7 @@ class MainActivity : Activity() {
         })
         page.addView(data)
         val build = try { packageManager.getPackageInfo(packageName, 0).longVersionCode } catch (e: Exception) { 0L }
-        page.addView(Ui.text(this, "Mehitha build $build", 11.5f, Ui.MUTED).apply {
+        page.addView(Ui.text(this, "Mehitha build $build" + if (hasService(VoiceHelper::class.java)) " (full)" else " (basic)", 11.5f, Ui.MUTED).apply {
             gravity = Gravity.CENTER; setPadding(0, Ui.dp(this@MainActivity, 20), 0, 0)
         })
 
@@ -169,6 +173,14 @@ class MainActivity : Activity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         refresh()
     }
+
+    private fun hasService(cls: Class<*>) = try {
+        packageManager.getServiceInfo(android.content.ComponentName(this, cls), 0); true
+    } catch (e: PackageManager.NameNotFoundException) { false }
+
+    private fun declares(p: String) = try {
+        packageManager.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS).requestedPermissions?.contains(p) == true
+    } catch (e: Exception) { false }
 
     private fun granted(p: String) = checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED
 
