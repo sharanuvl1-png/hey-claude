@@ -1,0 +1,64 @@
+0 passed, 0 failed
+
+No test results. End of the build log:
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preVoiceDebugBuild UP-TO-DATE
+> Task :app:generateVoiceDebugResValues
+> Task :app:checkVoiceDebugAarMetadata
+> Task :app:mapVoiceDebugSourceSetPaths
+> Task :app:generateVoiceDebugResources
+> Task :app:packageVoiceDebugResources
+> Task :app:createVoiceDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksVoiceDebug
+> Task :app:mergeVoiceDebugResources
+> Task :app:parseVoiceDebugLocalResources
+> Task :app:processVoiceDebugMainManifest
+> Task :app:processVoiceDebugManifest
+> Task :app:preVoiceDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileVoiceDebug
+> Task :app:javaPreCompileVoiceDebugUnitTest
+> Task :app:processVoiceDebugManifestForPackage
+> Task :app:mergeVoiceDebugShaders
+> Task :app:compileVoiceDebugShaders NO-SOURCE
+> Task :app:generateVoiceDebugAssets UP-TO-DATE
+> Task :app:processVoiceDebugResources
+> Task :app:mergeVoiceDebugAssets
+> Task :app:packageVoiceDebugUnitTestForUnitTest
+> Task :app:generateVoiceDebugUnitTestConfig
+
+> Task :app:compileVoiceDebugKotlin
+w: file:///home/runner/work/hey-claude/hey-claude/app/src/main/java/com/personal/heyclaude/LaunchClaudeActivity.kt:97:9 'overridePendingTransition(Int, Int): Unit' is deprecated. Deprecated in Java
+
+> Task :app:compileVoiceDebugJavaWithJavac NO-SOURCE
+> Task :app:processVoiceDebugJavaRes
+> Task :app:bundleVoiceDebugClassesToRuntimeJar
+> Task :app:bundleVoiceDebugClassesToCompileJar
+
+> Task :app:compileVoiceDebugUnitTestKotlin
+e: file:///home/runner/work/hey-claude/hey-claude/app/src/test/java/com/personal/heyclaude/FakeApi.kt:3:16 Unresolved reference: net
+e: file:///home/runner/work/hey-claude/hey-claude/app/src/test/java/com/personal/heyclaude/FakeApi.kt:10:26 Unresolved reference: HttpServer
+e: file:///home/runner/work/hey-claude/hey-claude/app/src/test/java/com/personal/heyclaude/FakeApi.kt:14:48 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/hey-claude/hey-claude/app/src/test/java/com/personal/heyclaude/FakeApi.kt:20:35 Unresolved reference: it
+
+> Task :app:compileVoiceDebugUnitTestKotlin FAILED
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/tests-1793026772606.json
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileVoiceDebugUnitTestKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 55s
+25 actionable tasks: 25 executed
+
