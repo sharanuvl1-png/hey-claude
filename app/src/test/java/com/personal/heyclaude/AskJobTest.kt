@@ -59,7 +59,7 @@ class AskJobTest {
         val j = job()
         j.step(chat("", home[2]), 0)
         j.step(chat(j.question, home[2]), 100)
-        val cut = chat("", ScreenText("when is my bus (Reply with a short summary in 2…"), ScreenText("At 6:30 PM."))
+        val cut = chat("", ScreenText("when is my bus (Start with one line beginning SPOKEN…"), ScreenText("At 6:30 PM."))
         j.step(cut, 200)
         assertEquals(ScreenAction.Done("At 6:30 PM.", "got the reply"), j.step(cut, 200 + AskJob.SETTLE_MS))
     }

@@ -101,6 +101,12 @@ class AssistantFlowTest {
         return r
     }
 
+    /** Says a question, then pauses long enough for Mehitha to send it. */
+    private fun ask(words: String) {
+        hear(words)
+        hear(null)
+    }
+
     /** Waits for the background Claude call to come back. */
     private fun waitFor(what: String, check: () -> Boolean) {
         val until = System.currentTimeMillis() + 15_000
@@ -122,7 +128,7 @@ class AssistantFlowTest {
 
     @Test fun answersThenReadsWhenToldYes() {
         val a = start(replies = listOf(200 to text("Your bus leaves at 6:30 PM from Majestic.")))
-        hear("when is my bus")
+        ask("when is my bus")
         waitFor("the answer") { answerShown(a) && status(a).startsWith("Shall I read it out?") }
         assertEquals("Your bus leaves at 6:30 PM from Majestic.", answerText(a))
         assertTrue(api!!.requests.single().contains("when is my bus"))
@@ -136,7 +142,7 @@ class AssistantFlowTest {
 
     @Test fun staysQuietWhenToldNo() {
         val a = start(replies = listOf(200 to text("Nifty closed higher today.")))
-        hear("how did the market do")
+        ask("how did the market do")
         waitFor("the answer") { answerShown(a) }
         hear("no thanks")
         assertEquals("Okay.", spoken().last())
@@ -146,7 +152,7 @@ class AssistantFlowTest {
 
     @Test fun asksAgainWhenReplyIsUnclear() {
         val a = start(replies = listOf(200 to text("It is sunny.")))
-        hear("weather in Bangalore")
+        ask("weather in Bangalore")
         waitFor("the answer") { answerShown(a) }
         val first = hear("hmm")
         assertEquals("Please say yes or no.", spoken().last())
@@ -166,21 +172,21 @@ class AssistantFlowTest {
 
     @Test fun followUpKeepsTheConversation() {
         val a = start(replies = listOf(200 to text("First answer."), 200 to text("Second answer.")))
-        hear("first question")
+        ask("first question")
         waitFor("first answer") { answerText(a) == "First answer." }
         hear("no")
         field<View>(a, "buttons").let { assertEquals(View.VISIBLE, it.visibility) }
         // Tap "Ask" for another question.
         (field<android.widget.LinearLayout>(a, "buttons").getChildAt(0)).performClick()
         idle()
-        hear("second question")
+        ask("second question")
         waitFor("second answer") { answerText(a) == "Second answer." }
         assertTrue(api!!.requests[1].contains("First answer.") && api!!.requests[1].contains("second question"))
     }
 
     @Test fun saysWhenTheKeyIsWrong() {
         val a = start(replies = listOf(401 to FakeApi.BAD_KEY))
-        hear("anything")
+        ask("anything")
         waitFor("the error") { status(a).startsWith("Claude didn't accept") }
         assertEquals("Claude didn't accept the API key. Please check it in the Mehitha app.", spoken().last())
     }
@@ -190,7 +196,7 @@ class AssistantFlowTest {
             android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, "${app.packageName}/.VoiceHelper")
         val a = start(key = "")
         assertEquals("How can I help you today?", spoken().first())
-        hear("when is my bus")
+        ask("when is my bus")
         assertEquals("when is my bus", VoiceHelper.pending)
         assertEquals("Asking Claude.", spoken().last())
         val opened = shadowOf(app).nextStartedActivity
@@ -200,7 +206,7 @@ class AssistantFlowTest {
 
     @Test fun noKeyAndNoHelperCopiesQuestion() {
         start(key = "")
-        hear("when is my bus")
+        ask("when is my bus")
         val clip = app.getSystemService(android.content.ClipboardManager::class.java).primaryClip
         assertEquals("when is my bus", clip!!.getItemAt(0).text.toString())
         assertTrue(spoken().last().startsWith("I copied your question. To let me type it into Claude"))
@@ -230,5 +236,34 @@ class AssistantFlowTest {
         val a = startWithReply(null)
         assertEquals("I couldn't read Claude's reply. Please look in the Claude app.", spoken().last())
         assertTrue(status(a).startsWith("I couldn't read"))
+    }
+
+    @Test fun pauseInTheMiddleKeepsListening() {
+        val a = start(replies = listOf(200 to text("At 6:30 PM.")))
+        hear("when is my bus")
+        // A short pause ended the first part; Mehitha is still listening for more.
+        assertTrue(api!!.requests.isEmpty())
+        assertEquals("“when is my bus”", field<TextView>(a, "heard").text.toString())
+        hear("to Mysore tomorrow")
+        hear(null)
+        waitFor("the answer") { answerShown(a) }
+        assertTrue(api!!.requests.single().contains("when is my bus to Mysore tomorrow"))
+    }
+
+    @Test fun sendsAfterNoMoreSpeech() {
+        val a = start(replies = listOf(200 to text("At 6:30 PM.")))
+        hear("when is my bus")
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(AssistantActivity.MORE_SPEECH_MS + 100))
+        waitFor("the answer") { answerShown(a) }
+        assertTrue(api!!.requests.single().contains("when is my bus"))
+    }
+
+    @Test fun readsTheCasualGistNotTheWholeText() {
+        val a = start(replies = listOf(200 to text("SPOKEN: Your bus is at half past six tonight.\\nredBus TVBN78163260 leaves Majestic at 6:30 PM, seat 14.")))
+        ask("when is my bus")
+        waitFor("the answer") { answerShown(a) }
+        assertEquals("redBus TVBN78163260 leaves Majestic at 6:30 PM, seat 14.", answerText(a))
+        hear("yes")
+        assertEquals("Your bus is at half past six tonight.", spoken().last())
     }
 }

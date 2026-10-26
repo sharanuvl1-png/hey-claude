@@ -41,6 +41,7 @@ class AssistantActivity : Activity() {
     private var brain: AssistantBrain? = null
     private var misses = 0
     private var ready = false
+    private var gist = ""
     private var resumeDelayMs = 0L
 
     private lateinit var orb: OrbView
@@ -148,16 +149,34 @@ class AssistantActivity : Activity() {
     private fun greet() {
         misses = 0
         status.text = GREETING
-        say(GREETING) { listen(::onQuestion) }
+        say(GREETING) { listenForQuestion() }
     }
 
     // ---- Flow -------------------------------------------------------------------------------
+
+    // The phone's recogniser stops at a short pause, so keep listening after each part and
+    // only send the question once a further pause brings nothing new.
+    private val questionParts = mutableListOf<String>()
+
+    private fun listenForQuestion() {
+        questionParts.clear()
+        listen(::onQuestionPart)
+    }
+
+    private fun onQuestionPart(text: String?) {
+        if (text.isNullOrBlank()) {
+            onQuestion(questionParts.joinToString(" ").ifBlank { null })
+            return
+        }
+        questionParts += text.trim()
+        listen(::onQuestionPart, prefix = questionParts.joinToString(" "), waitForSpeechMs = MORE_SPEECH_MS)
+    }
 
     private fun onQuestion(text: String?) {
         if (text.isNullOrBlank()) {
             if (++misses < 2) {
                 status.text = "Sorry, I didn't catch that."
-                say("Sorry, I didn't catch that. Please say it again.") { listen(::onQuestion) }
+                say("Sorry, I didn't catch that. Please say it again.") { listenForQuestion() }
             } else {
                 show("Tap Ask to try again.", showButtons = true)
             }
@@ -187,7 +206,9 @@ class AssistantActivity : Activity() {
             say(msg)
             return
         }
-        answer.text = text
+        val reply = AssistantText.forSpeech(text)
+        answer.text = reply.display
+        gist = reply.speech
         answerBox.visibility = View.VISIBLE
         misses = 0
         askToRead()
@@ -215,7 +236,7 @@ class AssistantActivity : Activity() {
 
     private fun readAnswer() {
         done("Reading it out…")
-        val chunks = AssistantText.chunksForSpeech(answer.text.toString())
+        val chunks = AssistantText.chunksForSpeech(gist.ifBlank { answer.text.toString() })
         chunks.forEachIndexed { i, c ->
             val last = i == chunks.lastIndex
             say(c, flush = i == 0) { if (last) status.text = "Ask me something else, or close." }
@@ -251,28 +272,37 @@ class AssistantActivity : Activity() {
 
     // ---- Speech in --------------------------------------------------------------------------
 
-    private fun listen(then: (String?) -> Unit) {
+    /**
+     * Listens once. [prefix] is what was already heard (shown before the new words).
+     * With [waitForSpeechMs], gives up quietly if no new speech starts in that time.
+     */
+    private fun listen(then: (String?) -> Unit, prefix: String = "", waitForSpeechMs: Long = 0) {
         if (isFinishing) return
         cancelListening()
         orb.active = true
-        heard.visibility = View.GONE
+        heard.text = if (prefix.isEmpty()) "" else "“$prefix”"
+        heard.visibility = if (prefix.isEmpty()) View.GONE else View.VISIBLE
+        val shown = { words: String -> "“" + listOf(prefix, words).filter { it.isNotBlank() }.joinToString(" ") + "”" }
         val r = SpeechRecognizer.createSpeechRecognizer(this).also { recognizer = it }
         var delivered = false
         fun deliver(text: String?) {
             if (delivered) return
             delivered = true
+            handler.removeCallbacks(noMoreSpeech)
             handler.post { orb.active = false; then(text) }
         }
+        noMoreSpeech = Runnable { r.cancel(); deliver(null) }
+        if (waitForSpeechMs > 0) handler.postDelayed(noMoreSpeech, waitForSpeechMs)
         r.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) { status.text = status.text.toString().let { if (it.endsWith("🎤")) it else "$it  🎤" } }
-            override fun onBeginningOfSpeech() {}
+            override fun onBeginningOfSpeech() { handler.removeCallbacks(noMoreSpeech) }
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {}
             override fun onError(error: Int) { Log.i(TAG, "Recognizer error $error"); deliver(null) }
             override fun onResults(results: Bundle?) { deliver(best(results)) }
             override fun onPartialResults(partial: Bundle?) {
-                best(partial)?.let { heard.text = it; heard.visibility = View.VISIBLE }
+                best(partial)?.let { heard.text = shown(it); heard.visibility = View.VISIBLE }
             }
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
@@ -281,13 +311,17 @@ class AssistantActivity : Activity() {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2500L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 2500L)
         })
     }
 
     private fun best(b: Bundle?) = b?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.takeIf { it.isNotBlank() }
 
+    private var noMoreSpeech = Runnable {}
+
     private fun cancelListening() {
+        handler.removeCallbacks(noMoreSpeech)
         recognizer?.let { it.cancel(); it.destroy() }
         recognizer = null
     }
@@ -420,6 +454,8 @@ class AssistantActivity : Activity() {
         private const val TAG = "HeyClaude"
         const val GREETING = "How can I help you today?"
         const val EXTRA_QUESTION = "question"
+        /** How long to wait for more words after a pause before sending the question. */
+        const val MORE_SPEECH_MS = 2_500L
         const val EXTRA_REPLY = "reply"
         private const val PREFS = "assistant"
         private const val KEY = "claude_api_key"

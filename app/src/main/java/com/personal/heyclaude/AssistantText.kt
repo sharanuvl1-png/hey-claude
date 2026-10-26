@@ -13,6 +13,26 @@ object AssistantText {
         else -> null
     }
 
+    /** What to show on screen, and the shorter, casual version to say out loud. */
+    data class Reply(val display: String, val speech: String)
+
+    private val SPOKEN = Regex("(?im)^[\\s*_#>-]*spoken[\\s*_]*:[\\s*_]*(.+)$")
+
+    /**
+     * Claude is asked to start with a "SPOKEN:" line: a casual gist to read aloud.
+     * Without one, the first two sentences are read.
+     */
+    fun forSpeech(reply: String): Reply {
+        val m = SPOKEN.find(reply)
+        if (m != null) {
+            val speech = m.groupValues[1].trim().trim('*', '_').trim()
+            val display = reply.removeRange(m.range).trim().ifBlank { speech }
+            return Reply(display, speech)
+        }
+        val sentences = reply.replace(Regex("\\s+"), " ").trim().split(Regex("(?<=[.!?])\\s+"))
+        return Reply(reply.trim(), sentences.take(2).joinToString(" "))
+    }
+
     /** Splits text into chunks the speech engine accepts, breaking at sentence ends. */
     fun chunksForSpeech(text: String, max: Int = 3500): List<String> {
         val sentences = text.replace(Regex("\\s+"), " ").trim().split(Regex("(?<=[.!?])\\s+"))

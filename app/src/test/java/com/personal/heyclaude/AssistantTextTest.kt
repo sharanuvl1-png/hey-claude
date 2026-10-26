@@ -40,4 +40,16 @@ class AssistantTextTest {
         assertEquals(listOf("redBus ticket booked", "redBus offer", "ticket for movie"),
             AssistantText.bestLines(lines, listOf("redbus", "ticket")))
     }
+
+    @Test fun gistComesFromSpokenLine() {
+        val r = AssistantText.forSpeech("**SPOKEN:** Nifty had a good day.\n\nNifty 50 closed at 24,310, up 0.8%. Banks led.")
+        assertEquals("Nifty had a good day.", r.speech)
+        assertEquals("Nifty 50 closed at 24,310, up 0.8%. Banks led.", r.display)
+    }
+
+    @Test fun gistFallsBackToFirstTwoSentences() {
+        val r = AssistantText.forSpeech("One. Two! Three? Four.")
+        assertEquals("One. Two!", r.speech)
+        assertEquals("One. Two! Three? Four.", r.display)
+    }
 }

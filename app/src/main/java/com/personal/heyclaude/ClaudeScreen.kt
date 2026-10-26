@@ -94,7 +94,8 @@ class AskJob(val spoken: String, private val startedAt: Long) {
     }
 
     companion object {
-        const val SUMMARY_NOTE = " (Reply with a short summary in 2 to 4 plain spoken sentences, no tables or lists.)"
+        const val SUMMARY_NOTE = " (Start with one line beginning SPOKEN: that gives a casual one or two sentence gist to say out loud," +
+            " then a short summary in 2 to 4 plain sentences, no tables or lists.)"
         const val TIMEOUT_MS = 90_000L
         const val SETTLE_MS = 2_500L
         private const val MAX_SEND_TAPS = 4
