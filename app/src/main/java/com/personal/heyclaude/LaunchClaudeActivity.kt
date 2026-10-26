@@ -56,7 +56,7 @@ class LaunchClaudeActivity : Activity() {
             }, LinearLayout.LayoutParams(d(40), d(5)))
             addView(OrbView(this@LaunchClaudeActivity), LinearLayout.LayoutParams(d(150), d(150)).apply { topMargin = d(12) })
             addView(Ui.text(this@LaunchClaudeActivity, "Hi, I'm listening", 22f, bold = true).apply { gravity = Gravity.CENTER })
-            addView(Ui.text(this@LaunchClaudeActivity, "Opening Claude…", 14f, Ui.MUTED).apply { gravity = Gravity.CENTER; setPadding(0, d(6), 0, 0) })
+            addView(Ui.text(this@LaunchClaudeActivity, "Opening Claude voice…", 14f, Ui.MUTED).apply { gravity = Gravity.CENTER; setPadding(0, d(6), 0, 0) })
         }
         return FrameLayout(this).apply {
             setOnClickListener { finish() }
@@ -70,28 +70,27 @@ class LaunchClaudeActivity : Activity() {
     }
 
     /**
-     * Prefer Claude's voice entry points so the mic is already listening,
-     * then fall back to simply opening the app.
+     * Opens Claude on a fresh chat screen. Claude has no public "start voice" link,
+     * so the VoiceHelper accessibility service then taps its voice button.
      */
     private fun openClaude() {
-        val voiceFirst = listOf(
-            Intent(Intent.ACTION_VOICE_COMMAND).setPackage(CLAUDE_PACKAGE),
-            Intent(Intent.ACTION_ASSIST).setPackage(CLAUDE_PACKAGE),
-        )
-        val launch = voiceFirst.firstOrNull { it.resolveActivity(packageManager) != null }
-            ?: packageManager.getLaunchIntentForPackage(CLAUDE_PACKAGE)
+        VoiceHelper.arm()
+        val launch = packageManager.getLaunchIntentForPackage(CLAUDE_PACKAGE)
+            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             ?: Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$CLAUDE_PACKAGE"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
-            startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            startActivity(launch)
         } catch (e: Exception) {
             packageManager.getLaunchIntentForPackage(CLAUDE_PACKAGE)
                 ?.let { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         }
         finish()
+        overridePendingTransition(0, android.R.anim.fade_out)
     }
 
     companion object {
         const val CLAUDE_PACKAGE = "com.anthropic.claude"
-        private const val SHEET_MS = 700L
+        private const val SHEET_MS = 450L
     }
 }

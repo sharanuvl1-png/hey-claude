@@ -31,6 +31,8 @@ class MainActivity : Activity() {
     private lateinit var overlayRow: Ui.Row
     private lateinit var batteryRow: Ui.Row
     private lateinit var claudeRow: Ui.Row
+    private lateinit var voiceRow: Ui.Row
+    private lateinit var voiceDebug: TextView
     private lateinit var dropboxRow: Ui.Row
     private lateinit var smsRow: Ui.Row
     private lateinit var filesRow: Ui.Row
@@ -76,7 +78,14 @@ class MainActivity : Activity() {
         claudeRow = Ui.Row(this, "Claude app", "Install") {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${LaunchClaudeActivity.CLAUDE_PACKAGE}")))
         }
-        listOf(micRow, overlayRow, batteryRow, claudeRow).forEach { voice.addView(it.view) }
+        voiceRow = Ui.Row(this, "Start Claude in voice mode", "Turn on") {
+            toast("Tap \"Installed apps\" → \"Mehitha voice button\" → turn it on")
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
+        listOf(micRow, overlayRow, batteryRow, claudeRow, voiceRow).forEach { voice.addView(it.view) }
+        voice.addView(Ui.pill(this, "Test now") { startActivity(Intent(this, LaunchClaudeActivity::class.java)) })
+        voiceDebug = Ui.text(this, "", 11.5f, Ui.MUTED).apply { setPadding(0, Ui.dp(this@MainActivity, 8), 0, 0) }
+        voice.addView(voiceDebug)
         page.addView(voice)
         page.addView(Ui.spacer(this, 16))
 
@@ -115,6 +124,10 @@ class MainActivity : Activity() {
             if (dropbox.isLinked) { SyncWorker.runNow(this); toast("Sync started") } else toast("Link Dropbox first")
         })
         page.addView(data)
+        val build = try { packageManager.getPackageInfo(packageName, 0).longVersionCode } catch (e: Exception) { 0L }
+        page.addView(Ui.text(this, "Mehitha build $build", 11.5f, Ui.MUTED).apply {
+            gravity = Gravity.CENTER; setPadding(0, Ui.dp(this@MainActivity, 20), 0, 0)
+        })
 
         setContentView(ScrollView(this).apply {
             setBackgroundColor(Ui.BG)
@@ -179,8 +192,15 @@ class MainActivity : Activity() {
 
         micRow.set(mic, "Allowed", "Needed to hear \"Hi Mehitha\"")
         overlayRow.set(overlay, "Allowed", "Lets Mehitha bring Claude to the front")
-        batteryRow.set(battery, "No battery limits", "Recommended so it keeps listening", required = false)
+        batteryRow.set(battery, "No battery limits",
+            "Needed so it hears you every time. On Samsung also add Hi Mehitha to Battery → Never sleeping apps")
         claudeRow.set(claude, "Installed", "Install the Claude app")
+        voiceRow.set(VoiceHelper.isEnabled(this), "On: taps Claude's voice button for you",
+            "Turn on \"Mehitha voice button\" in Accessibility. If it's greyed out: App info → ⋮ → Allow restricted settings")
+        voiceDebug.text = listOfNotNull(
+            VoiceHelper.lastTapped?.let { "Last tapped in Claude: $it" },
+            VoiceHelper.seenButtons(this)?.let { "Claude buttons seen: $it" },
+        ).joinToString("\n")
 
         val sms = granted(Manifest.permission.READ_SMS)
         val files = Environment.isExternalStorageManager()

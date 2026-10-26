@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_helper_description">After you say "Hi Mehitha", taps the voice button in the Claude app so the mic is already on. It only looks at the Claude app, only right after the wake word.</string>
+</resources>

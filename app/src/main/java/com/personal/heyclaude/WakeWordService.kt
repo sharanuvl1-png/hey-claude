@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
@@ -32,6 +33,7 @@ class WakeWordService : Service(), RecognitionListener {
     private var recognizer: Recognizer? = null
     private var speechService: SpeechService? = null
     private var lastTriggerAt = 0L
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -68,6 +70,11 @@ class WakeWordService : Service(), RecognitionListener {
             startForeground(NOTIFICATION_ID, notification)
         }
         isRunning = true
+        // Keeps the CPU awake so the phone's deep sleep can't pause listening.
+        if (wakeLock == null) {
+            wakeLock = getSystemService(PowerManager::class.java)
+                .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Mehitha:listen").apply { acquire() }
+        }
         if (model == null) loadModel() else startListening()
         return START_STICKY
     }
@@ -77,6 +84,8 @@ class WakeWordService : Service(), RecognitionListener {
         requestPoller.interrupt()
         handler.removeCallbacksAndMessages(null)
         stopListening()
+        wakeLock?.let { if (it.isHeld) it.release() }
+        wakeLock = null
         model?.close()
         model = null
         super.onDestroy()
@@ -121,10 +130,10 @@ class WakeWordService : Service(), RecognitionListener {
 
     private fun onWakeWord() {
         val now = System.currentTimeMillis()
-        if (now - lastTriggerAt < RESUME_AFTER_TRIGGER_MS) return
+        if (now - lastTriggerAt < COOLDOWN_MS) return
         lastTriggerAt = now
         stopListening()
-        updateNotification("Opened Claude. Listening again in a minute")
+        updateNotification("Opened Claude. Listening again in a few seconds")
         startActivity(
             Intent(this, LaunchClaudeActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
@@ -133,8 +142,9 @@ class WakeWordService : Service(), RecognitionListener {
     }
 
     private fun handle(json: String) {
-        val text = JSONObject(json).optString("text")
-        if (WAKE_PHRASES.any { text.contains(it) }) {
+        val o = JSONObject(json)
+        val text = o.optString("text").ifEmpty { o.optString("partial") }
+        if (text.isNotEmpty() && WAKE_PHRASES.any { text.contains(it) }) {
             Log.i(TAG, "Wake word heard: $text")
             handler.post { onWakeWord() }
         }
@@ -142,7 +152,8 @@ class WakeWordService : Service(), RecognitionListener {
 
     override fun onResult(hypothesis: String) = handle(hypothesis)
     override fun onFinalResult(hypothesis: String) = handle(hypothesis)
-    override fun onPartialResult(hypothesis: String) {}
+    // Partial results let us react as soon as the phrase is heard, without waiting for silence.
+    override fun onPartialResult(hypothesis: String) = handle(hypothesis)
     override fun onTimeout() {}
 
     override fun onError(exception: Exception) {
@@ -185,15 +196,16 @@ class WakeWordService : Service(), RecognitionListener {
         private const val ACTION_STOP = "com.personal.heyclaude.STOP"
         private const val SAMPLE_RATE = 16000f
         private const val RETRY_MS = 5_000L
-        private const val RESUME_AFTER_TRIGGER_MS = 60_000L
+        private const val RESUME_AFTER_TRIGGER_MS = 8_000L
+        private const val COOLDOWN_MS = 4_000L
         private const val REQUEST_POLL_MS = 3 * 60_000L
 
         // "Mehitha" is not in the offline English vocabulary, so listen for
         // the English word sequences it sounds like instead.
-        private val GREETINGS = listOf("hi", "hey", "hello")
+        private val GREETINGS = listOf("hi", "hey", "hello", "high", "hay")
         private val NAME_SOUNDS = listOf(
-            "me hit a", "may hit a", "me heat a", "may heat a", "me eat a",
-            "mehta", "meta", "mahita", "mehitha"
+            "me hit a", "may hit a", "me heat a", "may heat a", "me eat a", "may eat a",
+            "me hit the", "me eat the", "me that", "mehta", "meta", "mita", "meet a", "mahita", "mehitha"
         )
         private val WAKE_PHRASES = GREETINGS.flatMap { g -> NAME_SOUNDS.map { "$g $it" } }
         private val GRAMMAR = JSONArray(WAKE_PHRASES + "[unk]").toString()
