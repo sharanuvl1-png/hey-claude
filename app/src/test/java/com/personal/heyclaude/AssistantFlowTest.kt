@@ -376,6 +376,21 @@ class AssistantFlowTest {
         assertTrue(VoiceHelper.pending!!.contains("Ravi: Are we meeting at 6?"))
     }
 
+    @Test fun noKeySpendingQuestionStaysShortEnoughToSend() {
+        // Build 24 sent thousands of characters here; the Claude app made it an attachment and it never sent.
+        android.provider.Settings.Secure.putString(app.contentResolver,
+            android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, "${app.packageName}/.VoiceHelper")
+        val now = PhoneData.now()
+        AssistantActivity.phoneData = FakePhone(spends = (1..300).map { Spend(now.minusHours(it.toLong() % 20), 100.0 + it, "Food", "Merchant number $it", "UPI") })
+        start(key = "")
+        ask("how much did I spend today")
+        waitFor("the hand-off") { VoiceHelper.pending != null }
+        val sent = VoiceHelper.pending!!
+        assertTrue(sent, sent.startsWith("how much did I spend today"))
+        assertTrue(sent.length.toString(), sent.length <= Prompts.MAX_PROMPT)
+        assertTrue(sent.contains("Facts only"))
+    }
+
     @Test fun stockAlertsFileIsRead() {
         val json = """{"date":"2026-10-26","alerts":[{"id":"target:HCLTECH:2026-10-26","title":"HCL Technologies reached its target","text":"HCL closed at 1,670."}]}"""
         assertEquals(listOf(Alert("target:HCLTECH:2026-10-26", "HCL Technologies reached its target", "HCL closed at 1,670.")),

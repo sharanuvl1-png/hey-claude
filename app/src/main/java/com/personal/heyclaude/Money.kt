@@ -67,13 +67,19 @@ object Money {
         val month = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.US)
         return buildString {
             append("My spending from bank and UPI text messages. ")
-            append("${today.format(month)} so far: ${rupees(total(now))} in ${now.size} spends; by category: ${byCategory(now).ifEmpty { "none" }}; top shops: ${byMerchant(now, 12).ifEmpty { "none" }}. ")
-            append("${today.minusMonths(1).format(month)}: ${rupees(total(last))} in ${last.size} spends; by category: ${byCategory(last).ifEmpty { "none" }}; top shops: ${byMerchant(last, 12).ifEmpty { "none" }}. ")
+            // Today and this week first, so they survive when the facts are cut short.
+            val day = spends.filter { it.time.toLocalDate() == today }.sortedByDescending { it.time }
+            append("Today (${today.format(DAY)}): ${rupees(total(day))} in ${day.size} spends")
+            append(if (day.isEmpty()) ". " else ": ${day.take(8).joinToString("; ") { "${it.merchant} ${rupees(it.amount)}" }}. ")
+            val week = spends.filter { !it.time.toLocalDate().isBefore(today.minusDays(6)) && !it.time.toLocalDate().isAfter(today) }
+            append("Last 7 days: ${rupees(total(week))} in ${week.size} spends. ")
             if (words.isNotEmpty()) {
                 append("Spends matching ${words.joinToString(", ")}: ")
-                append(if (matched.isEmpty()) "none" else matched.take(40).joinToString("; ") { line(it) })
+                append(if (matched.isEmpty()) "none" else matched.take(15).joinToString("; ") { line(it) })
                 append(". ")
             }
+            append("${today.format(month)} so far: ${rupees(total(now))} in ${now.size} spends; by category: ${byCategory(now).ifEmpty { "none" }}; top shops: ${byMerchant(now, 6).ifEmpty { "none" }}. ")
+            append("${today.minusMonths(1).format(month)}: ${rupees(total(last))} in ${last.size} spends; by category: ${byCategory(last).ifEmpty { "none" }}; top shops: ${byMerchant(last, 6).ifEmpty { "none" }}. ")
             append("Only cash withdrawals and card, UPI and bank debits that sent an SMS are included.")
         }
     }

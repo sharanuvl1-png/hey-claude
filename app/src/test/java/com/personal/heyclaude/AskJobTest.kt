@@ -101,4 +101,30 @@ class AskJobTest {
             j.step(screen, 200 + AskJob.SETTLE_MS))
         assertEquals("good morning", j.label)
     }
+
+    @Test fun doesNotKeepRetypingWhenClaudeMakesTheTextAnAttachment() {
+        val j = job()
+        val empty = chat("", home[2])
+        assertEquals(ScreenAction.Type(3), j.step(empty, 0))
+        // Claude turned the text into an attachment: the box stays empty.
+        val attached = chat("", home[2], ScreenText("Pasted text", clickable = true))
+        assertEquals(ScreenAction.Type(4), j.step(attached, 600))
+        // Second try didn't show either: press send instead of typing again.
+        assertEquals(ScreenAction.Tap(5), j.step(attached, 1_200))
+        // Sent: the Send button became Stop and Claude is writing.
+        val writing = home.take(2) + listOf(ScreenText("Pasted text", clickable = true), ScreenText("Your bus leaves at 6:30 PM."),
+            ScreenText("", editable = true), ScreenText("Stop", clickable = true))
+        assertEquals(ScreenAction.Wait, j.step(writing, 1_800))
+        val done = writing.dropLast(1) + ScreenText("Voice mode", clickable = true)
+        j.step(done, 2_400)
+        assertEquals(ScreenAction.Done("Your bus leaves at 6:30 PM.", "got the reply"), j.step(done, 2_400 + AskJob.SETTLE_MS))
+    }
+
+    @Test fun typesOnlyTwiceBeforeTryingSend() {
+        val j = job()
+        val stuck = chat("", home[2])
+        assertEquals(ScreenAction.Type(3), j.step(stuck, 0))
+        assertEquals(ScreenAction.Type(3), j.step(stuck, 600))
+        assertEquals(ScreenAction.Tap(4), j.step(stuck, 1_200))
+    }
 }

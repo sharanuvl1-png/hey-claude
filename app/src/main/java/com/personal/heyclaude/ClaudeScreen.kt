@@ -29,6 +29,7 @@ class AskJob(val spoken: String, private val startedAt: Long, val label: String 
     private var before: Set<String> = emptySet()
     private var newChatTapped = false
     private var sendTaps = 0
+    private var typeTries = 0
     private var changedAt = 0L
 
     fun step(items: List<ScreenText>, now: Long): ScreenAction {
@@ -44,14 +45,21 @@ class AskJob(val spoken: String, private val startedAt: Long, val label: String 
                     if (!newChatTapped && chat >= 0) { newChatTapped = true; return ScreenAction.Tap(chat) }
                     return ScreenAction.Wait
                 }
-                if (!same(items[input].text, question)) return ScreenAction.Type(input)
-                before = items.filter { !it.editable }.map { it.text.trim() }.toSet()
+                // The Claude app may turn long text into an attachment, so the box never shows
+                // the question: after a couple of tries, move on to sending instead of typing again.
+                if (!same(items[input].text, question)) {
+                    if (typeTries == 0) before = items.filter { !it.editable }.map { it.text.trim() }.toSet()
+                    if (++typeTries <= MAX_TYPE_TRIES) return ScreenAction.Type(input)
+                } else if (typeTries == 0) {
+                    before = items.filter { !it.editable }.map { it.text.trim() }.toSet()
+                }
                 phase = Phase.SEND
                 return step(items, now)
             }
             Phase.SEND -> {
-                val sent = (input < 0 || !same(items[input].text, question)) &&
-                    items.any { !it.editable && isQuestion(it.text) }
+                val boxEmpty = input < 0 || items[input].text.isBlank() || !same(items[input].text, question) && sendTaps > 0
+                val sent = boxEmpty && (items.any { !it.editable && isQuestion(it.text) } ||
+                    sendTaps > 0 && items.none { it.clickable && SEND.containsMatchIn(it.text) })
                 if (sent) {
                     phase = Phase.WAIT
                     changedAt = now
@@ -78,13 +86,13 @@ class AskJob(val spoken: String, private val startedAt: Long, val label: String 
      */
     fun replyOn(items: List<ScreenText>): String {
         val q = items.indexOfLast { !it.editable && isQuestion(it.text) }
-        if (q < 0) return ""
-        var start = q + 1
+        // No copy of the question on screen (sent as an attachment): use whatever is new.
+        var start = if (q < 0) 0 else q + 1
         while (start < items.size && !items[start].editable && partOfQuestion(items[start].text)) start++
         return items.drop(start)
             .filter { !it.editable && !(it.clickable && it.text.length < 40) }
             .map { it.text.trim() }
-            .filter { it.length > 1 && it !in before }
+            .filter { it.length > 1 && it !in before && (q >= 0 || !partOfQuestion(it)) }
             .joinToString("\n")
     }
 
@@ -115,7 +123,8 @@ class AskJob(val spoken: String, private val startedAt: Long, val label: String 
         const val TIMEOUT_MS = 150_000L
         const val SETTLE_MS = 2_500L
         private const val MAX_SEND_TAPS = 4
-        private val SEND = Regex("(?i)\\bsend\\b")
+        private const val MAX_TYPE_TRIES = 2
+        private val SEND = Regex("(?i)\\bsend\\b|\\bsubmit\\b")
         private val STOP = Regex("(?i)\\bstop\\b")
         private val MORE = Regex("(show|see|read) (more|less)")
         private val NEW_CHAT = Regex("(?i)new chat|start (a )?new chat|new conversation")

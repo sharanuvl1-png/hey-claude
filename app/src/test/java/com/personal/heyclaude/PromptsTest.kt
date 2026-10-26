@@ -63,4 +63,16 @@ class PromptsTest {
         val (list2, _) = Prompts.reminders("**REMIND:** 2027-03-14 | Car insurance expires on 14 April 2027")
         assertEquals(LocalDateTime.parse("2027-03-14T09:00"), list2.single().at)
     }
+
+    @Test fun promptsStayShortEnoughToSendAsAMessage() {
+        val t = java.time.LocalDateTime.of(2026, 10, 26, 8, 0)
+        val lots = "x".repeat(5000)
+        listOf(
+            Prompts.briefing(t, lots, Prompts.scanSummary(scan)),
+            Prompts.money(t, "how much did I spend on food", lots),
+            Prompts.catchUp(t, lots),
+            Prompts.weeklyReview(t, lots, lots, lots),
+        ).forEach { assertTrue(it.length.toString(), it.length <= Prompts.MAX_PROMPT) }
+        assertTrue(Prompts.scanSummary(scan).length <= 450)
+    }
 }

@@ -227,7 +227,7 @@ class AssistantActivity : Activity() {
         val t = PhoneData.now()
         val day = t.toLocalDate()
         val data = phoneData ?: PhoneData(this)
-        fun bills() = if (data.canReadSms) Money.billsText(data.bills(), day) else PhoneData.NO_SMS
+        fun bills() = (if (data.canReadSms) Money.billsText(data.bills(), day) else PhoneData.NO_SMS).take(300)
         return when (command) {
             is Command.Briefing -> Prompts.briefing(t, bills(), Prompts.scanSummary(data.scan()))
             is Command.Money -> Prompts.money(t, command.question, data.moneyFacts(command.question).take(MAX_DATA))
@@ -239,10 +239,10 @@ class AssistantActivity : Activity() {
                 Prompts.oddCharges(t, if (data.canReadSms) flags else PhoneData.NO_SMS, Money.recentLines(spends, t, 7).take(MAX_DATA))
             }
             is Command.StockCheck -> Prompts.stockCheck(t, command.stock, Prompts.scanFor(data.scan(), command.stock))
-            is Command.CatchUp -> Prompts.catchUp(t, data.messagesToday())
+            is Command.CatchUp -> Prompts.catchUp(t, data.messagesToday(MAX_DATA))
             is Command.FindDocument -> Prompts.findDocument(t, command.question, data.files(command.question))
             is Command.WeeklyReview -> Prompts.weeklyReview(t,
-                if (data.canReadSms) Money.week(data.spends(), t) else PhoneData.NO_SMS, bills(), Prompts.scanSummary(data.scan()))
+                (if (data.canReadSms) Money.week(data.spends(), t) else PhoneData.NO_SMS).take(MAX_DATA / 2), bills(), Prompts.scanSummary(data.scan()))
             is Command.Reminder -> Prompts.reminder(t, command.request)
             else -> text
         }
@@ -516,7 +516,7 @@ class AssistantActivity : Activity() {
         const val EXTRA_QUESTION = "question"
         /** Asks Mehitha this straight away (from tapping an alert). */
         const val EXTRA_ASK = "ask"
-        private const val MAX_DATA = 3500
+        private const val MAX_DATA = 700
         /** How long to wait for more words after a pause before sending the question. */
         const val MORE_SPEECH_MS = 2_500L
         const val EXTRA_REPLY = "reply"

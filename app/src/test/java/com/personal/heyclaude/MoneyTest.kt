@@ -45,6 +45,14 @@ class MoneyTest {
         assertTrue(sum, sum.contains("September 2026: 949 rupees"))
     }
 
+    @Test fun summaryStartsWithTodayAndTheWeek() {
+        val withToday = spends + s("2026-10-26T09:30", 120.0, "Food", "Chai Point") + s("2026-10-26T13:00", 350.0, "Food", "Swiggy")
+        val sum = Money.summary(withToday, today, "how much did I spend today")
+        assertTrue(sum, sum.startsWith("My spending from bank and UPI text messages. Today (26 Oct): 470 rupees in 2 spends: Swiggy 350 rupees; Chai Point 120 rupees."))
+        assertTrue(sum, sum.contains("Last 7 days: 3,470 rupees in 4 spends."))
+        assertTrue(Money.summary(spends, today, "today").contains("Today (26 Oct): 0 rupees in 0 spends."))
+    }
+
     @Test fun findsSubscriptions() {
         assertEquals(listOf("Netflix about 199 rupees a month"), Money.subscriptions(spends, today))
     }

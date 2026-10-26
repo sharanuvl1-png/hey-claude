@@ -21,6 +21,7 @@ object Prompts {
     private val STAMP = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy, h:mm a", Locale.US)
     private val SHORT = DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.US)
 
+    const val MAX_PROMPT = 1200
     const val RULES = "Facts only: if you can't find something, say so, never guess. Never place orders, trades or payments, and never send messages."
     private const val REMIND_HOW = "If there is a date worth a reminder, add a line exactly like REMIND: YYYY-MM-DD HH:MM | what to remind, and I will set it on my phone."
 
@@ -103,7 +104,7 @@ object Prompts {
     }
 
     /** The watchlist from LATEST_SCAN.md, one short entry per stock, best verdicts first. */
-    fun scanSummary(md: String, max: Int = 2500): String {
+    fun scanSummary(md: String, max: Int = 450): String {
         val rows = watchlistRows(md)
         if (rows.isEmpty()) return "not available"
         val order = listOf("BUY NOW", "BUY ON DIP", "WAIT", "AVOID")
@@ -134,6 +135,9 @@ object Prompts {
         }
     }
 
-    /** Keeps the prompt on one line and within what the Claude app takes comfortably. */
-    fun oneLine(s: String, max: Int = 6000) = s.replace(Regex("\\s+"), " ").trim().let { if (it.length > max) it.take(max - 1) + "…" else it }
+    /**
+     * Keeps the prompt on one line and short: the Claude app turns long text into an
+     * attachment instead of a message, which Mehitha can't send or read back.
+     */
+    fun oneLine(s: String, max: Int = MAX_PROMPT) = s.replace(Regex("\\s+"), " ").trim().let { if (it.length > max) it.take(max - 1) + "…" else it }
 }

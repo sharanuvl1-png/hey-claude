@@ -18,6 +18,9 @@ sealed class Command {
     companion object {
         private fun re(p: String) = Regex(p, RegexOption.IGNORE_CASE)
 
+        /** Words that start an everyday request rather than a stock name ("check my email"). */
+        private const val NOT_STOCK = "(my|the|a|an|if|whether|what|when|where|how|who|for|on|in|is|are|it|this|that|e?mails?|mail|weather|whatsapp|slack|calendar|messages?|news|traffic)\\b"
+
         private val BRIEFING = re("^(good morning|(give me |what'?s |start )?(my )?(morning |daily )?brief(ing)?( me)?|brief me)\\W*$")
         private val ALERTS = re("\\b(any|my|what are (my|the)|show|read)( new)? alerts?\\b|^alerts?\\W*$")
         private val ODD = re("\\b(odd|unusual|strange|suspicious|unknown|wrong|double|fraud(ulent)?)\\b.*\\b(charges?|debits?|transactions?|payments?|spends?)\\b|\\bfraud\\b")
@@ -30,9 +33,10 @@ sealed class Command {
         private val DOC = re("\\b(expire|expires|expiry|expiring|renewal|renew)\\b|^(find|where('s| is)) my\\b.*\\b(policy|document|certificate|card|bill|receipt|invoice|papers?|insurance|passport|licen[cs]e|rc)\\b")
         private val STOCK = listOf(
             re("^(please )?(check|analy[sz]e|look at|review) (the )?(?<s>.+?) (stock|shares?|share price)\\W*$"),
-            re("^should i (look at|buy|sell|invest in|hold) (?<s>.+?)\\W*$"),
+            re("^should i (buy|sell|hold|invest in) (the )?(?<s>.+?) (stock|shares?)\\W*$"),
+            re("^should i (look at|invest in) (?!$NOT_STOCK)(?<s>[\\w&.'-]+( [\\w&.'-]+){0,3})\\W*$"),
             re("^how (is|are) (?<s>.+?) (stock|shares?) (doing|looking)\\W*$"),
-            re("^(please )?(check|analy[sz]e) (?!(my|the|a|an|if|whether|what|when|where|how|who|for|on|in|is|are|it|this|that|e?mails?|mail|weather|whatsapp|slack|calendar|messages?|news|traffic)\\b)(?<s>[\\w&.'-]+( [\\w&.'-]+){0,3})\\W*$"),
+            re("^(please )?(check|analy[sz]e) (?!$NOT_STOCK)(?<s>[\\w&.'-]+( [\\w&.'-]+){0,3})\\W*$"),
         )
 
         fun parse(heard: String): Command {

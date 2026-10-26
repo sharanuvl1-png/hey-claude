@@ -25,6 +25,10 @@ class CommandsTest {
         assertEquals(Command.StockCheck("Tata Motors"), c("should I look at Tata Motors?"))
         assertEquals(Command.StockCheck("HCL"), c("check HCL stock"))
         assertEquals(Command.StockCheck("Infosys"), c("how is Infosys stock doing"))
+        assertEquals(Command.StockCheck("Cipla"), c("should I buy Cipla shares"))
+        // Everyday questions stay plain questions for Claude.
+        assertEquals(Command.Ask("should I buy an umbrella today"), c("should I buy an umbrella today"))
+        assertEquals(Command.Ask("should I look at the weather"), c("should I look at the weather"))
         // Not stocks:
         assertEquals(Command.Ask("check the weather in Bangalore"), c("check the weather in Bangalore"))
         assertEquals(Command.Ask("check my email"), c("check my email"))
