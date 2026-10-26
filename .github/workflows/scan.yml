@@ -36,6 +36,13 @@ jobs:
           git fetch origin charts 2>/dev/null && git show origin/charts:watchlist_auto.txt > out/watchlist_auto.txt 2>/dev/null || rm -f out/watchlist_auto.txt
           python tools/techchart/screener.py --out out ${{ inputs.refresh == true && '--refresh-watchlist' || '' }} | tee result.txt
 
+      - name: Stock alerts for the phone
+        continue-on-error: true
+        run: |
+          git show origin/charts:LATEST_SCAN.md > prev_scan.md 2>/dev/null || touch prev_scan.md
+          python tools/techchart/alerts.py prev_scan.md "$(tail -1 result.txt)" > out/ALERTS.json
+          cat out/ALERTS.json
+
       - name: Save to the charts branch
         run: |
           git config user.name "github-actions[bot]"

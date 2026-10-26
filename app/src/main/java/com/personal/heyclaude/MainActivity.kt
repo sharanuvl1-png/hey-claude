@@ -154,6 +154,7 @@ class MainActivity : Activity() {
             addView(page)
         })
         if (dropbox.isLinked) SyncWorker.schedule(this)
+        Alerts.schedule(this)
     }
 
     override fun onResume() {

@@ -69,5 +69,7 @@ object AssistantText {
         "is", "are", "my", "me", "you", "your", "about", "with", "from", "this", "that", "there", "any",
         "have", "has", "had", "can", "could", "please", "tell", "show", "find", "check", "message",
         "messages", "today", "yesterday", "phone", "mehitha", "get", "give", "last",
+        "much", "many", "spend", "spent", "spending", "pay", "paid", "paying", "month", "week", "year", "this",
+        "did", "does", "will", "should", "would",
     )
 }

@@ -108,7 +108,13 @@ class AssistantActivity : Activity() {
             else -> {
                 ready = true
                 if (key.isNotBlank()) brain = AssistantBrain(key, tools ?: PhoneTools(this), apiBaseUrl)
-                if (intent.hasExtra(EXTRA_QUESTION)) showClaudeReply() else greet()
+                val asked = intent.getStringExtra(EXTRA_ASK)
+                intent.removeExtra(EXTRA_ASK)
+                when {
+                    intent.hasExtra(EXTRA_QUESTION) -> showClaudeReply()
+                    asked != null -> onQuestion(asked) // tapped an alert
+                    else -> greet()
+                }
             }
         }
     }
@@ -130,11 +136,11 @@ class AssistantActivity : Activity() {
     }
 
     /** No API key: type the question into the Claude app, which answers with your own login. */
-    private fun handOff(question: String) {
+    private fun handOff(question: String, label: String) {
         status.text = "Asking Claude…"
         orb.active = true
         if (VoiceHelper.isEnabled(this)) {
-            VoiceHelper.ask(question)
+            VoiceHelper.ask(question, label)
             say("Asking Claude.") { LaunchClaudeActivity.openNewChat(this); finish() }
         } else {
             // Without the helper Mehitha can't type into Claude, so copy the question instead.
@@ -185,18 +191,70 @@ class AssistantActivity : Activity() {
         heard.text = "“$text”"
         heard.visibility = View.VISIBLE
         answerBox.visibility = View.GONE
-        val b = brain ?: return handOff(text)
+        val command = Command.parse(text)
+        // Things Mehitha answers itself, without Claude.
+        when (command) {
+            is Command.Remember -> {
+                Memory.add(this, command.fact)
+                return localAnswer("Okay, I'll remember that: ${command.fact}.")
+            }
+            is Command.Alerts -> return localAnswer(Alerts.summary(this))
+            is Command.Ask -> Prompts.recall(Memory.all(this), text)?.let { return localAnswer(it) }
+            else -> Unit
+        }
         status.text = "Looking that up…"
         orb.active = true
+        val b = brain
         Thread {
+            // Gathering phone data (SMS, scan) can take a moment, so it happens off the screen thread.
+            val prompt = try { promptFor(command, text) } catch (e: Exception) { Log.w(TAG, "Phone data failed", e); text }
+            if (b == null) {
+                handler.post { if (!isDestroyed) handOff(prompt, text) }
+                return@Thread
+            }
             val result = try {
-                Result.success(b.ask(text))
+                Result.success(b.ask(prompt))
             } catch (e: Exception) {
                 Log.w(TAG, "Claude request failed", e)
                 Result.failure(e)
             }
             handler.post { if (!isDestroyed) onAnswer(result) }
         }.start()
+    }
+
+    /** The words sent to Claude for [command], with the phone's own data filled in. */
+    private fun promptFor(command: Command, text: String): String {
+        val t = PhoneData.now()
+        val day = t.toLocalDate()
+        val data = phoneData ?: PhoneData(this)
+        fun bills() = if (data.canReadSms) Money.billsText(data.bills(), day) else PhoneData.NO_SMS
+        return when (command) {
+            is Command.Briefing -> Prompts.briefing(t, bills(), Prompts.scanSummary(data.scan()))
+            is Command.Money -> Prompts.money(t, command.question, data.moneyFacts(command.question).take(MAX_DATA))
+            is Command.SpendingReport -> Prompts.spendingReport(t,
+                (if (data.canReadSms) Money.report(data.spends(), day) else PhoneData.NO_SMS).take(MAX_DATA))
+            is Command.OddCharges -> {
+                val spends = data.spends()
+                val flags = Money.oddCharges(spends, t, days = 7).joinToString("; ") { it.text }.ifEmpty { "none" }
+                Prompts.oddCharges(t, if (data.canReadSms) flags else PhoneData.NO_SMS, Money.recentLines(spends, t, 7).take(MAX_DATA))
+            }
+            is Command.StockCheck -> Prompts.stockCheck(t, command.stock, Prompts.scanFor(data.scan(), command.stock))
+            is Command.CatchUp -> Prompts.catchUp(t, data.messagesToday())
+            is Command.FindDocument -> Prompts.findDocument(t, command.question, data.files(command.question))
+            is Command.WeeklyReview -> Prompts.weeklyReview(t,
+                if (data.canReadSms) Money.week(data.spends(), t) else PhoneData.NO_SMS, bills(), Prompts.scanSummary(data.scan()))
+            is Command.Reminder -> Prompts.reminder(t, command.request)
+            else -> text
+        }
+    }
+
+    /** Mehitha's own answer: shown and said straight away. */
+    private fun localAnswer(text: String) {
+        answer.text = text
+        gist = text
+        answerBox.visibility = View.VISIBLE
+        done("Ask me something else, or close.")
+        say(text)
     }
 
     private fun onAnswer(result: Result<String>) {
@@ -206,8 +264,10 @@ class AssistantActivity : Activity() {
             say(msg)
             return
         }
-        val reply = AssistantText.forSpeech(text)
-        answer.text = reply.display
+        val (reminders, rest) = Prompts.reminders(text)
+        val set = try { Reminders.schedule(this, reminders) } catch (e: Exception) { Log.w(TAG, "Reminder failed", e); emptyList() }
+        val reply = AssistantText.forSpeech(rest)
+        answer.text = (listOf(reply.display) + set).joinToString("\n\n")
         gist = reply.speech
         answerBox.visibility = View.VISIBLE
         misses = 0
@@ -454,6 +514,9 @@ class AssistantActivity : Activity() {
         private const val TAG = "HeyClaude"
         const val GREETING = "How can I help you today?"
         const val EXTRA_QUESTION = "question"
+        /** Asks Mehitha this straight away (from tapping an alert). */
+        const val EXTRA_ASK = "ask"
+        private const val MAX_DATA = 3500
         /** How long to wait for more words after a pause before sending the question. */
         const val MORE_SPEECH_MS = 2_500L
         const val EXTRA_REPLY = "reply"
@@ -463,6 +526,7 @@ class AssistantActivity : Activity() {
         // Tests point these at a fake Claude API and fake phone data.
         @Volatile var apiBaseUrl: String? = null
         @Volatile var tools: MehithaTools? = null
+        @Volatile var phoneData: PhoneData? = null
 
         fun apiKey(ctx: Context): String =
             ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, "").orEmpty()

@@ -82,7 +82,7 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
         return AssistantText.bestLines(lines.asSequence(), words)
     }
 
-    private fun searchFiles(words: List<String>): List<String> {
+    internal fun searchFiles(words: List<String>): List<String> {
         val base = Environment.getExternalStorageDirectory()
         val day = SimpleDateFormat("dd MMM yyyy", Locale.US)
         val roots = listOf("Download", "Documents", "DCIM", "Pictures", "Recordings",

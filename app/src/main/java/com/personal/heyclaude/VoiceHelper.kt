@@ -22,7 +22,7 @@ class VoiceHelper : AccessibilityService() {
 
     override fun onServiceConnected() {
         instance = this
-        pending?.let { startAsk(it) }
+        pending?.let { startAsk(it, pendingLabel ?: it) }
     }
 
     override fun onDestroy() {
@@ -35,10 +35,10 @@ class VoiceHelper : AccessibilityService() {
 
     private var job: AskJob? = null
 
-    private fun startAsk(question: String) {
+    private fun startAsk(question: String, label: String) {
         pending = null
         armedUntil = 0
-        job = AskJob(question, System.currentTimeMillis())
+        job = AskJob(question, System.currentTimeMillis(), label)
         record("asking: typing the question")
         handler.removeCallbacksAndMessages(null)
         handler.postDelayed(poll, POLL_MS)
@@ -78,7 +78,7 @@ class VoiceHelper : AccessibilityService() {
                 if (action.reply == null) remember(nodes.map { it.first.text })
                 startActivity(Intent(this, AssistantActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .putExtra(AssistantActivity.EXTRA_QUESTION, j.spoken)
+                    .putExtra(AssistantActivity.EXTRA_QUESTION, j.label)
                     .putExtra(AssistantActivity.EXTRA_REPLY, action.reply))
             }
         }
@@ -173,11 +173,13 @@ class VoiceHelper : AccessibilityService() {
         @Volatile var pending: String? = null
             internal set
 
-        /** Hands [question] to Claude: call right before opening the Claude app. */
-        fun ask(question: String) {
+        @Volatile private var pendingLabel: String? = null
+
+        /** Hands [question] to Claude, shown back as [label]: call right before opening the Claude app. */
+        fun ask(question: String, label: String = question) {
             val service = instance
-            if (service == null) pending = question
-            else service.handler.post { service.startAsk(question) }
+            if (service == null) { pending = question; pendingLabel = label }
+            else service.handler.post { service.startAsk(question, label) }
         }
 
         fun lastAsk(ctx: Context): String? =

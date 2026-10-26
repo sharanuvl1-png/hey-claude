@@ -62,6 +62,7 @@ class AssistantFlowTest {
         AssistantActivity.apiBaseUrl = null
         AssistantActivity.tools = null
         VoiceHelper.pending = null
+        AssistantActivity.phoneData = null
     }
 
     private fun start(key: String = "sk-ant-test", replies: List<Pair<Int, String>> = emptyList()): AssistantActivity {
@@ -265,5 +266,118 @@ class AssistantFlowTest {
         assertEquals("redBus TVBN78163260 leaves Majestic at 6:30 PM, seat 14.", answerText(a))
         hear("yes")
         assertEquals("Your bus is at half past six tonight.", spoken().last())
+    }
+
+    // ---- Top 10 features --------------------------------------------------------------------
+
+    private inner class FakePhone(val spends: List<Spend> = emptyList(), val scanMd: String = "") : PhoneData(RuntimeEnvironment.getApplication()) {
+        override val canReadSms get() = true
+        override fun spends(days: Long) = spends
+        override fun bills(days: Long) = listOf(Bill("ICICIB", 12400.0, PhoneData.today().plusDays(2), "due"))
+        override fun scan() = scanMd
+        override fun messagesToday(max: Int) = "09:10 WhatsApp, Ravi: Are we meeting at 6?"
+        override fun files(question: String) = "Download/Car_Insurance_Policy_2026.pdf (210 KB, 14 Apr 2026)"
+    }
+
+    private val scanMd = """
+        # Mehitha daily stock scan, 2026-10-26
+
+        ## Watchlist
+
+        | Group | Stock | Close | Verdict | Grade | Entry | Stop-loss (risk) | Target 1 | Chart |
+        |---|---|---|---|---|---|---|---|---|
+        | Nifty 50 | HCL Technologies Limited | ₹1417.0 | 🟢 BUY NOW | A | ₹1385.9–1406.1 | ₹1162.7 (17%) | ₹1659.4 | HCLTECH/2026-10-26.png |
+    """.trimIndent()
+
+    private fun tapAsk(a: AssistantActivity) {
+        field<android.widget.LinearLayout>(a, "buttons").getChildAt(0).performClick()
+        idle()
+    }
+
+    @Test fun remembersAndRecalls() {
+        val a = start(replies = listOf(200 to text("x")))
+        ask("remember I parked on level 3")
+        assertEquals("Okay, I'll remember that: I parked on level 3.", spoken().last())
+        tapAsk(a)
+        ask("where did I park")
+        assertTrue(spoken().last(), spoken().last().contains("you told me: I parked on level 3."))
+        assertTrue(api!!.requests.isEmpty()) // answered on the phone, not by Claude
+    }
+
+    @Test fun moneyQuestionSendsPhoneFacts() {
+        val now = PhoneData.now()
+        AssistantActivity.phoneData = FakePhone(spends = listOf(Spend(now.minusDays(1), 900.0, "Food", "Swiggy", "UPI")))
+        val a = start(replies = listOf(200 to text("SPOKEN: About 900 rupees on Swiggy.\\nYou spent 900 rupees on Swiggy this month.")))
+        ask("how much did I spend on Swiggy this month")
+        waitFor("the answer") { answerShown(a) }
+        val sent = api!!.requests.single()
+        assertTrue(sent.contains("how much did I spend on Swiggy this month"))
+        assertTrue(sent.contains("Spends matching swiggy"))
+        assertTrue(sent.contains("Swiggy 900 rupees"))
+        hear("yes")
+        assertEquals("About 900 rupees on Swiggy.", spoken().last())
+    }
+
+    @Test fun briefingIncludesBillsAndScan() {
+        AssistantActivity.phoneData = FakePhone(scanMd = scanMd)
+        val a = start(replies = listOf(200 to text("SPOKEN: Two meetings and a bill today.")))
+        ask("good morning")
+        waitFor("the answer") { answerShown(a) }
+        val sent = api!!.requests.single()
+        assertTrue(sent.contains("morning briefing"))
+        assertTrue(sent.contains("ICICIB 12,400 rupees due"))
+        assertTrue(sent.contains("HCL Technologies Limited 1417.0 rupees BUY NOW"))
+    }
+
+    @Test fun stockCheckUsesScanAndWeb() {
+        AssistantActivity.phoneData = FakePhone(scanMd = scanMd)
+        val a = start(replies = listOf(200 to text("HCL is in an uptrend.")))
+        ask("check HCL Technologies")
+        waitFor("the answer") { answerShown(a) }
+        val sent = api!!.requests.single()
+        assertTrue(sent.contains("Quick stock check on HCL Technologies"))
+        assertTrue(sent.contains("verdict BUY NOW"))
+        assertTrue(sent.contains("web_search"))
+    }
+
+    @Test fun reminderFromClaudeIsSet() {
+        androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(app)
+        val a = start(replies = listOf(200 to text("SPOKEN: Done, I'll remind you.\\nREMIND: 2030-01-01 18:00 | Call Ravi")))
+        ask("remind me to call Ravi on new year's day at 6 pm")
+        waitFor("the answer") { answerShown(a) }
+        assertTrue(api!!.requests.single().contains("REMIND: YYYY-MM-DD HH:MM"))
+        assertTrue(answerText(a), answerText(a).contains("Reminder set for 1 Jan, 6:00 PM: Call Ravi"))
+        assertFalse(answerText(a).contains("REMIND:"))
+        val work = androidx.work.WorkManager.getInstance(app).getWorkInfosForUniqueWork("remind:2030-01-01T18:00:${"Call Ravi".hashCode()}").get()
+        assertEquals(1, work.size)
+    }
+
+    @Test fun alertsAreListedAndTapOpensTheAnswer() {
+        Alerts.post(app, Alert("bill:test", "Bill due tomorrow", "Airtel bill of 799 rupees is due tomorrow."))
+        assertFalse(Alerts.post(app, Alert("bill:test", "Bill due tomorrow", "again"))) // only once
+        AssistantActivity.saveApiKey(app, "sk-ant-test")
+        val i = Intent(app, AssistantActivity::class.java).putExtra(AssistantActivity.EXTRA_ASK, "any alerts")
+        controller = Robolectric.buildActivity(AssistantActivity::class.java, i).setup()
+        ShadowTextToSpeech.getLastTextToSpeechInstance()?.let { shadowOf(it).onInitListener.onInit(TextToSpeech.SUCCESS) }
+        idle()
+        assertEquals("You have 1 alert. Bill due tomorrow: Airtel bill of 799 rupees is due tomorrow.", spoken().last())
+    }
+
+    @Test fun noKeySendsTheFullPromptButShowsWhatYouSaid() {
+        android.provider.Settings.Secure.putString(app.contentResolver,
+            android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, "${app.packageName}/.VoiceHelper")
+        AssistantActivity.phoneData = FakePhone(scanMd = scanMd)
+        start(key = "")
+        ask("catch me up")
+        waitFor("the hand-off") { VoiceHelper.pending != null }
+        assertTrue(VoiceHelper.pending!!.startsWith("Catch me up on what I missed today."))
+        assertTrue(VoiceHelper.pending!!.contains("Ravi: Are we meeting at 6?"))
+    }
+
+    @Test fun stockAlertsFileIsRead() {
+        val json = """{"date":"2026-10-26","alerts":[{"id":"target:HCLTECH:2026-10-26","title":"HCL Technologies reached its target","text":"HCL closed at 1,670."}]}"""
+        assertEquals(listOf(Alert("target:HCLTECH:2026-10-26", "HCL Technologies reached its target", "HCL closed at 1,670.")),
+            AlertWorker.parseStockAlerts(json, "2026-10-26"))
+        assertTrue(AlertWorker.parseStockAlerts(json, "2026-10-27").isEmpty()) // yesterday's alerts are not repeated
     }
 }

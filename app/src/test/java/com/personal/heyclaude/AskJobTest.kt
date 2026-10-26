@@ -87,4 +87,18 @@ class AskJobTest {
         repeat(4) { assertEquals(ScreenAction.Tap(4), j.step(typed, 100L * (it + 1))) }
         assertEquals(ScreenAction.Done(null, "send button didn't work"), j.step(typed, 1_000))
     }
+
+    @Test fun longPromptShownInPiecesIsNotPartOfTheReply() {
+        val j = AskJob("Give me my morning briefing. It is Monday 26 October 2026, 8:15 AM in India. Check my Outlook calendar for today's meetings.", 0, "good morning")
+        j.step(chat("", home[2]), 0)
+        j.step(chat(j.question, home[2]), 100)
+        val q = j.question
+        val pieces = arrayOf(ScreenText(q.take(60)), ScreenText(q.drop(60).take(70)), ScreenText("Show more", clickable = true),
+            ScreenText("Good morning! You have 2 meetings today."), ScreenText("The 11 AM design review needs your slides."))
+        val screen = chat("", *pieces)
+        j.step(screen, 200)
+        assertEquals(ScreenAction.Done("Good morning! You have 2 meetings today.\nThe 11 AM design review needs your slides.", "got the reply"),
+            j.step(screen, 200 + AskJob.SETTLE_MS))
+        assertEquals("good morning", j.label)
+    }
 }

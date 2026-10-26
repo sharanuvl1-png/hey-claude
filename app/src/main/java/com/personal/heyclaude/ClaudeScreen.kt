@@ -16,7 +16,7 @@ sealed class ScreenAction {
  * then waits for Claude's reply to stop changing. Plain Kotlin so it can be tested
  * against made-up screens; the VoiceHelper service does the actual typing and tapping.
  */
-class AskJob(val spoken: String, private val startedAt: Long) {
+class AskJob(val spoken: String, private val startedAt: Long, val label: String = spoken) {
     /** What gets typed: the spoken question plus a request for a short, speakable summary. */
     val question = spoken.trim() + SUMMARY_NOTE
 
@@ -72,20 +72,36 @@ class AskJob(val spoken: String, private val startedAt: Long) {
         }
     }
 
-    /** Claude's reply: the text below the last copy of the question, minus what was already on screen. */
+    /**
+     * Claude's reply: the text below the last copy of the question (skipping the rest of a
+     * long question shown as several pieces), minus what was already on screen.
+     */
     fun replyOn(items: List<ScreenText>): String {
         val q = items.indexOfLast { !it.editable && isQuestion(it.text) }
         if (q < 0) return ""
-        return items.drop(q + 1)
+        var start = q + 1
+        while (start < items.size && !items[start].editable && partOfQuestion(items[start].text)) start++
+        return items.drop(start)
             .filter { !it.editable && !(it.clickable && it.text.length < 40) }
             .map { it.text.trim() }
             .filter { it.length > 1 && it !in before }
             .joinToString("\n")
     }
 
-    /** Claude's copy of the question; long messages may be cut short on screen. */
-    private fun isQuestion(text: String) = same(text, question) ||
-        (norm(spoken).length >= 3 && norm(text).startsWith(norm(spoken)) && norm(question).startsWith(norm(text)))
+    /** The start of Claude's copy of the question; long messages may be cut short or split on screen. */
+    private fun isQuestion(text: String): Boolean {
+        val t = shown(text)
+        val q = norm(question)
+        return t.isNotEmpty() && (t == q || (t.length >= minOf(q.length, 20) && q.startsWith(t)))
+    }
+
+    private fun partOfQuestion(text: String): Boolean {
+        val t = shown(text)
+        return t.isEmpty() || MORE.matches(t) || (t.length >= 8 && norm(question).contains(t))
+    }
+
+    /** Text as compared: plain words, without a trailing "show more". */
+    private fun shown(text: String) = norm(text).replace(Regex("\\s*(show|see|read) more$"), "").trim()
 
     private fun Phase.label() = when (this) {
         Phase.TYPE -> "couldn't find Claude's message box"
@@ -96,11 +112,12 @@ class AskJob(val spoken: String, private val startedAt: Long) {
     companion object {
         const val SUMMARY_NOTE = " (Start with one line beginning SPOKEN: that gives a casual one or two sentence gist to say out loud," +
             " then a short summary in 2 to 4 plain sentences, no tables or lists.)"
-        const val TIMEOUT_MS = 90_000L
+        const val TIMEOUT_MS = 150_000L
         const val SETTLE_MS = 2_500L
         private const val MAX_SEND_TAPS = 4
         private val SEND = Regex("(?i)\\bsend\\b")
         private val STOP = Regex("(?i)\\bstop\\b")
+        private val MORE = Regex("(show|see|read) (more|less)")
         private val NEW_CHAT = Regex("(?i)new chat|start (a )?new chat|new conversation")
 
         private fun norm(s: String) = s.lowercase().replace(Regex("[^\\p{L}\\p{N}]+"), " ").trim()
