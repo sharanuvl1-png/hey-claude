@@ -3,6 +3,9 @@ name: Build app
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "tools/**"
+      - ".github/workflows/chart.yml"
   workflow_dispatch:
 
 permissions:

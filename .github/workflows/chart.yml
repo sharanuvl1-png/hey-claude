@@ -1,0 +1,51 @@
+name: Technical chart
+
+on:
+  workflow_dispatch:
+    inputs:
+      stock:
+        description: "Company name or NSE symbol (e.g. PC Jeweller or PCJEWELLER.NS)"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: charts-branch
+  cancel-in-progress: false
+
+jobs:
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install libraries
+        run: pip install -q yfinance matplotlib pandas numpy
+
+      - name: Build chart and analysis
+        env:
+          STOCK: ${{ inputs.stock }}
+        run: python tools/techchart/techchart.py "$STOCK" --out out | tee result.txt
+
+      - name: Save to the charts branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch origin charts 2>/dev/null; then
+            git worktree add charts-wt origin/charts
+            git -C charts-wt checkout -B charts
+          else
+            git worktree add --detach charts-wt
+            git -C charts-wt checkout --orphan charts
+            git -C charts-wt rm -rf . > /dev/null
+          fi
+          cp -r out/* charts-wt/
+          cp result.txt charts-wt/LATEST.txt
+          git -C charts-wt add -A
+          git -C charts-wt commit -m "Chart: $(head -1 result.txt)"
+          git -C charts-wt push origin charts
