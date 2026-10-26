@@ -3,6 +3,8 @@ package com.personal.heyclaude
 import android.Manifest
 import android.app.Activity
 import android.app.KeyguardManager
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -38,6 +40,7 @@ class AssistantActivity : Activity() {
     private var recognizer: SpeechRecognizer? = null
     private var brain: AssistantBrain? = null
     private var misses = 0
+    private var ready = false
     private var resumeDelayMs = 0L
 
     private lateinit var orb: OrbView
@@ -55,6 +58,7 @@ class AssistantActivity : Activity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         window.setDimAmount(0.45f)
         setContentView(sheet())
+        WakeWordService.pause(this) // the wake word lets go of the mic while Mehitha listens
 
         tts = TextToSpeech(this) { code ->
             handler.post {
@@ -81,13 +85,17 @@ class AssistantActivity : Activity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        stopSpeaking()
+        cancelListening()
+        start()
+    }
+
     private fun start() {
         val key = apiKey(this)
         when {
-            key.isBlank() -> {
-                show("Add your Claude API key in the Mehitha app first.", showButtons = true)
-                say("Please add your Claude API key in the Mehitha app first.")
-            }
             checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED -> {
                 show("Allow the microphone in the Mehitha app first.", showButtons = true)
                 say("Please allow the microphone in the Mehitha app first.")
@@ -97,9 +105,40 @@ class AssistantActivity : Activity() {
                 say("I can't hear you because speech recognition is missing. Please install or update the Google app.")
             }
             else -> {
-                brain = AssistantBrain(key, tools ?: PhoneTools(this), apiBaseUrl)
-                greet()
+                ready = true
+                if (key.isNotBlank()) brain = AssistantBrain(key, tools ?: PhoneTools(this), apiBaseUrl)
+                if (intent.hasExtra(EXTRA_QUESTION)) showClaudeReply() else greet()
             }
+        }
+    }
+
+    /** Back from the Claude app with its reply (no API key). */
+    private fun showClaudeReply() {
+        val question = intent.getStringExtra(EXTRA_QUESTION).orEmpty()
+        val reply = intent.getStringExtra(EXTRA_REPLY)
+        intent.removeExtra(EXTRA_QUESTION)
+        heard.text = "“$question”"
+        heard.visibility = View.VISIBLE
+        if (reply.isNullOrBlank()) {
+            val msg = "I couldn't read Claude's reply. Please look in the Claude app."
+            show(msg, showButtons = true)
+            say(msg)
+        } else {
+            onAnswer(Result.success(reply))
+        }
+    }
+
+    /** No API key: type the question into the Claude app, which answers with your own login. */
+    private fun handOff(question: String) {
+        status.text = "Asking Claude…"
+        orb.active = true
+        if (VoiceHelper.isEnabled(this)) {
+            VoiceHelper.ask(question)
+            say("Asking Claude.") { LaunchClaudeActivity.openNewChat(this); finish() }
+        } else {
+            // Without the helper Mehitha can't type into Claude, so copy the question instead.
+            getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Question", question))
+            say("I copied your question. Paste it in Claude.") { LaunchClaudeActivity.openNewChat(this); finish() }
         }
     }
 
@@ -124,9 +163,9 @@ class AssistantActivity : Activity() {
         heard.text = "“$text”"
         heard.visibility = View.VISIBLE
         answerBox.visibility = View.GONE
+        val b = brain ?: return handOff(text)
         status.text = "Looking that up…"
         orb.active = true
-        val b = brain ?: return
         Thread {
             val result = try {
                 Result.success(b.ask(text))
@@ -304,7 +343,7 @@ class AssistantActivity : Activity() {
             Ui.pill(this, "No thanks") { cancelListening(); done("Okay, it's on the screen.") },
         ).apply { visibility = View.GONE }
         buttons = row(
-            Ui.gradientButton(this, "Ask") { stopSpeaking(); if (brain != null) greet() else start() },
+            Ui.gradientButton(this, "Ask") { stopSpeaking(); if (ready) greet() else start() },
             Ui.pill(this, "Open in Claude app") { openClaudeApp() },
             Ui.pill(this, "Close") { finish() },
         ).apply { visibility = View.GONE }
@@ -377,6 +416,8 @@ class AssistantActivity : Activity() {
     companion object {
         private const val TAG = "HeyClaude"
         const val GREETING = "How can I help you today?"
+        const val EXTRA_QUESTION = "question"
+        const val EXTRA_REPLY = "reply"
         private const val PREFS = "assistant"
         private const val KEY = "claude_api_key"
 

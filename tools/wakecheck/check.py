@@ -11,7 +11,7 @@ def kt_list(name):
     return re.findall(r'"([^"]+)"', body)
 greet, names = kt_list("GREETINGS"), kt_list("NAME_SOUNDS")
 phrases = [f"{g} {n}" for g in greet for n in names]
-grammar = json.dumps(phrases + ["[unk]"])
+grammar = json.dumps(phrases + kt_list("DECOYS") + ["[unk]"])
 model = Model(sys.argv[1])
 
 def heard(wav_path):
@@ -35,7 +35,8 @@ def heard(wav_path):
 positives = ["Hi Mehitha", "Hey Mehitha", "Hi Meh-hee-tha", "Hello Mehitha", "Hi Mehita"]
 negatives = ["Hi, how are you", "Hey, what is the time", "Meta stock is up today", "Hello mother",
              "I hit a ball", "Hey Google", "Hi Bixby", "Please call Mehta tomorrow",
-             "Hi there", "Hey listen to this", "He hit the ball hard", "Hello Mitha"]
+             "Hi there", "Hey listen to this", "He hit the ball hard", "Hello Mitha",
+             "OK Google", "Hey Google, what's the weather", "Hi Google", "Hey Siri"]
 voices = ["en-us", "en-gb", "en-in" if subprocess.run(["espeak-ng", "-v", "en-in", "x", "-w", "/dev/null"]).returncode == 0 else "en",
           "en-us+f3", "en-gb+m3"]
 speeds = [140, 175]

@@ -63,6 +63,13 @@ class WakeWordService : Service(), RecognitionListener {
             stopSelf()
             return START_NOT_STICKY
         }
+        if (intent?.action == ACTION_PAUSE) {
+            // Mehitha's own sheet is using the mic; the sheet resumes us when it closes.
+            handler.removeCallbacksAndMessages(null)
+            stopListening()
+            handler.postDelayed({ startListening() }, ASSISTANT_TIMEOUT_MS)
+            return START_STICKY
+        }
         if (intent?.action == ACTION_RESUME && model != null) {
             // The assistant sheet closed: listen again right away (or after the given delay).
             handler.removeCallbacksAndMessages(null)
@@ -207,6 +214,7 @@ class WakeWordService : Service(), RecognitionListener {
         const val RESUME_AFTER_TRIGGER_MS = 8_000L
         private const val ASSISTANT_TIMEOUT_MS = 5 * 60_000L
         private const val ACTION_RESUME = "com.personal.heyclaude.RESUME"
+        private const val ACTION_PAUSE = "com.personal.heyclaude.PAUSE"
         private const val EXTRA_DELAY = "delay"
         private const val COOLDOWN_MS = 4_000L
         private const val REQUEST_POLL_MS = 3 * 60_000L
@@ -218,7 +226,12 @@ class WakeWordService : Service(), RecognitionListener {
             "me hit a", "may hit a", "me heat a", "may heat a", "me heat the", "mahita", "mehitha"
         )
         private val WAKE_PHRASES = GREETINGS.flatMap { g -> NAME_SOUNDS.map { "$g $it" } }
-        private val GRAMMAR = JSONArray(WAKE_PHRASES + "[unk]").toString()
+        // Other assistants' wake words, so the recogniser has a better match than "Hi Mehitha"
+        // for them. Hearing one of these does nothing.
+        private val DECOYS = listOf(
+            "hey google", "ok google", "okay google", "hi google", "hello google", "hi there", "hello there"
+        )
+        private val GRAMMAR = JSONArray(WAKE_PHRASES + DECOYS + "[unk]").toString()
 
         @Volatile
         var isRunning = false
@@ -229,13 +242,18 @@ class WakeWordService : Service(), RecognitionListener {
         }
 
         /** Starts listening again after the assistant has finished with the mic. */
-        fun resume(context: Context, delayMs: Long = 0L) {
+        fun resume(context: Context, delayMs: Long = 0L) = send(context, ACTION_RESUME, delayMs)
+
+        /** Lets go of the mic while the assistant listens. */
+        fun pause(context: Context) = send(context, ACTION_PAUSE, 0L)
+
+        private fun send(context: Context, action: String, delayMs: Long) {
             if (!isRunning) return
             try {
                 context.startService(Intent(context, WakeWordService::class.java)
-                    .setAction(ACTION_RESUME).putExtra(EXTRA_DELAY, delayMs))
+                    .setAction(action).putExtra(EXTRA_DELAY, delayMs))
             } catch (e: Exception) {
-                Log.w(TAG, "Could not resume listening; the safety net will", e)
+                Log.w(TAG, "Could not send $action; the safety net will listen again", e)
             }
         }
 

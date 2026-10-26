@@ -2,16 +2,105 @@ package com.personal.heyclaude
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
 /**
- * Right after the wake word, finds the voice button in the Claude app and taps it,
- * so Claude is already listening. It is armed for a few seconds per wake word and
- * only receives events from the Claude app.
+ * Works the Claude app for Mehitha, and only sees the Claude app:
+ * - with no API key, types the spoken question into Claude, sends it and reads back the reply;
+ * - for "Open in Claude app", taps Claude's voice button for a few seconds after opening it.
  */
 class VoiceHelper : AccessibilityService() {
+
+    private val handler = Handler(Looper.getMainLooper())
+
+    override fun onServiceConnected() {
+        instance = this
+        pending?.let { startAsk(it) }
+    }
+
+    override fun onDestroy() {
+        instance = null
+        handler.removeCallbacksAndMessages(null)
+        super.onDestroy()
+    }
+
+    // ---- Asking Claude without an API key -------------------------------------------------
+
+    private var job: AskJob? = null
+
+    private fun startAsk(question: String) {
+        pending = null
+        armedUntil = 0
+        job = AskJob(question, System.currentTimeMillis())
+        record("asking: typing the question")
+        handler.removeCallbacksAndMessages(null)
+        handler.postDelayed(poll, POLL_MS)
+    }
+
+    private val poll = object : Runnable {
+        override fun run() {
+            val j = job ?: return
+            try {
+                step(j)
+            } catch (e: Exception) {
+                Log.w("HeyClaude", "Claude hand-off step failed", e)
+            }
+            if (job === j) handler.postDelayed(this, POLL_MS)
+        }
+    }
+
+    private fun step(j: AskJob) {
+        val root = rootInActiveWindow
+        val onClaude = root?.packageName?.toString() == LaunchClaudeActivity.CLAUDE_PACKAGE
+        val nodes = mutableListOf<Pair<ScreenText, AccessibilityNodeInfo>>()
+        if (onClaude) screen(root!!, nodes, 0)
+        when (val action = j.step(nodes.map { it.first }, System.currentTimeMillis())) {
+            is ScreenAction.Wait -> Unit
+            is ScreenAction.Type -> {
+                val box = nodes[action.index].second
+                box.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                box.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, Bundle().apply {
+                    putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, j.question)
+                })
+                record("asking: typed the question")
+            }
+            is ScreenAction.Tap -> { click(nodes[action.index].second); record("asking: tapped ${nodes[action.index].first.text.take(30)}") }
+            is ScreenAction.Done -> {
+                job = null
+                record("last ask: ${action.note}" + (action.reply?.let { " (${it.length} letters)" } ?: ""))
+                if (action.reply == null) remember(nodes.map { it.first.text })
+                startActivity(Intent(this, AssistantActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .putExtra(AssistantActivity.EXTRA_QUESTION, j.spoken)
+                    .putExtra(AssistantActivity.EXTRA_REPLY, action.reply))
+            }
+        }
+    }
+
+    /** Everything on Claude's screen in order: message box, buttons and message text. */
+    private fun screen(node: AccessibilityNodeInfo, out: MutableList<Pair<ScreenText, AccessibilityNodeInfo>>, depth: Int) {
+        if (depth > 60) return
+        if (node.isVisibleToUser) {
+            val text = if (node.isEditable) node.text?.toString().orEmpty()
+            else if (node.isClickable) listOfNotNull(node.contentDescription, node.text).joinToString(" ").trim()
+            else (node.text ?: node.contentDescription)?.toString().orEmpty().trim()
+            if (node.isEditable || text.isNotEmpty()) out += ScreenText(text, node.isClickable, node.isEditable) to node
+        }
+        for (i in 0 until node.childCount) node.getChild(i)?.let { screen(it, out, depth + 1) }
+    }
+
+    private fun record(what: String) {
+        getSharedPreferences("voice_helper", Context.MODE_PRIVATE).edit().putString("ask", what).apply()
+    }
+
+    // ---- Voice button for "Open in Claude app" --------------------------------------------
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (System.currentTimeMillis() > armedUntil) return
@@ -78,6 +167,21 @@ class VoiceHelper : AccessibilityService() {
         @Volatile private var armedUntil = 0L
         @Volatile var lastTapped: String? = null
             private set
+        private const val POLL_MS = 600L
+        @Volatile private var instance: VoiceHelper? = null
+        /** A question waiting for the service to connect. */
+        @Volatile var pending: String? = null
+            internal set
+
+        /** Hands [question] to Claude: call right before opening the Claude app. */
+        fun ask(question: String) {
+            val service = instance
+            if (service == null) pending = question
+            else service.handler.post { service.startAsk(question) }
+        }
+
+        fun lastAsk(ctx: Context): String? =
+            ctx.getSharedPreferences("voice_helper", Context.MODE_PRIVATE).getString("ask", null)
 
         fun arm() {
             armedUntil = System.currentTimeMillis() + ARM_MS

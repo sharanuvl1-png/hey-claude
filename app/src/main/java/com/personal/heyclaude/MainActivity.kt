@@ -91,7 +91,7 @@ class MainActivity : Activity() {
         claudeRow = Ui.Row(this, "Claude app", "Install") {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${LaunchClaudeActivity.CLAUDE_PACKAGE}")))
         }
-        voiceRow = Ui.Row(this, "Start Claude in voice mode", "Turn on") {
+        voiceRow = Ui.Row(this, "Let Mehitha use the Claude app", "Turn on") {
             toast("Tap \"Installed apps\" → \"Mehitha voice button\" → turn it on")
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
@@ -218,18 +218,20 @@ class MainActivity : Activity() {
         toggle.alpha = if (toggle.isEnabled) 1f else 0.4f
 
         val hasKey = AssistantActivity.apiKey(this).isNotBlank()
-        apiRow.set(hasKey, "Saved. Tap to replace", "Needed so Mehitha can answer. Get it at console.anthropic.com")
+        apiRow.set(hasKey, "Saved: Mehitha answers by itself. Tap to replace",
+            "Optional. Without a key Mehitha asks the Claude app for you", required = false)
         apiRow.view.setOnClickListener { apiBox.visibility = View.VISIBLE }
         micRow.set(mic, "Allowed", "Needed to hear \"Hi Mehitha\"")
         overlayRow.set(overlay, "Allowed", "Lets Mehitha appear when you say \"Hi Mehitha\"")
         batteryRow.set(battery, "No battery limits",
             "Needed so it hears you every time. On Samsung also add Hi Mehitha to Battery → Never sleeping apps")
-        claudeRow.set(claude, "Installed", "For the \"Open in Claude app\" button", required = false)
-        voiceRow.set(VoiceHelper.isEnabled(this), "On: taps Claude's voice button for you",
+        claudeRow.set(claude, "Installed", "Install Claude: Mehitha asks it when there is no API key")
+        voiceRow.set(VoiceHelper.isEnabled(this), "On: types your question into Claude and reads the reply",
             "Turn on \"Mehitha voice button\" in Accessibility. If it's greyed out: App info → ⋮ → Allow restricted settings")
         voiceDebug.text = listOfNotNull(
             LaunchClaudeActivity.lastLaunch?.let { "Claude opened by: $it" },
             VoiceHelper.lastTapped?.let { "Last tapped in Claude: $it" },
+            VoiceHelper.lastAsk(this)?.let { "Claude app: $it" },
             VoiceHelper.seenButtons(this)?.let { "Claude buttons seen: $it" },
         ).joinToString("\n")
 
