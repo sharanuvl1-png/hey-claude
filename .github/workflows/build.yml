@@ -33,9 +33,15 @@ jobs:
 
       - name: Show which wake word sounds the model knows
         run: |
-          for w in hi hey hello me may hit heat eat a mehta meta mahita mehitha; do
-            if grep -qx "$w" app/src/main/assets/model-en-us/graph/words.txt 2>/dev/null || grep -q "^$w " app/src/main/assets/model-en-us/graph/words.txt 2>/dev/null; then echo "known: $w"; else echo "UNKNOWN: $w"; fi
-          done
+          M=app/src/main/assets/model-en-us
+          find $M -type f | sed "s|$M/||"
+          WORDS=$(find $M -name "words.txt" | head -1)
+          echo "word list: ${WORDS:-none}"
+          if [ -n "$WORDS" ]; then
+            for w in hi hey hello me may hit heat eat a mehta meta mahita mehitha; do
+              if cut -d' ' -f1 "$WORDS" | grep -qx "$w"; then echo "known: $w"; else echo "UNKNOWN: $w"; fi
+            done
+          fi
 
       - name: Build APK
         run: gradle :app:assembleDebug --no-daemon
