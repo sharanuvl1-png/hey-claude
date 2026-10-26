@@ -19,6 +19,10 @@ jobs:
           unzip -q model.zip
       - name: Run check
         run: python tools/wakecheck/check.py vosk-model-small-en-us-0.15 | tee wakecheck.txt
+      - name: Result
+        if: always()
+        run: tail -1 wakecheck.txt
+
       - uses: actions/upload-artifact@v4
         with:
           name: wakecheck
