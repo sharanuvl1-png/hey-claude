@@ -1,10 +1,7 @@
-63 passed, 0 failed
+34 passed, 0 failed
 PASS AskJobTest.givesUpAfterTimeoutWithReason
 PASS AskJobTest.findsQuestionEvenWhenCutShortOnScreen
 PASS AskJobTest.opensNewChatWhenNoMessageBox
-PASS AskJobTest.keepsTypingWhileTheNewChatIsStillLoading
-PASS AskJobTest.longPromptShownInPiecesIsNotPartOfTheReply
-PASS AskJobTest.pressesSendWhenTheBoxNeverShowsTheText
 PASS AskJobTest.waitsWhileClaudeIsStillWriting
 PASS AskJobTest.typesSendsAndReadsTheReply
 PASS AskJobTest.stopsIfSendNeverWorks
@@ -15,9 +12,6 @@ PASS AssistantBrainTest.pauseTurnIsResumed
 PASS AssistantBrainTest.toolFailureIsReportedNotThrown
 PASS AssistantBrainTest.runsToolsThenAnswers
 PASS AssistantFlowTest.claudeAppReplyIsOfferedThenRead
-PASS AssistantFlowTest.remembersAndRecalls
-PASS AssistantFlowTest.noKeySendsTheFullPromptButShowsWhatYouSaid
-PASS AssistantFlowTest.noKeySpendingQuestionStaysShortEnoughToSend
 PASS AssistantFlowTest.answersThenReadsWhenToldYes
 PASS AssistantFlowTest.asksAgainWhenReplyIsUnclear
 PASS AssistantFlowTest.saysWhenTheKeyIsWrong
@@ -25,16 +19,10 @@ PASS AssistantFlowTest.staysQuietWhenToldNo
 PASS AssistantFlowTest.noKeyAndNoHelperCopiesQuestion
 PASS AssistantFlowTest.pauseInTheMiddleKeepsListening
 PASS AssistantFlowTest.claudeAppReplyMissingSaysSo
-PASS AssistantFlowTest.briefingIncludesBillsAndScan
-PASS AssistantFlowTest.reminderFromClaudeIsSet
-PASS AssistantFlowTest.moneyQuestionSendsPhoneFacts
 PASS AssistantFlowTest.retriesOnceWhenNothingHeard
-PASS AssistantFlowTest.alertsAreListedAndTapOpensTheAnswer
 PASS AssistantFlowTest.followUpKeepsTheConversation
 PASS AssistantFlowTest.readsTheCasualGistNotTheWholeText
-PASS AssistantFlowTest.stockAlertsFileIsRead
 PASS AssistantFlowTest.greetsThenListensInIndianEnglish
-PASS AssistantFlowTest.stockCheckUsesScanAndWeb
 PASS AssistantFlowTest.noKeyHandsQuestionToClaudeApp
 PASS AssistantFlowTest.sendsAfterNoMoreSpeech
 PASS AssistantTextTest.yesMeansRead
@@ -45,20 +33,3 @@ PASS AssistantTextTest.gistComesFromSpokenLine
 PASS AssistantTextTest.unclearAsksAgain
 PASS AssistantTextTest.bestLinesRankByMatches
 PASS AssistantTextTest.keywordsDropFillerWords
-PASS CommandsTest.everythingElse
-PASS CommandsTest.stocks
-PASS CommandsTest.money
-PASS CommandsTest.briefing
-PASS MoneyTest.findsSubscriptions
-PASS MoneyTest.flagsUnusualCategorySpend
-PASS MoneyTest.readsTheRowsPhoneSyncWrites
-PASS MoneyTest.flagsDoubleAndLargeCharges
-PASS MoneyTest.summaryStartsWithTodayAndTheWeek
-PASS MoneyTest.summaryHasTotalsAndMatchingSpends
-PASS MoneyTest.readsBillDueDates
-PASS PromptsTest.remindLinesBecomeReminders
-PASS PromptsTest.promptsStayShortEnoughToSendAsAMessage
-PASS PromptsTest.promptsAreOneLineWithDateAndRules
-PASS PromptsTest.recallAnswersFromNotes
-PASS PromptsTest.scanForFindsByNameOrSymbol
-PASS PromptsTest.scanSummaryPutsBuysFirst
