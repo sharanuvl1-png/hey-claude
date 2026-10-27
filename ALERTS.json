@@ -2,61 +2,6 @@
  "date": "2026-10-27",
  "alerts": [
   {
-   "id": "buyzone:MPHASIS:2026-10-27",
-   "title": "Mphasis is in the buy zone",
-   "text": "Mphasis moved from buy on dip to buy now at ₹2,618.4."
-  },
-  {
-   "id": "target:IPCALAB:2026-10-27",
-   "title": "Ipca Laboratories reached its target",
-   "text": "Ipca Laboratories closed at ₹1,980.8, at or above the target of ₹1,972.3."
-  },
-  {
-   "id": "target:LAURUSLABS:2026-10-27",
-   "title": "Laurus Labs reached its target",
-   "text": "Laurus Labs closed at ₹2,142.0, at or above the target of ₹2,075.8."
-  },
-  {
-   "id": "buyzone:BHARTIHEXA:2026-10-27",
-   "title": "Bharti Hexacom is in the buy zone",
-   "text": "Bharti Hexacom moved from buy on dip to buy now at ₹1,665.9."
-  },
-  {
-   "id": "target:CHENNPETRO:2026-10-27",
-   "title": "Chennai Petroleum Corporation reached its target",
-   "text": "Chennai Petroleum Corporation closed at ₹1,573.8, at or above the target of ₹1,552.6."
-  },
-  {
-   "id": "target:ATHERENERG:2026-10-27",
-   "title": "Ather Energy reached its target",
-   "text": "Ather Energy closed at ₹1,674.0, at or above the target of ₹1,596.2."
-  },
-  {
-   "id": "buyzone:ATHERENERG:2026-10-27",
-   "title": "Ather Energy is in the buy zone",
-   "text": "Ather Energy moved from buy on dip to buy now at ₹1,674.0."
-  },
-  {
-   "id": "target:SONACOMS:2026-10-27",
-   "title": "Sona BLW Precision Forgings reached its target",
-   "text": "Sona BLW Precision Forgings closed at ₹851.8, at or above the target of ₹806.9."
-  },
-  {
-   "id": "target:ACUTAAS:2026-10-27",
-   "title": "Acutaas Chemicals reached its target",
-   "text": "Acutaas Chemicals closed at ₹3,793.3, at or above the target of ₹3,667.3."
-  },
-  {
-   "id": "buyzone:ACUTAAS:2026-10-27",
-   "title": "Acutaas Chemicals is in the buy zone",
-   "text": "Acutaas Chemicals moved from buy on dip to buy now at ₹3,793.3."
-  },
-  {
-   "id": "target:MRPL:2026-10-27",
-   "title": "Mangalore Refinery and Petrochemicals reached its target",
-   "text": "Mangalore Refinery and Petrochemicals closed at ₹189.4, at or above the target of ₹186.6."
-  },
-  {
    "id": "results:ADANIPORTS:2026-10-28",
    "title": "Adani Ports and Special Economic Zone results tomorrow",
    "text": "Adani Ports and Special Economic Zone reports quarterly results tomorrow (28 Oct)."
