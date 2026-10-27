@@ -87,4 +87,31 @@ class AskJobTest {
         repeat(4) { assertEquals(ScreenAction.Tap(4), j.step(typed, 100L * (it + 1))) }
         assertEquals(ScreenAction.Done(null, "send button didn't work"), j.step(typed, 1_000))
     }
+
+    @Test fun waitsThroughToolUseAndReadsOnlyTheAnswer() {
+        // As seen on the phone: Claude looks up the calendar, with status lines and the chat title on screen.
+        val j = job()
+        j.step(chat("", home[2]), 0)
+        j.step(chat(j.question, home[2]), 100)
+        val busy = chat("", ScreenText(j.question), ScreenText("Using Microsoft 365: Outlook calendar search"),
+            ScreenText("Claude is thinking"), ScreenText("Tomorrow's office meeting"), ScreenText("Reply to Claude…"),
+            ScreenText("Stop responding"))
+        assertEquals(ScreenAction.Wait, j.step(busy, 200))
+        assertEquals(ScreenAction.Wait, j.step(busy, 10_000)) // status unchanged for long, but Claude is still working
+        val answer = "Tomorrow is busy. You start with Coffee with the Leaders at 11 AM in person."
+        val done = chat("", ScreenText(j.question), ScreenText("Used Microsoft 365: Outlook calendar"),
+            ScreenText(answer), ScreenText("Tomorrow's office meeting"), ScreenText("Reply to Claude…"),
+            ScreenText("Copy", clickable = true))
+        assertEquals(ScreenAction.Wait, j.step(done, 11_000))
+        assertEquals(ScreenAction.Done(answer, "got the reply"), j.step(done, 11_000 + AskJob.SETTLE_MS))
+    }
+
+    @Test fun keepsAShortReplyThatIsNotASentence() {
+        val j = job()
+        j.step(chat("", home[2]), 0)
+        j.step(chat(j.question, home[2]), 100)
+        val done = chat("", ScreenText(j.question), ScreenText("Yes"))
+        j.step(done, 200)
+        assertEquals(ScreenAction.Done("Yes", "got the reply"), j.step(done, 200 + AskJob.SETTLE_MS))
+    }
 }
