@@ -111,6 +111,25 @@ object PhoneSync {
         return "$count messages in ${months.size} month file(s), $spends spends found"
     }
 
+    /** Spends from bank and UPI SMS in the last [days] days, read on the phone; null without SMS permission. */
+    fun spends(ctx: Context, days: Int = 70): List<Spend>? {
+        if (!hasPermission(ctx, android.Manifest.permission.READ_SMS)) return null
+        val since = System.currentTimeMillis() - days * 24L * 3600 * 1000
+        val rows = linkedSetOf<String>()
+        ctx.contentResolver.query(
+            Telephony.Sms.Inbox.CONTENT_URI,
+            arrayOf(Telephony.Sms.DATE, Telephony.Sms.ADDRESS, Telephony.Sms.BODY),
+            "${Telephony.Sms.DATE} >= ?", arrayOf(since.toString()), "${Telephony.Sms.DATE} ASC"
+        )?.use { c ->
+            while (c.moveToNext()) {
+                val body = (c.getString(2) ?: "").replace(Regex("\\s+"), " ").trim()
+                if (looksLikeOtp(body)) continue
+                expenseRow(Date(c.getLong(0)), c.getString(1) ?: "", body)?.let { rows += it }
+            }
+        }
+        return rows.mapNotNull { Money.parseRow(it) }
+    }
+
     // ------------------------------------------------------- expenses
 
     private const val EXPENSE_HEADER = "Date,Amount (INR),Category,Description,Paid via,Notes"

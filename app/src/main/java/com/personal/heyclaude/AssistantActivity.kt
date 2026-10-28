@@ -25,6 +25,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import java.time.LocalDate
 import java.util.Locale
 
 /**
@@ -163,6 +164,7 @@ class AssistantActivity : Activity() {
         heard.text = "“$text”"
         heard.visibility = View.VISIBLE
         answerBox.visibility = View.GONE
+        if (Money.isSpendQuestion(text)) return answerSpending(text)
         val b = brain ?: return handOff(text)
         status.text = "Looking that up…"
         orb.active = true
@@ -172,6 +174,25 @@ class AssistantActivity : Activity() {
             } catch (e: Exception) {
                 Log.w(TAG, "Claude request failed", e)
                 Result.failure(e)
+            }
+            handler.post { if (!isDestroyed) onAnswer(result) }
+        }.start()
+    }
+
+    /** Spending questions are answered from the bank and UPI SMS on the phone, not the Claude app. */
+    private fun answerSpending(question: String) {
+        status.text = "Checking your bank messages…"
+        orb.active = true
+        Thread {
+            val result = try {
+                val spends = PhoneSync.spends(this)
+                Result.success(
+                    if (spends == null) "I can't read your text messages yet. Open Hi Mehitha and tap Allow next to Text messages, then ask again."
+                    else Money.answer(spends, LocalDate.now(), question)
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "Reading spends failed", e)
+                Result.success("I couldn't read your bank messages just now, so I don't know your spending. Please try again.")
             }
             handler.post { if (!isDestroyed) onAnswer(result) }
         }.start()
