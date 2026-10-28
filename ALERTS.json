@@ -1,30 +1,80 @@
 {
- "date": "2026-10-27",
+ "date": "2026-10-28",
  "alerts": [
   {
+   "id": "buyzone:HCLTECH:2026-10-28",
+   "title": "HCL Technologies is in the buy zone",
+   "text": "HCL Technologies moved from buy on dip to buy now at ₹1,400.5."
+  },
+  {
+   "id": "buyzone:BHARTIARTL:2026-10-28",
+   "title": "Bharti Airtel is in the buy zone",
+   "text": "Bharti Airtel moved from buy on dip to buy now at ₹1,948.1."
+  },
+  {
+   "id": "buyzone:BSE:2026-10-28",
+   "title": "BSE is in the buy zone",
+   "text": "BSE moved from buy on dip to buy now at ₹3,485.0."
+  },
+  {
+   "id": "target:APOLLOHOSP:2026-10-28",
+   "title": "Apollo Hospitals Enterprise reached its target",
+   "text": "Apollo Hospitals Enterprise closed at ₹8,137.0, at or above the target of ₹8,047.5."
+  },
+  {
+   "id": "buyzone:IPCALAB:2026-10-28",
+   "title": "Ipca Laboratories is in the buy zone",
+   "text": "Ipca Laboratories moved from buy on dip to buy now at ₹1,930.5."
+  },
+  {
+   "id": "target:LAURUSLABS:2026-10-28",
+   "title": "Laurus Labs reached its target",
+   "text": "Laurus Labs closed at ₹2,181.9, at or above the target of ₹2,128.1."
+  },
+  {
+   "id": "buyzone:LAURUSLABS:2026-10-28",
+   "title": "Laurus Labs is in the buy zone",
+   "text": "Laurus Labs moved from buy on dip to buy now at ₹2,181.9."
+  },
+  {
+   "id": "buyzone:LTTS:2026-10-28",
+   "title": "L&T Technology Services is in the buy zone",
+   "text": "L&T Technology Services moved from buy on dip to buy now at ₹4,088.1."
+  },
+  {
+   "id": "target:SONACOMS:2026-10-28",
+   "title": "Sona BLW Precision Forgings reached its target",
+   "text": "Sona BLW Precision Forgings closed at ₹879.5, at or above the target of ₹838.9."
+  },
+  {
+   "id": "buyzone:SONACOMS:2026-10-28",
+   "title": "Sona BLW Precision Forgings is in the buy zone",
+   "text": "Sona BLW Precision Forgings moved from buy on dip to buy now at ₹879.5."
+  },
+  {
+   "id": "buyzone:FSL:2026-10-28",
+   "title": "Firstsource Solutions is in the buy zone",
+   "text": "Firstsource Solutions moved from buy on dip to buy now at ₹308.0."
+  },
+  {
    "id": "results:ADANIPORTS:2026-10-28",
-   "title": "Adani Ports and Special Economic Zone results tomorrow",
-   "text": "Adani Ports and Special Economic Zone reports quarterly results tomorrow (28 Oct)."
+   "title": "Adani Ports and Special Economic Zone results today",
+   "text": "Adani Ports and Special Economic Zone reports quarterly results today (28 Oct)."
   },
   {
-   "id": "results:CIPLA:2026-10-27",
-   "title": "Cipla results today",
-   "text": "Cipla reports quarterly results today (27 Oct)."
-  },
-  {
-   "id": "results:BAJAJ-AUTO:2026-10-27",
-   "title": "Bajaj Auto results today",
-   "text": "Bajaj Auto reports quarterly results today (27 Oct)."
+   "id": "results:SUNPHARMA:2026-10-30",
+   "title": "Sun Pharmaceutical Industries results 30 Oct",
+   "text": "Sun Pharmaceutical Industries reports quarterly results 30 Oct."
   },
   {
    "id": "results:TRENT:2026-10-29",
-   "title": "Trent results 29 Oct",
-   "text": "Trent reports quarterly results 29 Oct."
+   "title": "Trent results tomorrow",
+   "text": "Trent reports quarterly results tomorrow (29 Oct)."
   },
   {
    "id": "results:LAURUSLABS:2026-10-29",
-   "title": "Laurus Labs results 29 Oct",
-   "text": "Laurus Labs reports quarterly results 29 Oct."
+   "title": "Laurus Labs results tomorrow",
+   "text": "Laurus Labs reports quarterly results tomorrow (29 Oct)."
   }
  ]
 }
