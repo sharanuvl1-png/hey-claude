@@ -72,7 +72,7 @@ Your own stocks plus the strongest 20 Nifty 50, 10 Midcap 150, 10 Smallcap 100 s
 | 4 | Laurus Labs Limited (LAURUSLABS) | ₹2181.9 | 🟢 BUY NOW | ₹2136.4–2181.9 | ₹1936.9 (10%) | ₹2492.5 | n/a | 0.46 | 125% | 29% | 108 |
 | 5 | Persistent Systems Limited (PERSISTENT) | ₹5848.0 | 🟡 BUY ON DIP | ₹5649.5–5748.5 | ₹5442.5 (5%) | ₹6028.5 | 23% | 0.07 | -26% | 30% | 51 |
 
-150 liquid stocks scanned; 18 had a buy setup with risk under 12%.
+149 liquid stocks scanned; 18 had a buy setup with risk under 12%.
 
 ## Top 5 buy setups today: Smallcap 100
 
