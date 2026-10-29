@@ -66,7 +66,7 @@ Your own stocks plus the strongest 20 Nifty 50, 10 Midcap 150, 10 Smallcap 100 s
 
 | # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | APL Apollo Tubes Limited (APLAPOLLO) | ₹2195.0 | 🟡 BUY ON DIP | ₹2119.8–2153.2 | ₹2009.5 (6%) | ₹2334.8 | 25% | 0.17 | 25% | 34% | 47 |
+| 1 | APL Apollo Tubes Limited (APLAPOLLO) | ₹2195.0 | 🟡 BUY ON DIP | ₹2119.8–2153.2 | ₹2009.5 (6%) | ₹2334.8 | 25% | 0.17 | 25% | 34% | 48 |
 | 2 | Persistent Systems Limited (PERSISTENT) | ₹5880.0 | 🟡 BUY ON DIP | ₹5651.1–5746.9 | ₹5444.1 (4%) | ₹6081.3 | 23% | 0.07 | -26% | 30% | 51 |
 | 3 | Coforge Limited (COFORGE) | ₹1962.0 | 🟡 BUY ON DIP | ₹1822.2–1912.5 | ₹1704.5 (9%) | ₹2111.6 | 13% | 0.27 | 19% | 55% | 38 |
 | 4 | Indian Bank (INDIANB) | ₹864.1 | 🟢 BUY NOW | ₹844.8–864.1 | ₹781.4 (9%) | ₹994.6 | 16% | n/a | 14% | 14% | 9 |

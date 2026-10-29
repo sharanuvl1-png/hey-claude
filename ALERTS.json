@@ -2,36 +2,6 @@
  "date": "2026-10-29",
  "alerts": [
   {
-   "id": "buyzone:KOTAKBANK:2026-10-29",
-   "title": "Kotak Mahindra Bank is in the buy zone",
-   "text": "Kotak Mahindra Bank moved from buy on dip to buy now at ₹459.0."
-  },
-  {
-   "id": "target:ETERNAL:2026-10-29",
-   "title": "Eternal reached its target",
-   "text": "Eternal closed at ₹337.9, at or above the target of ₹329.2."
-  },
-  {
-   "id": "target:ADANIPORTS:2026-10-29",
-   "title": "Adani Ports and Special Economic Zone reached its target",
-   "text": "Adani Ports and Special Economic Zone closed at ₹1,872.0, at or above the target of ₹1,810.5."
-  },
-  {
-   "id": "target:GESHIP:2026-10-29",
-   "title": "The Great Eastern Shipping Company reached its target",
-   "text": "The Great Eastern Shipping Company closed at ₹1,618.8, at or above the target of ₹1,566.5."
-  },
-  {
-   "id": "target:ATHERENERG:2026-10-29",
-   "title": "Ather Energy reached its target",
-   "text": "Ather Energy closed at ₹1,663.0, at or above the target of ₹1,654.4."
-  },
-  {
-   "id": "target:ACUTAAS:2026-10-29",
-   "title": "Acutaas Chemicals reached its target",
-   "text": "Acutaas Chemicals closed at ₹3,976.7, at or above the target of ₹3,932.5."
-  },
-  {
    "id": "results:SUNPHARMA:2026-10-30",
    "title": "Sun Pharmaceutical Industries results tomorrow",
    "text": "Sun Pharmaceutical Industries reports quarterly results tomorrow (30 Oct)."
