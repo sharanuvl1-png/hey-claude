@@ -69,10 +69,10 @@ Your own stocks plus the strongest 20 Nifty 50, 10 Midcap 150, 10 Smallcap 100 s
 | 1 | Coforge Limited (COFORGE) | ₹2045.0 | 🟡 BUY ON DIP | ₹1901.0–1925.1 | ₹1704.0 (11%) | ₹2226.6 | 13% | 0.27 | 19% | 55% | 40 |
 | 2 | Persistent Systems Limited (PERSISTENT) | ₹6048.0 | 🟡 BUY ON DIP | ₹5668.5–5755.3 | ₹5444.6 (5%) | ₹6001.1 | 23% | 0.07 | -26% | 30% | 53 |
 | 3 | Blue Star Limited (BLUESTARCO) | ₹1627.9 | 🟢 BUY NOW | ₹1546.8–1616.5 | ₹1428.8 (10%) | ₹1793.8 | 16% | 0.22 | 26% | 22% | 63 |
-| 4 | APL Apollo Tubes Limited (APLAPOLLO) | ₹2165.1 | 🟢 BUY NOW | ₹2120.1–2152.9 | ₹1977.7 (7%) | ₹2374.7 | 25% | 0.17 | 25% | 34% | 46 |
+| 4 | APL Apollo Tubes Limited (APLAPOLLO) | ₹2165.1 | 🟢 BUY NOW | ₹2120.1–2152.9 | ₹1977.7 (7%) | ₹2374.7 | 25% | 0.17 | 25% | 34% | 47 |
 | 5 | Indian Bank (INDIANB) | ₹865.5 | 🟢 BUY NOW | ₹844.9–865.5 | ₹781.5 (9%) | ₹994.7 | 16% | n/a | 14% | 14% | 9 |
 
-148 liquid stocks scanned; 17 had a buy setup with risk under 12%.
+149 liquid stocks scanned; 17 had a buy setup with risk under 12%.
 
 ## Top 5 buy setups today: Smallcap 100
 
