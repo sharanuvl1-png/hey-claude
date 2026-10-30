@@ -1,20 +1,35 @@
 {
- "date": "2026-10-29",
+ "date": "2026-10-30",
  "alerts": [
   {
+   "id": "buyzone:ICICIBANK:2026-10-30",
+   "title": "ICICI Bank is in the buy zone",
+   "text": "ICICI Bank moved from buy on dip to buy now at ₹1,398.0."
+  },
+  {
+   "id": "target:ETERNAL:2026-10-30",
+   "title": "Eternal reached its target",
+   "text": "Eternal closed at ₹343.6, at or above the target of ₹336.7."
+  },
+  {
+   "id": "target:CIPLA:2026-10-30",
+   "title": "Cipla reached its target",
+   "text": "Cipla closed at ₹1,378.9, at or above the target of ₹1,377.6."
+  },
+  {
+   "id": "target:APOLLOHOSP:2026-10-30",
+   "title": "Apollo Hospitals Enterprise reached its target",
+   "text": "Apollo Hospitals Enterprise closed at ₹8,448.0, at or above the target of ₹8,388.4."
+  },
+  {
+   "id": "buyzone:ATHERENERG:2026-10-30",
+   "title": "Ather Energy is in the buy zone",
+   "text": "Ather Energy moved from buy on dip to buy now at ₹1,756.0."
+  },
+  {
    "id": "results:SUNPHARMA:2026-10-30",
-   "title": "Sun Pharmaceutical Industries results tomorrow",
-   "text": "Sun Pharmaceutical Industries reports quarterly results tomorrow (30 Oct)."
-  },
-  {
-   "id": "results:TRENT:2026-10-29",
-   "title": "Trent results today",
-   "text": "Trent reports quarterly results today (29 Oct)."
-  },
-  {
-   "id": "results:LAURUSLABS:2026-10-29",
-   "title": "Laurus Labs results today",
-   "text": "Laurus Labs reports quarterly results today (29 Oct)."
+   "title": "Sun Pharmaceutical Industries results today",
+   "text": "Sun Pharmaceutical Industries reports quarterly results today (30 Oct)."
   }
  ]
 }
