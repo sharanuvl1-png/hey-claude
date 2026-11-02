@@ -2,69 +2,9 @@
  "date": "2026-11-02",
  "alerts": [
   {
-   "id": "buyzone:TRENT:2026-11-02",
-   "title": "Trent is in the buy zone",
-   "text": "Trent moved from buy on dip to buy now at ₹3,046.4."
-  },
-  {
-   "id": "buyzone:INFY:2026-11-02",
-   "title": "Infosys is in the buy zone",
-   "text": "Infosys moved from buy on dip to buy now at ₹1,161.0."
-  },
-  {
-   "id": "target:GRASIM:2026-11-02",
-   "title": "Grasim Industries reached its target",
-   "text": "Grasim Industries closed at ₹3,057.1, at or above the target of ₹3,039.4."
-  },
-  {
-   "id": "target:JSWSTEEL:2026-11-02",
-   "title": "JSW Steel reached its target",
-   "text": "JSW Steel closed at ₹1,309.9, at or above the target of ₹1,296.0."
-  },
-  {
-   "id": "buyzone:DRREDDY:2026-11-02",
-   "title": "Dr. Reddy's Laboratories is in the buy zone",
-   "text": "Dr. Reddy's Laboratories moved from buy on dip to buy now at ₹1,342.0."
-  },
-  {
-   "id": "buyzone:LAURUSLABS:2026-11-02",
-   "title": "Laurus Labs is in the buy zone",
-   "text": "Laurus Labs moved from buy on dip to buy now at ₹2,348.0."
-  },
-  {
-   "id": "target:PERSISTENT:2026-11-02",
-   "title": "Persistent Systems reached its target",
-   "text": "Persistent Systems closed at ₹6,051.0, at or above the target of ₹6,001.1."
-  },
-  {
-   "id": "buyzone:COFORGE:2026-11-02",
-   "title": "Coforge is in the buy zone",
-   "text": "Coforge moved from buy on dip to buy now at ₹2,099.0."
-  },
-  {
-   "id": "buyzone:ACUTAAS:2026-11-02",
-   "title": "Acutaas Chemicals is in the buy zone",
-   "text": "Acutaas Chemicals moved from buy on dip to buy now at ₹3,892.6."
-  },
-  {
-   "id": "buyzone:MRPL:2026-11-02",
-   "title": "Mangalore Refinery and Petrochemicals is in the buy zone",
-   "text": "Mangalore Refinery and Petrochemicals moved from buy on dip to buy now at ₹177.5."
-  },
-  {
    "id": "results:APOLLOHOSP:2026-11-04",
    "title": "Apollo Hospitals Enterprise results 4 Nov",
    "text": "Apollo Hospitals Enterprise reports quarterly results 4 Nov."
-  },
-  {
-   "id": "results:SBIN:2026-11-03",
-   "title": "State Bank of India results tomorrow",
-   "text": "State Bank of India reports quarterly results tomorrow (3 Nov)."
-  },
-  {
-   "id": "results:PETRONET:2026-11-02",
-   "title": "Petronet LNG results today",
-   "text": "Petronet LNG reports quarterly results today (2 Nov)."
   }
  ]
 }
