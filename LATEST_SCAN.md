@@ -1,4 +1,4 @@
-# Mehitha daily stock scan, 2026-11-02
+# Mehitha daily stock scan, 2026-11-03
 
 Prices and fundamentals from Yahoo Finance (end of day). Not investment advice; check before you trade.
 
@@ -8,81 +8,81 @@ Your own stocks plus the strongest 20 Nifty 50, 10 Midcap 150, 10 Smallcap 100 s
 
 | Group | Stock | Close | Verdict | Grade | Entry | Stop-loss (risk) | Target 1 | Chart |
 |---|---|---|---|---|---|---|---|---|
-| Your picks | PCJEWELLER.NS | ₹15.5 | 🟡 BUY ON DIP | B | ₹13.2–15.5 | ₹12.3 (14%) | ₹17.4 | PCJEWELLER/2026-10-30.png |
-| Nifty 50 | Kotak Mahindra Bank Limited | ₹461.6 | 🟢 BUY NOW | A | ₹454.2–461.6 | ₹425.2 (7%) | ₹506.9 | KOTAKBANK/2026-10-30.png |
-| Nifty 50 | Tech Mahindra Limited | ₹1790.8 | 🟡 BUY ON DIP | A | ₹1683.9–1702.8 | ₹1429.1 (16%) | ₹2089.6 | TECHM/2026-10-30.png |
-| Nifty 50 | Adani Ports and Special Economic Zone Limited | ₹1850.0 | 🟡 BUY ON DIP | A | ₹1747.8–1796.0 | ₹1675.1 (5%) | ₹1916.7 | ADANIPORTS/2026-10-30.png |
-| Nifty 50 | HCL Technologies Limited | ₹1428.1 | 🟡 BUY ON DIP | A | ₹1385.9–1406.1 | ₹1162.7 (17%) | ₹1659.4 | HCLTECH/2026-10-30.png |
-| Nifty 50 | Tata Consultancy Services Limited | ₹2502.6 | 🟡 BUY ON DIP | A | ₹2359.0–2406.7 | ₹2014.5 (15%) | ₹2935.6 | TCS/2026-10-30.png |
-| Nifty 50 | Eternal Limited | ₹343.6 | 🟡 BUY ON DIP | A | ₹322.6–325.6 | ₹299.1 (8%) | ₹361.6 | ETERNAL/2026-10-30.png |
-| Nifty 50 | Bharti Airtel Limited | ₹1973.7 | 🟡 BUY ON DIP | A | ₹1886.7–1936.5 | ₹1745.3 (9%) | ₹2114.1 | BHARTIARTL/2026-10-30.png |
-| Nifty 50 | ICICI Bank Limited | ₹1398.0 | 🟢 BUY NOW | A | ₹1385.3–1397.7 | ₹1284.8 (8%) | ₹1551.6 | ICICIBANK/2026-10-30.png |
-| Nifty 50 | BSE Limited | ₹3510.4 | 🟢 BUY NOW | A | ₹3386.8–3476.5 | ₹3164.6 (8%) | ₹3842.1 | BSE/2026-10-30.png |
-| Nifty 50 | Infosys Limited | ₹1185.0 | 🟡 BUY ON DIP | A | ₹1139.3–1164.1 | ₹1027.6 (11%) | ₹1366.4 | INFY/2026-10-30.png |
-| Nifty 50 | Trent Limited | ₹3017.3 | 🟡 BUY ON DIP | B | ₹2839.6–2858.2 | ₹2654.0 (7%) | ₹3222.3 | TRENT/2026-10-30.png |
-| Nifty 50 | Apollo Hospitals Enterprise Limited | ₹8448.0 | 🟡 BUY ON DIP | B | ₹8003.3–8050.7 | ₹7409.4 (8%) | ₹8849.4 | APOLLOHOSP/2026-10-30.png |
-| Nifty 50 | Dr. Reddy's Laboratories Limited | ₹1352.0 | 🟡 BUY ON DIP | A | ₹1329.6–1352.0 | ₹1159.7 (14%) | ₹1612.4 | DRREDDY/2026-10-30.png |
-| Nifty 50 | JSW Steel Limited | ₹1246.0 | 🟠 WAIT | C | ₹1181.9–1233.3 | ₹1150.0 (5%) | ₹1296.0 | JSWSTEEL/2026-10-30.png |
-| Nifty 50 | Eicher Motors Limited | ₹7220.0 | 🟠 WAIT | C | ₹7093.1–7204.2 | ₹6871.6 (4%) | ₹7563.6 | EICHERMOT/2026-10-30.png |
-| Nifty 50 | Larsen & Toubro Limited | ₹3871.7 | 🟠 WAIT | C | ₹3751.1–3871.7 | ₹3574.3 (6%) | ₹4093.3 | LT/2026-10-30.png |
-| Nifty 50 | Titan Company Limited | ₹4436.5 | 🟠 WAIT | C | ₹4306.3–4436.5 | ₹4185.3 (4%) | ₹4656.1 | TITAN/2026-10-30.png |
-| Nifty 50 | Bajaj Finance Limited | ₹939.1 | 🔴 AVOID | C | ₹930.6–939.1 | ₹917.1 (2%) | ₹969.0 | BAJFINANCE/2026-10-30.png |
-| Nifty 50 | Bajaj Auto Limited | ₹10350.0 | 🔴 AVOID | C | ₹10010.2–10350.0 | ₹9837.7 (3%) | ₹10706.7 | BAJAJ-AUTO/2026-10-30.png |
-| Nifty 50 | Grasim Industries Limited | ₹2981.4 | 🔴 AVOID | C | ₹2854.1–2952.2 | ₹2812.3 (3%) | ₹3039.4 | GRASIM/2026-10-30.png |
-| Midcap 150 | The Indian Hotels Company Limited | ₹811.7 | 🟢 BUY NOW | A | ₹796.4–811.7 | ₹703.0 (13%) | ₹955.5 | INDHOTEL/2026-10-30.png |
-| Midcap 150 | Mphasis Limited | ₹2525.6 | 🟡 BUY ON DIP | A | ₹2363.3–2464.8 | ₹2123.1 (12%) | ₹2837.3 | MPHASIS/2026-10-30.png |
-| Midcap 150 | Coforge Limited | ₹2045.0 | 🟡 BUY ON DIP | A | ₹1901.0–1925.1 | ₹1704.0 (11%) | ₹2226.6 | COFORGE/2026-10-30.png |
-| Midcap 150 | Laurus Labs Limited | ₹2405.5 | 🟡 BUY ON DIP | A | ₹2351.7–2405.5 | ₹1915.6 (19%) | ₹3073.2 | LAURUSLABS/2026-10-30.png |
-| Midcap 150 | Persistent Systems Limited | ₹6048.0 | 🟡 BUY ON DIP | A | ₹5668.5–5755.3 | ₹5444.6 (5%) | ₹6001.1 | PERSISTENT/2026-10-30.png |
-| Midcap 150 | L&T Technology Services Limited | ₹4280.2 | 🟡 BUY ON DIP | A | ₹3983.5–4092.6 | ₹3013.2 (25%) | ₹5575.3 | LTTS/2026-10-30.png |
-| Midcap 150 | Ipca Laboratories Limited | ₹1927.8 | 🟢 BUY NOW | A | ₹1864.2–1925.7 | ₹1780.4 (6%) | ₹2066.8 | IPCALAB/2026-10-30.png |
-| Midcap 150 | APL Apollo Tubes Limited | ₹2165.1 | 🟢 BUY NOW | A | ₹2120.1–2152.9 | ₹1977.7 (7%) | ₹2374.7 | APLAPOLLO/2026-10-30.png |
-| Midcap 150 | Indian Bank | ₹865.5 | 🟢 BUY NOW | A | ₹844.9–865.5 | ₹781.5 (9%) | ₹994.7 | INDIANB/2026-10-30.png |
-| Midcap 150 | Lenskart Solutions Limited | ₹678.2 | 🟢 BUY NOW | A | ₹661.7–672.8 | ₹609.7 (9%) | ₹753.6 | LENSKART/2026-10-30.png |
-| Smallcap 100 | Sona BLW Precision Forgings Limited | ₹890.5 | 🟢 BUY NOW | A | ₹868.5–890.5 | ₹734.0 (17%) | ₹1097.8 | SONACOMS/2026-10-30.png |
-| Smallcap 100 | Acutaas Chemicals Limited | ₹4003.6 | 🟡 BUY ON DIP | A | ₹3869.4–4003.6 | ₹3040.3 (23%) | ₹5280.9 | ACUTAAS/2026-10-30.png |
-| Smallcap 100 | Gland Pharma Limited | ₹3095.9 | 🟡 BUY ON DIP | A | ₹2889.7–2987.2 | ₹2744.0 (7%) | ₹3230.0 | GLAND/2026-10-30.png |
-| Smallcap 100 | The Karur Vysya Bank Limited | ₹356.1 | 🟡 BUY ON DIP | A | ₹328.8–345.6 | ₹308.0 (9%) | ₹387.4 | KARURVYSYA/2026-10-30.png |
-| Smallcap 100 | Anand Rathi Wealth Limited | ₹2252.0 | 🟡 BUY ON DIP | A | ₹2161.5–2197.7 | ₹2004.6 (8%) | ₹2442.1 | ANANDRATHI/2026-10-30.png |
-| Smallcap 100 | The Great Eastern Shipping Company Limited | ₹1593.6 | 🟡 BUY ON DIP | A | ₹1496.1–1533.0 | ₹1447.8 (4%) | ₹1634.8 | GESHIP/2026-10-30.png |
-| Smallcap 100 | Chennai Petroleum Corporation Limited | ₹1511.5 | 🟡 BUY ON DIP | A | ₹1357.4–1480.9 | ₹1317.7 (7%) | ₹1562.1 | CHENNPETRO/2026-10-30.png |
-| Smallcap 100 | Navin Fluorine International Limited | ₹8680.0 | 🟡 BUY ON DIP | A | ₹8102.3–8263.3 | ₹7957.9 (3%) | ₹8616.1 | NAVINFLUOR/2026-10-30.png |
-| Smallcap 100 | Firstsource Solutions Limited | ₹292.9 | 🟡 BUY ON DIP | A | ₹267.1–285.3 | ₹243.8 (12%) | ₹315.8 | FSL/2026-10-30.png |
-| Smallcap 100 | Ather Energy Limited | ₹1756.0 | 🟢 BUY NOW | A | ₹1697.9–1756.0 | ₹1349.2 (22%) | ₹2293.5 | ATHERENERG/2026-10-30.png |
+| Your picks | PCJEWELLER.NS | ₹14.7 | 🟠 WAIT | C | ₹12.5–14.7 | ₹12.0 (12%) | ₹16.1 | PCJEWELLER/2026-11-03.png |
+| Nifty 50 | Kotak Mahindra Bank Limited | ₹464.6 | 🟢 BUY NOW | A | ₹457.3–464.6 | ₹425.2 (8%) | ₹514.6 | KOTAKBANK/2026-11-03.png |
+| Nifty 50 | Tech Mahindra Limited | ₹1789.1 | 🟡 BUY ON DIP | A | ₹1687.2–1718.2 | ₹1429.8 (16%) | ₹2112.2 | TECHM/2026-11-03.png |
+| Nifty 50 | Adani Ports and Special Economic Zone Limited | ₹1866.9 | 🟡 BUY ON DIP | A | ₹1768.7–1795.5 | ₹1675.6 (6%) | ₹1915.7 | ADANIPORTS/2026-11-03.png |
+| Nifty 50 | HCL Technologies Limited | ₹1439.1 | 🟡 BUY ON DIP | A | ₹1386.3–1405.7 | ₹1163.1 (17%) | ₹1659.8 | HCLTECH/2026-11-03.png |
+| Nifty 50 | Tata Consultancy Services Limited | ₹2499.1 | 🟡 BUY ON DIP | A | ₹2371.5–2406.1 | ₹2015.1 (16%) | ₹2949.4 | TCS/2026-11-03.png |
+| Nifty 50 | Eternal Limited | ₹349.5 | 🟢 BUY NOW | A | ₹342.0–349.5 | ₹299.3 (13%) | ₹415.4 | ETERNAL/2026-11-03.png |
+| Nifty 50 | Bharti Airtel Limited | ₹2065.0 | 🟡 BUY ON DIP | A | ₹2026.5–2049.5 | ₹1744.7 (14%) | ₹2477.9 | BHARTIARTL/2026-11-03.png |
+| Nifty 50 | ICICI Bank Limited | ₹1424.5 | 🟢 BUY NOW | A | ₹1408.8–1422.0 | ₹1284.4 (9%) | ₹1611.9 | ICICIBANK/2026-11-03.png |
+| Nifty 50 | BSE Limited | ₹3665.7 | 🟢 BUY NOW | A | ₹3604.0–3657.2 | ₹3163.4 (13%) | ₹4193.3 | BSE/2026-11-03.png |
+| Nifty 50 | Infosys Limited | ₹1148.1 | 🟡 BUY ON DIP | A | ₹1078.7–1122.8 | ₹1027.8 (7%) | ₹1177.4 | INFY/2026-11-03.png |
+| Nifty 50 | Trent Limited | ₹3036.5 | 🟡 BUY ON DIP | A | ₹2868.5–2887.6 | ₹2655.2 (8%) | ₹3223.5 | TRENT/2026-11-03.png |
+| Nifty 50 | Apollo Hospitals Enterprise Limited | ₹8440.0 | 🟡 BUY ON DIP | B | ₹8014.6–8122.9 | ₹7411.8 (8%) | ₹8851.8 | APOLLOHOSP/2026-11-03.png |
+| Nifty 50 | Dr. Reddy's Laboratories Limited | ₹1368.3 | 🟡 BUY ON DIP | A | ₹1346.0–1368.3 | ₹1159.8 (15%) | ₹1653.2 | DRREDDY/2026-11-03.png |
+| Nifty 50 | JSW Steel Limited | ₹1320.0 | 🟡 BUY ON DIP | B | ₹1253.1–1260.9 | ₹1149.6 (9%) | ₹1367.7 | JSWSTEEL/2026-11-03.png |
+| Nifty 50 | Eicher Motors Limited | ₹7440.0 | 🟡 BUY ON DIP | B | ₹7364.2–7440.0 | ₹6869.2 (7%) | ₹8098.2 | EICHERMOT/2026-11-03.png |
+| Nifty 50 | Larsen & Toubro Limited | ₹3948.2 | 🟡 BUY ON DIP | B | ₹3787.2–3874.5 | ₹3574.9 (7%) | ₹4093.9 | LT/2026-11-03.png |
+| Nifty 50 | Titan Company Limited | ₹4562.0 | 🟡 BUY ON DIP | B | ₹4375.0–4473.4 | ₹4185.6 (5%) | ₹4782.1 | TITAN/2026-11-03.png |
+| Nifty 50 | Bajaj Finance Limited | ₹970.0 | 🔴 AVOID | C | ₹930.8–954.0 | ₹917.8 (3%) | ₹969.2 | BAJFINANCE/2026-11-03.png |
+| Nifty 50 | Bajaj Auto Limited | ₹10540.0 | 🟡 BUY ON DIP | B | ₹10010.5–10394.8 | ₹9838.0 (4%) | ₹10707.0 | BAJAJ-AUTO/2026-11-03.png |
+| Nifty 50 | Grasim Industries Limited | ₹3090.0 | 🟡 BUY ON DIP | B | ₹3018.4–3088.8 | ₹2811.7 (8%) | ₹3326.6 | GRASIM/2026-11-03.png |
+| Midcap 150 | The Indian Hotels Company Limited | ₹836.0 | 🟡 BUY ON DIP | A | ₹821.2–836.0 | ₹703.2 (15%) | ₹1016.9 | INDHOTEL/2026-11-03.png |
+| Midcap 150 | Mphasis Limited | ₹2535.3 | 🟡 BUY ON DIP | A | ₹2367.0–2480.0 | ₹2324.9 (4%) | ₹2597.4 | MPHASIS/2026-11-03.png |
+| Midcap 150 | Coforge Limited | ₹2060.8 | 🟡 BUY ON DIP | A | ₹1918.8–1953.0 | ₹1794.4 (7%) | ₹2094.4 | COFORGE/2026-11-03.png |
+| Midcap 150 | Laurus Labs Limited | ₹2323.0 | 🟢 BUY NOW | A | ₹2266.4–2323.0 | ₹1914.6 (17%) | ₹2864.8 | LAURUSLABS/2026-11-03.png |
+| Midcap 150 | Persistent Systems Limited | ₹6097.0 | 🟡 BUY ON DIP | A | ₹5737.5–5813.3 | ₹5447.1 (6%) | ₹6268.0 | PERSISTENT/2026-11-03.png |
+| Midcap 150 | L&T Technology Services Limited | ₹4224.0 | 🟡 BUY ON DIP | A | ₹3984.0–4092.1 | ₹3013.7 (25%) | ₹5574.6 | LTTS/2026-11-03.png |
+| Midcap 150 | Ipca Laboratories Limited | ₹1950.1 | 🟡 BUY ON DIP | A | ₹1864.9–1930.1 | ₹1781.1 (6%) | ₹2072.1 | IPCALAB/2026-11-03.png |
+| Midcap 150 | APL Apollo Tubes Limited | ₹2152.8 | 🟢 BUY NOW | A | ₹2120.8–2152.2 | ₹1978.4 (7%) | ₹2373.7 | APLAPOLLO/2026-11-03.png |
+| Midcap 150 | Indian Bank | ₹849.7 | 🟢 BUY NOW | A | ₹827.6–845.7 | ₹813.9 (3%) | ₹862.4 | INDIANB/2026-11-03.png |
+| Midcap 150 | Lenskart Solutions Limited | ₹671.0 | 🟢 BUY NOW | A | ₹661.7–671.0 | ₹609.6 (9%) | ₹751.5 | LENSKART/2026-11-03.png |
+| Smallcap 100 | Sona BLW Precision Forgings Limited | ₹900.0 | 🟢 BUY NOW | A | ₹878.9–900.0 | ₹734.3 (17%) | ₹1122.2 | SONACOMS/2026-11-03.png |
+| Smallcap 100 | Acutaas Chemicals Limited | ₹3904.0 | 🟢 BUY NOW | A | ₹3768.7–3904.0 | ₹3039.9 (21%) | ₹5031.0 | ACUTAAS/2026-11-03.png |
+| Smallcap 100 | Gland Pharma Limited | ₹3158.9 | 🟡 BUY ON DIP | A | ₹2951.4–3010.4 | ₹2743.9 (8%) | ₹3336.4 | GLAND/2026-11-03.png |
+| Smallcap 100 | The Karur Vysya Bank Limited | ₹336.1 | 🔴 AVOID | C | ₹322.7–336.1 | ₹315.8 (4%) | ₹350.0 | KARURVYSYA/2026-11-03.png |
+| Smallcap 100 | Anand Rathi Wealth Limited | ₹2288.0 | 🟡 BUY ON DIP | A | ₹2200.9–2213.1 | ₹2005.0 (9%) | ₹2510.0 | ANANDRATHI/2026-11-03.png |
+| Smallcap 100 | The Great Eastern Shipping Company Limited | ₹1536.5 | 🟢 BUY NOW | A | ₹1447.1–1536.5 | ₹1421.3 (5%) | ₹1597.5 | GESHIP/2026-11-03.png |
+| Smallcap 100 | Chennai Petroleum Corporation Limited | ₹1540.6 | 🟡 BUY ON DIP | A | ₹1382.3–1492.2 | ₹1342.8 (7%) | ₹1562.2 | CHENNPETRO/2026-11-03.png |
+| Smallcap 100 | Navin Fluorine International Limited | ₹8530.0 | 🟡 BUY ON DIP | B | ₹7961.3–8301.0 | ₹7436.8 (9%) | ₹9172.6 | NAVINFLUOR/2026-11-03.png |
+| Smallcap 100 | Firstsource Solutions Limited | ₹289.0 | 🟢 BUY NOW | A | ₹262.5–286.4 | ₹243.7 (11%) | ₹315.7 | FSL/2026-11-03.png |
+| Smallcap 100 | Ather Energy Limited | ₹1795.0 | 🟢 BUY NOW | A | ₹1739.5–1795.0 | ₹1327.2 (25%) | ₹2427.3 | ATHERENERG/2026-11-03.png |
 
 ## Top 5 buy setups today: Nifty 50
 
 | # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Adani Ports and Special Economic Zone Limited (ADANIPORTS) | ₹1850.0 | 🟡 BUY ON DIP | ₹1747.8–1796.0 | ₹1675.1 (5%) | ₹1916.7 | 16% | 0.63 | 9% | 24% | 31 |
-| 2 | Kotak Mahindra Bank Limited (KOTAKBANK) | ₹461.6 | 🟢 BUY NOW | ₹454.2–461.6 | ₹425.2 (7%) | ₹506.9 | 12% | n/a | 26% | 21% | 21 |
-| 3 | Bharti Airtel Limited (BHARTIARTL) | ₹1973.7 | 🟡 BUY ON DIP | ₹1886.7–1936.5 | ₹1745.3 (9%) | ₹2114.1 | 20% | 1.00 | 35% | 18% | 42 |
-| 4 | ICICI Bank Limited (ICICIBANK) | ₹1398.0 | 🟢 BUY NOW | ₹1385.3–1397.7 | ₹1284.8 (8%) | ₹1551.6 | 16% | n/a | 22% | 16% | 17 |
-| 5 | BSE Limited (BSE) | ₹3510.4 | 🟢 BUY NOW | ₹3386.8–3476.5 | ₹3164.6 (8%) | ₹3842.1 | n/a | 0.00 | 62% | 64% | 51 |
+| 1 | Adani Ports and Special Economic Zone Limited (ADANIPORTS) | ₹1866.9 | 🟡 BUY ON DIP | ₹1768.7–1795.5 | ₹1675.6 (6%) | ₹1915.7 | 16% | 0.63 | 9% | 24% | 31 |
+| 2 | Kotak Mahindra Bank Limited (KOTAKBANK) | ₹464.6 | 🟢 BUY NOW | ₹457.3–464.6 | ₹425.2 (8%) | ₹514.6 | 12% | n/a | 26% | 21% | 22 |
+| 3 | Trent Limited (TRENT) | ₹3036.5 | 🟡 BUY ON DIP | ₹2868.5–2887.6 | ₹2655.2 (8%) | ₹3223.5 | 27% | 0.29 | 23% | 22% | 85 |
+| 4 | ICICI Bank Limited (ICICIBANK) | ₹1424.5 | 🟢 BUY NOW | ₹1408.8–1422.0 | ₹1284.4 (9%) | ₹1611.9 | 16% | n/a | 22% | 16% | 17 |
+| 5 | Infosys Limited (INFY) | ₹1148.1 | 🟡 BUY ON DIP | ₹1078.7–1122.8 | ₹1027.8 (7%) | ₹1177.4 | 30% | 0.09 | -0% | 1% | 15 |
 
-50 liquid stocks scanned; 9 had a buy setup with risk under 12%.
+50 liquid stocks scanned; 13 had a buy setup with risk under 12%.
 
 ## Top 5 buy setups today: Midcap 150
 
 | # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Coforge Limited (COFORGE) | ₹2045.0 | 🟡 BUY ON DIP | ₹1901.0–1925.1 | ₹1704.0 (11%) | ₹2226.6 | 13% | 0.27 | 19% | 55% | 41 |
-| 2 | Persistent Systems Limited (PERSISTENT) | ₹6048.0 | 🟡 BUY ON DIP | ₹5668.5–5755.3 | ₹5444.6 (5%) | ₹6001.1 | 23% | 0.07 | -26% | 30% | 53 |
-| 3 | Blue Star Limited (BLUESTARCO) | ₹1627.9 | 🟢 BUY NOW | ₹1546.8–1616.5 | ₹1428.8 (10%) | ₹1793.8 | 16% | 0.22 | 26% | 21% | 61 |
-| 4 | APL Apollo Tubes Limited (APLAPOLLO) | ₹2165.1 | 🟢 BUY NOW | ₹2120.1–2152.9 | ₹1977.7 (7%) | ₹2374.7 | 25% | 0.17 | 25% | 34% | 47 |
-| 5 | Indian Bank (INDIANB) | ₹865.5 | 🟢 BUY NOW | ₹844.9–865.5 | ₹781.5 (9%) | ₹994.7 | 16% | n/a | 14% | 14% | 9 |
+| 1 | Mankind Pharma Limited (MANKIND) | ₹2475.0 | 🟢 BUY NOW | ₹2447.9–2475.0 | ₹2177.7 (12%) | ₹2887.1 | 14% | 0.30 | 39% | 17% | 46 |
+| 2 | Mphasis Limited (MPHASIS) | ₹2535.3 | 🟡 BUY ON DIP | ₹2367.0–2480.0 | ₹2324.9 (4%) | ₹2597.4 | 18% | 0.25 | 11% | 18% | 25 |
+| 3 | Persistent Systems Limited (PERSISTENT) | ₹6097.0 | 🟡 BUY ON DIP | ₹5737.5–5813.3 | ₹5447.1 (6%) | ₹6268.0 | 23% | 0.07 | -26% | 30% | 53 |
+| 4 | Petronet LNG Limited (PETRONET) | ₹303.0 | 🟡 BUY ON DIP | ₹287.8–292.5 | ₹277.4 (4%) | ₹309.1 | n/a | 0.11 | 35% | -53% | 10 |
+| 5 | Indian Bank (INDIANB) | ₹849.7 | 🟢 BUY NOW | ₹827.6–845.7 | ₹813.9 (3%) | ₹862.4 | 16% | n/a | 14% | 14% | 9 |
 
-149 liquid stocks scanned; 17 had a buy setup with risk under 12%.
+149 liquid stocks scanned; 27 had a buy setup with risk under 12%.
 
 ## Top 5 buy setups today: Smallcap 100
 
 | # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Gland Pharma Limited (GLAND) | ₹3095.9 | 🟡 BUY ON DIP | ₹2889.7–2987.2 | ₹2744.0 (7%) | ₹3230.0 | n/a | 0.03 | 47% | 20% | 45 |
-| 2 | The Great Eastern Shipping Company Limited (GESHIP) | ₹1593.6 | 🟡 BUY ON DIP | ₹1496.1–1533.0 | ₹1447.8 (4%) | ₹1634.8 | n/a | 0.06 | 159% | 67% | 6 |
-| 3 | The Karur Vysya Bank Limited (KARURVYSYA) | ₹356.1 | 🟡 BUY ON DIP | ₹328.8–345.6 | ₹308.0 (9%) | ₹387.4 | 21% | n/a | 37% | 21% | 11 |
-| 4 | Anand Rathi Wealth Limited (ANANDRATHI) | ₹2252.0 | 🟡 BUY ON DIP | ₹2161.5–2197.7 | ₹2004.6 (8%) | ₹2442.1 | 43% | 0.05 | -12% | 16% | 84 |
-| 5 | Chennai Petroleum Corporation Limited (CHENNPETRO) | ₹1511.5 | 🟡 BUY ON DIP | ₹1357.4–1480.9 | ₹1317.7 (7%) | ₹1562.1 | 51% | 0.16 | 212% | 26% | 4 |
+| 1 | Gland Pharma Limited (GLAND) | ₹3158.9 | 🟡 BUY ON DIP | ₹2951.4–3010.4 | ₹2743.9 (8%) | ₹3336.4 | n/a | 0.03 | 47% | 20% | 46 |
+| 2 | Mangalore Refinery and Petrochemicals Limited (MRPL) | ₹179.9 | 🟡 BUY ON DIP | ₹162.4–176.2 | ₹156.7 (7%) | ₹188.2 | 29% | 0.60 | 203% | 44% | 7 |
+| 3 | Angel One Limited (ANGELONE) | ₹310.4 | 🟡 BUY ON DIP | ₹287.3–293.7 | ₹270.9 (7%) | ₹327.3 | 18% | 1.14 | 57% | 15% | 25 |
+| 4 | Anand Rathi Wealth Limited (ANANDRATHI) | ₹2288.0 | 🟡 BUY ON DIP | ₹2200.9–2213.1 | ₹2005.0 (9%) | ₹2510.0 | 43% | 0.05 | -12% | 16% | 84 |
+| 5 | Sai Life Sciences Limited (SAILIFE) | ₹1558.2 | 🟡 BUY ON DIP | ₹1481.6–1507.2 | ₹1347.8 (10%) | ₹1684.2 | n/a | 0.12 | 21% | 12% | 92 |
 
-96 liquid stocks scanned; 16 had a buy setup with risk under 12%.
+97 liquid stocks scanned; 12 had a buy setup with risk under 12%.
 
