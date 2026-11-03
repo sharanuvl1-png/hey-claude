@@ -56,7 +56,7 @@ Your own stocks plus the strongest 20 Nifty 50, 10 Midcap 150, 10 Smallcap 100 s
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | Adani Ports and Special Economic Zone Limited (ADANIPORTS) | ₹1866.9 | 🟡 BUY ON DIP | ₹1768.7–1795.5 | ₹1675.6 (6%) | ₹1915.7 | 16% | 0.63 | 9% | 24% | 31 |
 | 2 | Kotak Mahindra Bank Limited (KOTAKBANK) | ₹464.6 | 🟢 BUY NOW | ₹457.3–464.6 | ₹425.2 (8%) | ₹514.6 | 12% | n/a | 26% | 21% | 22 |
-| 3 | Trent Limited (TRENT) | ₹3036.5 | 🟡 BUY ON DIP | ₹2868.5–2887.6 | ₹2655.2 (8%) | ₹3223.5 | 27% | 0.29 | 23% | 22% | 85 |
+| 3 | Trent Limited (TRENT) | ₹3036.5 | 🟡 BUY ON DIP | ₹2868.5–2887.6 | ₹2655.2 (8%) | ₹3223.5 | 27% | 0.29 | 23% | 22% | 90 |
 | 4 | ICICI Bank Limited (ICICIBANK) | ₹1424.5 | 🟢 BUY NOW | ₹1408.8–1422.0 | ₹1284.4 (9%) | ₹1611.9 | 16% | n/a | 22% | 16% | 17 |
 | 5 | Infosys Limited (INFY) | ₹1148.1 | 🟡 BUY ON DIP | ₹1078.7–1122.8 | ₹1027.8 (7%) | ₹1177.4 | 30% | 0.09 | -0% | 1% | 15 |
 

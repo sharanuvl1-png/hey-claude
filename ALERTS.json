@@ -2,51 +2,6 @@
  "date": "2026-11-03",
  "alerts": [
   {
-   "id": "buyzone:ETERNAL:2026-11-03",
-   "title": "Eternal is in the buy zone",
-   "text": "Eternal moved from buy on dip to buy now at ₹349.5."
-  },
-  {
-   "id": "target:JSWSTEEL:2026-11-03",
-   "title": "JSW Steel reached its target",
-   "text": "JSW Steel closed at ₹1,320.0, at or above the target of ₹1,296.0."
-  },
-  {
-   "id": "target:BAJFINANCE:2026-11-03",
-   "title": "Bajaj Finance reached its target",
-   "text": "Bajaj Finance closed at ₹970.0, at or above the target of ₹969.0."
-  },
-  {
-   "id": "target:GRASIM:2026-11-03",
-   "title": "Grasim Industries reached its target",
-   "text": "Grasim Industries closed at ₹3,090.0, at or above the target of ₹3,039.4."
-  },
-  {
-   "id": "buyzone:LAURUSLABS:2026-11-03",
-   "title": "Laurus Labs is in the buy zone",
-   "text": "Laurus Labs moved from buy on dip to buy now at ₹2,323.0."
-  },
-  {
-   "id": "target:PERSISTENT:2026-11-03",
-   "title": "Persistent Systems reached its target",
-   "text": "Persistent Systems closed at ₹6,097.0, at or above the target of ₹6,001.1."
-  },
-  {
-   "id": "buyzone:ACUTAAS:2026-11-03",
-   "title": "Acutaas Chemicals is in the buy zone",
-   "text": "Acutaas Chemicals moved from buy on dip to buy now at ₹3,904.0."
-  },
-  {
-   "id": "buyzone:GESHIP:2026-11-03",
-   "title": "The Great Eastern Shipping Company is in the buy zone",
-   "text": "The Great Eastern Shipping Company moved from buy on dip to buy now at ₹1,536.5."
-  },
-  {
-   "id": "buyzone:FSL:2026-11-03",
-   "title": "Firstsource Solutions is in the buy zone",
-   "text": "Firstsource Solutions moved from buy on dip to buy now at ₹289.0."
-  },
-  {
    "id": "results:BHARTIARTL:2026-11-05",
    "title": "Bharti Airtel results 5 Nov",
    "text": "Bharti Airtel reports quarterly results 5 Nov."
