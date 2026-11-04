@@ -1,30 +1,80 @@
 {
- "date": "2026-11-03",
+ "date": "2026-11-04",
  "alerts": [
   {
+   "id": "buyzone:ADANIPORTS:2026-11-04",
+   "title": "Adani Ports and Special Economic Zone is in the buy zone",
+   "text": "Adani Ports and Special Economic Zone moved from buy on dip to buy now at ₹1,910.0."
+  },
+  {
+   "id": "buyzone:HCLTECH:2026-11-04",
+   "title": "HCL Technologies is in the buy zone",
+   "text": "HCL Technologies moved from buy on dip to buy now at ₹1,405.0."
+  },
+  {
+   "id": "buyzone:INFY:2026-11-04",
+   "title": "Infosys is in the buy zone",
+   "text": "Infosys moved from buy on dip to buy now at ₹1,128.2."
+  },
+  {
+   "id": "buyzone:APOLLOHOSP:2026-11-04",
+   "title": "Apollo Hospitals Enterprise is in the buy zone",
+   "text": "Apollo Hospitals Enterprise moved from buy on dip to buy now at ₹8,599.5."
+  },
+  {
+   "id": "buyzone:JSWSTEEL:2026-11-04",
+   "title": "JSW Steel is in the buy zone",
+   "text": "JSW Steel moved from buy on dip to buy now at ₹1,343.0."
+  },
+  {
+   "id": "target:BAJFINANCE:2026-11-04",
+   "title": "Bajaj Finance reached its target",
+   "text": "Bajaj Finance closed at ₹994.0, at or above the target of ₹969.2."
+  },
+  {
+   "id": "buyzone:LTTS:2026-11-04",
+   "title": "L&T Technology Services is in the buy zone",
+   "text": "L&T Technology Services moved from buy on dip to buy now at ₹4,133.5."
+  },
+  {
+   "id": "target:CHENNPETRO:2026-11-04",
+   "title": "Chennai Petroleum Corporation reached its target",
+   "text": "Chennai Petroleum Corporation closed at ₹1,566.9, at or above the target of ₹1,562.2."
+  },
+  {
    "id": "results:BHARTIARTL:2026-11-05",
-   "title": "Bharti Airtel results 5 Nov",
-   "text": "Bharti Airtel reports quarterly results 5 Nov."
+   "title": "Bharti Airtel results tomorrow",
+   "text": "Bharti Airtel reports quarterly results tomorrow (5 Nov)."
   },
   {
    "id": "results:APOLLOHOSP:2026-11-04",
-   "title": "Apollo Hospitals Enterprise results tomorrow",
-   "text": "Apollo Hospitals Enterprise reports quarterly results tomorrow (4 Nov)."
+   "title": "Apollo Hospitals Enterprise results today",
+   "text": "Apollo Hospitals Enterprise reports quarterly results today (4 Nov)."
   },
   {
    "id": "results:TITAN:2026-11-05",
-   "title": "Titan Company results 5 Nov",
-   "text": "Titan Company reports quarterly results 5 Nov."
+   "title": "Titan Company results tomorrow",
+   "text": "Titan Company reports quarterly results tomorrow (5 Nov)."
   },
   {
    "id": "results:MPHASIS:2026-11-05",
-   "title": "Mphasis results 5 Nov",
-   "text": "Mphasis reports quarterly results 5 Nov."
+   "title": "Mphasis results tomorrow",
+   "text": "Mphasis reports quarterly results tomorrow (5 Nov)."
   },
   {
    "id": "results:IPCALAB:2026-11-05",
-   "title": "Ipca Laboratories results 5 Nov",
-   "text": "Ipca Laboratories reports quarterly results 5 Nov."
+   "title": "Ipca Laboratories results tomorrow",
+   "text": "Ipca Laboratories reports quarterly results tomorrow (5 Nov)."
+  },
+  {
+   "id": "results:GLAND:2026-11-06",
+   "title": "Gland Pharma results 6 Nov",
+   "text": "Gland Pharma reports quarterly results 6 Nov."
+  },
+  {
+   "id": "news:ICICIBANK:1b67300098",
+   "title": "News: ICICI Bank",
+   "text": "Asian Equities Traded in the US as American Depositary Receipts Higher in Tuesday Trading"
   }
  ]
 }
