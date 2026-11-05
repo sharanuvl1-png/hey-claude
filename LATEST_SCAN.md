@@ -60,7 +60,7 @@ Your own stocks plus the strongest 20 Nifty 50, 10 Midcap 150, 10 Smallcap 100 s
 | 4 | Bajaj Auto Limited (BAJAJ-AUTO) | ₹10758.0 | 🟡 BUY ON DIP | ₹10242.2–10447.7 | ₹9841.5 (5%) | ₹11100.2 | 36% | 0.70 | 64% | 57% | 23 |
 | 5 | ICICI Bank Limited (ICICIBANK) | ₹1500.0 | 🟡 BUY ON DIP | ₹1477.5–1500.0 | ₹1353.9 (9%) | ₹1691.0 | 16% | n/a | 22% | 16% | 18 |
 
-50 liquid stocks scanned; 17 had a buy setup with risk under 12%.
+49 liquid stocks scanned; 17 had a buy setup with risk under 12%.
 
 ## Top 5 buy setups today: Midcap 150
 
@@ -81,8 +81,8 @@ Your own stocks plus the strongest 20 Nifty 50, 10 Midcap 150, 10 Smallcap 100 s
 | 1 | Navin Fluorine International Limited (NAVINFLUOR) | ₹8845.0 | 🟡 BUY ON DIP | ₹8269.2–8394.5 | ₹7438.5 (11%) | ₹9671.8 | 23% | 0.28 | 81% | 57% | 50 |
 | 2 | Gland Pharma Limited (GLAND) | ₹3145.2 | 🟡 BUY ON DIP | ₹2944.4–3036.0 | ₹2744.7 (8%) | ₹3358.5 | n/a | 0.03 | 47% | 20% | 46 |
 | 3 | Tata Elxsi Limited (TATAELXSI) | ₹3920.0 | 🟢 BUY NOW | ₹3832.9–3920.0 | ₹3613.9 (7%) | ₹4318.4 | 24% | 0.05 | 10% | 15% | 36 |
-| 4 | Sai Life Sciences Limited (SAILIFE) | ₹1594.5 | 🟡 BUY ON DIP | ₹1491.6–1507.3 | ₹1347.7 (10%) | ₹1684.1 | n/a | 0.12 | 21% | 12% | 94 |
-| 5 | The Karur Vysya Bank Limited (KARURVYSYA) | ₹360.5 | 🟡 BUY ON DIP | ₹332.3–346.1 | ₹322.6 (5%) | ₹364.1 | 21% | n/a | 37% | 21% | 12 |
+| 4 | Dr. Lal PathLabs Limited (LALPATHLAB) | ₹1966.8 | 🟡 BUY ON DIP | ₹1837.8–1918.1 | ₹1779.9 (5%) | ₹2025.0 | 23% | 0.08 | 27% | 20% | 56 |
+| 5 | Sai Life Sciences Limited (SAILIFE) | ₹1594.5 | 🟡 BUY ON DIP | ₹1491.6–1507.3 | ₹1347.7 (10%) | ₹1684.1 | n/a | 0.12 | 21% | 12% | 94 |
 
 97 liquid stocks scanned; 16 had a buy setup with risk under 12%.
 

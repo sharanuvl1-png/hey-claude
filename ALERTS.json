@@ -2,61 +2,6 @@
  "date": "2026-11-05",
  "alerts": [
   {
-   "id": "target:KOTAKBANK:2026-11-05",
-   "title": "Kotak Mahindra Bank reached its target",
-   "text": "Kotak Mahindra Bank closed at ₹467.0, at or above the target of ₹463.5."
-  },
-  {
-   "id": "buyzone:ETERNAL:2026-11-05",
-   "title": "Eternal is in the buy zone",
-   "text": "Eternal moved from buy on dip to buy now at ₹358.3."
-  },
-  {
-   "id": "buyzone:BHARTIARTL:2026-11-05",
-   "title": "Bharti Airtel is in the buy zone",
-   "text": "Bharti Airtel moved from buy on dip to buy now at ₹2,056.9."
-  },
-  {
-   "id": "buyzone:BSE:2026-11-05",
-   "title": "BSE is in the buy zone",
-   "text": "BSE moved from buy on dip to buy now at ₹3,790.0."
-  },
-  {
-   "id": "buyzone:TITAN:2026-11-05",
-   "title": "Titan Company is in the buy zone",
-   "text": "Titan Company moved from buy on dip to buy now at ₹4,834.6."
-  },
-  {
-   "id": "target:BAJFINANCE:2026-11-05",
-   "title": "Bajaj Finance reached its target",
-   "text": "Bajaj Finance closed at ₹1,070.0, at or above the target of ₹1,030.8."
-  },
-  {
-   "id": "target:BAJAJ-AUTO:2026-11-05",
-   "title": "Bajaj Auto reached its target",
-   "text": "Bajaj Auto closed at ₹10,758.0, at or above the target of ₹10,709.7."
-  },
-  {
-   "id": "buyzone:IPCALAB:2026-11-05",
-   "title": "Ipca Laboratories is in the buy zone",
-   "text": "Ipca Laboratories moved from buy on dip to buy now at ₹1,949.6."
-  },
-  {
-   "id": "target:INDIANB:2026-11-05",
-   "title": "Indian Bank reached its target",
-   "text": "Indian Bank closed at ₹892.2, at or above the target of ₹862.6."
-  },
-  {
-   "id": "buyzone:SONACOMS:2026-11-05",
-   "title": "Sona BLW Precision Forgings is in the buy zone",
-   "text": "Sona BLW Precision Forgings moved from buy on dip to buy now at ₹915.2."
-  },
-  {
-   "id": "target:KARURVYSYA:2026-11-05",
-   "title": "The Karur Vysya Bank reached its target",
-   "text": "The Karur Vysya Bank closed at ₹360.5, at or above the target of ₹359.4."
-  },
-  {
    "id": "results:BHARTIARTL:2026-11-05",
    "title": "Bharti Airtel results today",
    "text": "Bharti Airtel reports quarterly results today (5 Nov)."
@@ -82,9 +27,9 @@
    "text": "Gland Pharma reports quarterly results tomorrow (6 Nov)."
   },
   {
-   "id": "news:INFY:42407ad529",
+   "id": "news:INFY:a33389f9c7",
    "title": "News: Infosys",
-   "text": "Infosys: 3 Key Takeaways for Long-Term Investors"
+   "text": "Asian Equities Traded in the US as American Depositary Receipts Drop Sharply in Thursday Trading"
   }
  ]
 }
