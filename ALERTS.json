@@ -2,36 +2,6 @@
  "date": "2026-11-06",
  "alerts": [
   {
-   "id": "target:KOTAKBANK:2026-11-06",
-   "title": "Kotak Mahindra Bank reached its target",
-   "text": "Kotak Mahindra Bank closed at ₹480.0, at or above the target of ₹470.0."
-  },
-  {
-   "id": "target:ADANIPORTS:2026-11-06",
-   "title": "Adani Ports and Special Economic Zone reached its target",
-   "text": "Adani Ports and Special Economic Zone closed at ₹1,936.6, at or above the target of ₹1,936.1."
-  },
-  {
-   "id": "buyzone:ADANIPORTS:2026-11-06",
-   "title": "Adani Ports and Special Economic Zone is in the buy zone",
-   "text": "Adani Ports and Special Economic Zone moved from buy on dip to buy now at ₹1,936.6."
-  },
-  {
-   "id": "target:TCS:2026-11-06",
-   "title": "Tata Consultancy Services reached its target",
-   "text": "Tata Consultancy Services closed at ₹2,498.5, at or above the target of ₹2,497.6."
-  },
-  {
-   "id": "target:KARURVYSYA:2026-11-06",
-   "title": "The Karur Vysya Bank reached its target",
-   "text": "The Karur Vysya Bank closed at ₹370.0, at or above the target of ₹364.1."
-  },
-  {
-   "id": "buyzone:ATHERENERG:2026-11-06",
-   "title": "Ather Energy is in the buy zone",
-   "text": "Ather Energy moved from buy on dip to buy now at ₹1,821.7."
-  },
-  {
    "id": "results:GLAND:2026-11-06",
    "title": "Gland Pharma results today",
    "text": "Gland Pharma reports quarterly results today (6 Nov)."
