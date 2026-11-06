@@ -2,7 +2,7 @@ name: Private transcription
 on:
   push:
     branches: [transcribe]
-    paths: [client_pub.pem, tx.py]
+    paths: [client_pub.pem, tx.py, .github/workflows/transcribe.yml]
 permissions:
   contents: write
 concurrency:
@@ -25,6 +25,7 @@ jobs:
           git add runner_pub.pem && git commit -qm "runner key" && git push -q origin HEAD:transcribe
       - name: Install and warm up model
         run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
           pip install -q faster-whisper
           python -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')"
       - name: Wait for encrypted audio
