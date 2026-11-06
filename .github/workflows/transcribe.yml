@@ -1,0 +1,50 @@
+name: Private transcription
+on:
+  push:
+    branches: [transcribe]
+    paths: [client_pub.pem]
+permissions:
+  contents: write
+concurrency:
+  group: transcribe
+jobs:
+  tx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: transcribe }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Exchange keys (private key never leaves the runner)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out /tmp/runner_priv.pem 2>/dev/null
+          openssl pkey -in /tmp/runner_priv.pem -pubout -out runner_pub.pem
+          git add runner_pub.pem && git commit -qm "runner key" && git push -q origin HEAD:transcribe
+      - name: Install and warm up model
+        run: |
+          pip install -q faster-whisper
+          python -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')"
+      - name: Wait for encrypted audio
+        run: |
+          for i in $(seq 1 160); do
+            git fetch -q origin transcribe && git reset -q --hard origin/transcribe
+            [ -f audio.enc ] && [ -f audio.key.enc ] && exit 0
+            sleep 15
+          done
+          echo "no audio arrived"; exit 1
+      - name: Decrypt and transcribe
+        run: |
+          openssl pkeyutl -decrypt -inkey /tmp/runner_priv.pem -pkeyopt rsa_padding_mode:oaep -in audio.key.enc -out /tmp/k
+          openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/tmp/k -in audio.enc -out /tmp/audio.ogg
+          python -I tx.py /tmp/audio.ogg /tmp/transcript.txt
+      - name: Encrypt transcript for the client and publish
+        run: |
+          openssl rand -hex 32 > /tmp/k2
+          openssl enc -aes-256-cbc -pbkdf2 -pass file:/tmp/k2 -in /tmp/transcript.txt -out transcript.enc
+          openssl pkeyutl -encrypt -pubin -inkey client_pub.pem -pkeyopt rsa_padding_mode:oaep -in /tmp/k2 -out transcript.key.enc
+          git rm -q audio.enc audio.key.enc
+          git add transcript.enc transcript.key.enc && git commit -qm "transcript (encrypted)" && git push -q origin HEAD:transcribe
+          rm -f /tmp/k /tmp/k2 /tmp/audio.ogg /tmp/transcript.txt /tmp/runner_priv.pem
