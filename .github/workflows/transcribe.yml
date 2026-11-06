@@ -2,7 +2,7 @@ name: Private transcription
 on:
   push:
     branches: [transcribe]
-    paths: [client_pub.pem]
+    paths: [client_pub.pem, tx.py]
 permissions:
   contents: write
 concurrency:

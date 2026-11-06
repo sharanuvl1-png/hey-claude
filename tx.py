@@ -1,7 +1,10 @@
-import sys
+import sys, subprocess
+import numpy as np
 from faster_whisper import WhisperModel
 m = WhisperModel("small", device="cpu", compute_type="int8")
-segs, info = m.transcribe(sys.argv[1], beam_size=1, vad_filter=True)
+raw = subprocess.run(["ffmpeg","-v","error","-i",sys.argv[1],"-ac","1","-ar","16000","-f","f32le","-"],check=True,capture_output=True).stdout
+audio = np.frombuffer(raw, dtype=np.float32)
+segs, info = m.transcribe(audio, beam_size=1, vad_filter=True)
 with open(sys.argv[2], "w") as f:
     f.write(f"# language={info.language} p={info.language_probability:.2f}\n")
     n = 0
