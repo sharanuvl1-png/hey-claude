@@ -1,20 +1,40 @@
 {
- "date": "2026-11-06",
+ "date": "2026-11-09",
  "alerts": [
   {
-   "id": "results:GLAND:2026-11-06",
-   "title": "Gland Pharma results today",
-   "text": "Gland Pharma reports quarterly results today (6 Nov)."
+   "id": "buyzone:BHARTIARTL:2026-11-09",
+   "title": "Bharti Airtel is in the buy zone",
+   "text": "Bharti Airtel moved from buy on dip to buy now at ₹2,072.1."
   },
   {
-   "id": "news:BSE:10f950a358",
-   "title": "News: BSE",
-   "text": "BSE Ltd (NSE:BSE) (Q2 2027) Earnings Call Highlights: Record IPO Haul and 53% Profit Surge"
+   "id": "buyzone:TRENT:2026-11-09",
+   "title": "Trent is in the buy zone",
+   "text": "Trent moved from buy on dip to buy now at ₹3,119.2."
   },
   {
-   "id": "news:IPCALAB:33d59d8f9e",
-   "title": "News: Ipca Laboratories",
-   "text": "Missed Ipca Laboratories' Run? What Holders Had To Believe"
+   "id": "buyzone:HCLTECH:2026-11-09",
+   "title": "HCL Technologies is in the buy zone",
+   "text": "HCL Technologies moved from buy on dip to buy now at ₹1,407.0."
+  },
+  {
+   "id": "buyzone:NAVINFLUOR:2026-11-09",
+   "title": "Navin Fluorine International is in the buy zone",
+   "text": "Navin Fluorine International moved from buy on dip to buy now at ₹9,115.0."
+  },
+  {
+   "id": "buyzone:SONACOMS:2026-11-09",
+   "title": "Sona BLW Precision Forgings is in the buy zone",
+   "text": "Sona BLW Precision Forgings moved from buy on dip to buy now at ₹924.0."
+  },
+  {
+   "id": "buyzone:GLAND:2026-11-09",
+   "title": "Gland Pharma is in the buy zone",
+   "text": "Gland Pharma moved from buy on dip to buy now at ₹3,302.4."
+  },
+  {
+   "id": "target:KARURVYSYA:2026-11-09",
+   "title": "The Karur Vysya Bank reached its target",
+   "text": "The Karur Vysya Bank closed at ₹370.0, at or above the target of ₹368.1."
   }
  ]
 }

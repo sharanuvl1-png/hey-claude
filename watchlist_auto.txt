@@ -1,42 +1,42 @@
 # Strongest stocks by trend, fundamentals and 6-month performance
-# generated 2026-11-02
-Nifty 50|KOTAKBANK.NS|Kotak Mahindra Bank Limited
-Nifty 50|TECHM.NS|Tech Mahindra Limited
-Nifty 50|ADANIPORTS.NS|Adani Ports and Special Economic Zone Limited
-Nifty 50|HCLTECH.NS|HCL Technologies Limited
-Nifty 50|TCS.NS|Tata Consultancy Services Limited
-Nifty 50|ETERNAL.NS|Eternal Limited
-Nifty 50|BHARTIARTL.NS|Bharti Airtel Limited
+# generated 2026-11-09
 Nifty 50|ICICIBANK.NS|ICICI Bank Limited
 Nifty 50|BSE.NS|BSE Limited
-Nifty 50|INFY.NS|Infosys Limited
-Nifty 50|TRENT.NS|Trent Limited
-Nifty 50|APOLLOHOSP.NS|Apollo Hospitals Enterprise Limited
-Nifty 50|DRREDDY.NS|Dr. Reddy's Laboratories Limited
-Nifty 50|JSWSTEEL.NS|JSW Steel Limited
+Nifty 50|ETERNAL.NS|Eternal Limited
+Nifty 50|ADANIPORTS.NS|Adani Ports and Special Economic Zone Limited
+Nifty 50|KOTAKBANK.NS|Kotak Mahindra Bank Limited
+Nifty 50|BHARTIARTL.NS|Bharti Airtel Limited
 Nifty 50|EICHERMOT.NS|Eicher Motors Limited
-Nifty 50|LT.NS|Larsen & Toubro Limited
-Nifty 50|TITAN.NS|Titan Company Limited
-Nifty 50|BAJFINANCE.NS|Bajaj Finance Limited
 Nifty 50|BAJAJ-AUTO.NS|Bajaj Auto Limited
+Nifty 50|TRENT.NS|Trent Limited
+Nifty 50|AXISBANK.NS|Axis Bank Limited
+Nifty 50|TECHM.NS|Tech Mahindra Limited
+Nifty 50|JSWSTEEL.NS|JSW Steel Limited
+Nifty 50|TCS.NS|Tata Consultancy Services Limited
+Nifty 50|APOLLOHOSP.NS|Apollo Hospitals Enterprise Limited
+Nifty 50|HDFCBANK.NS|HDFC Bank Limited
+Nifty 50|LT.NS|Larsen & Toubro Limited
+Nifty 50|HCLTECH.NS|HCL Technologies Limited
 Nifty 50|GRASIM.NS|Grasim Industries Limited
-Midcap 150|INDHOTEL.NS|The Indian Hotels Company Limited
-Midcap 150|MPHASIS.NS|Mphasis Limited
-Midcap 150|COFORGE.NS|Coforge Limited
+Nifty 50|RELIANCE.NS|Reliance Industries Limited
+Nifty 50|BAJFINANCE.NS|Bajaj Finance Limited
+Midcap 150|GROWW.NS|Billionbrains Garage Ventures Limited
+Midcap 150|MOTILALOFS.NS|Motilal Oswal Financial Services Limited
+Midcap 150|MANKIND.NS|Mankind Pharma Limited
+Midcap 150|KPRMILL.NS|K.P.R. Mill Limited
 Midcap 150|LAURUSLABS.NS|Laurus Labs Limited
-Midcap 150|PERSISTENT.NS|Persistent Systems Limited
+Midcap 150|FLUOROCHEM.NS|Gujarat Fluorochemicals Limited
+Midcap 150|AUROPHARMA.NS|Aurobindo Pharma Limited
+Midcap 150|MAHABANK.NS|Bank of Maharashtra
 Midcap 150|LTTS.NS|L&T Technology Services Limited
-Midcap 150|IPCALAB.NS|Ipca Laboratories Limited
-Midcap 150|APLAPOLLO.NS|APL Apollo Tubes Limited
-Midcap 150|INDIANB.NS|Indian Bank
-Midcap 150|LENSKART.NS|Lenskart Solutions Limited
-Smallcap 100|SONACOMS.NS|Sona BLW Precision Forgings Limited
-Smallcap 100|ACUTAAS.NS|Acutaas Chemicals Limited
-Smallcap 100|GLAND.NS|Gland Pharma Limited
-Smallcap 100|KARURVYSYA.NS|The Karur Vysya Bank Limited
-Smallcap 100|ANANDRATHI.NS|Anand Rathi Wealth Limited
-Smallcap 100|GESHIP.NS|The Great Eastern Shipping Company Limited
-Smallcap 100|CHENNPETRO.NS|Chennai Petroleum Corporation Limited
+Midcap 150|HEROMOTOCO.NS|Hero MotoCorp Limited
 Smallcap 100|NAVINFLUOR.NS|Navin Fluorine International Limited
-Smallcap 100|FSL.NS|Firstsource Solutions Limited
-Smallcap 100|ATHERENERG.NS|Ather Energy Limited
+Smallcap 100|ACUTAAS.NS|Acutaas Chemicals Limited
+Smallcap 100|ANGELONE.NS|Angel One Limited
+Smallcap 100|SONACOMS.NS|Sona BLW Precision Forgings Limited
+Smallcap 100|GLAND.NS|Gland Pharma Limited
+Smallcap 100|CEMPRO.NS|Cemindia Projects Limited
+Smallcap 100|KARURVYSYA.NS|The Karur Vysya Bank Limited
+Smallcap 100|LALPATHLAB.NS|Dr. Lal PathLabs Limited
+Smallcap 100|ANANDRATHI.NS|Anand Rathi Wealth Limited
+Smallcap 100|JYOTICNC.NS|Jyoti CNC Automation Limited
