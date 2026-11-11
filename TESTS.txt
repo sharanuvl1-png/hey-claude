@@ -1,4 +1,4 @@
-94 passed, 0 failed
+101 passed, 0 failed
 PASS AskJobTest.givesUpAfterTimeoutWithReason
 PASS AskJobTest.findsQuestionEvenWhenCutShortOnScreen
 PASS AskJobTest.opensNewChatWhenNoMessageBox
@@ -56,6 +56,7 @@ PASS CommandsTest.money
 PASS CommandsTest.today
 PASS CommandsTest.briefing
 PASS HomeChatTest.answersAlertsByItself
+PASS HomeChatTest.saysWhatIsMissingInsteadOfAskingClaudeWithNoData
 PASS HomeChatTest.showsAProblemPlainly
 PASS HomeChatTest.typedQuestionIsAnsweredInTheChat
 PASS HomeChatTest.showsAChartWithoutAsking
@@ -66,10 +67,12 @@ PASS HomeChatTest.asksForThePasscodeBeforeConfidentialDetails
 PASS HomeChatTest.tappedAlertCanReadTheAnswerAloud
 PASS HomeChatTest.usesTheChosenModel
 PASS HomeChatTest.wrongPasscodeSharesNothing
+PASS HomeChatTest.chatIsStillThereAfterReopeningAndKeepsItsContext
 PASS HomeChatTest.openedAsPhoneAssistantStartsListening
 PASS HomeChatTest.newChatStartsFresh
 PASS HomeChatTest.tappedAlertAsksStraightAway
 PASS HomeChatTest.keepsTheBreakoutAlertsScheduled
+PASS IconTest.appIconIsAdaptive
 PASS MoneyTest.findsSubscriptions
 PASS MoneyTest.flagsUnusualCategorySpend
 PASS MoneyTest.readsTheRowsPhoneSyncWrites
@@ -81,15 +84,19 @@ PASS MoreFeaturesTest.whatsAppBankAlertsCountButFriendsDoNot
 PASS MoreFeaturesTest.passcodeIsCheckedNotStored
 PASS MoreFeaturesTest.shoppingListAndSearchLinks
 PASS MoreFeaturesTest.orderStatusFromMessages
+PASS MoreFeaturesTest.chatsSaveAndLoad
 PASS MoreFeaturesTest.billsFromWhatsAppAndGmailButNotOfficeMail
 PASS PromptsTest.remindLinesBecomeReminders
 PASS PromptsTest.promptsStayShortEnoughToSendAsAMessage
 PASS PromptsTest.promptsAreOneLineWithDateAndRules
 PASS PromptsTest.recallAnswersFromNotes
 PASS PromptsTest.scanForFindsByNameOrSymbol
+PASS PromptsTest.inAppPromptsUseOnlyPhoneData
 PASS PromptsTest.scanSummaryPutsBuysFirst
 PASS ScanDigestTest.summarisesYourPicksAndTopPickPerGroup
 PASS ScanDigestTest.staleOrMissingScanGivesNothing
+PASS StartersTest.localStartersNeedNoClaude
+PASS StartersTest.everyStarterGetsARealAnswer
 PASS TodayTest.meetingReminderShowsOnceShortlyBefore
 PASS TodayTest.deliveriesFromMessages
 PASS TodayTest.spokenSummaries
