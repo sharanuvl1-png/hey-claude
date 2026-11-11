@@ -111,4 +111,56 @@ object Ui {
     }
 
     fun spacer(ctx: Context, h: Int) = View(ctx).apply { minimumHeight = dp(ctx, h) }
+
+    /** A round icon button (an emoji or symbol on a coloured circle). */
+    fun iconButton(ctx: Context, icon: String, description: String, gradient: Boolean = false, onClick: () -> Unit) =
+        TextView(ctx).apply {
+            text = icon
+            textSize = 18f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            contentDescription = description
+            background = if (gradient) GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(ACCENT_1, ACCENT_2)).apply { shape = GradientDrawable.OVAL }
+                         else GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(FIELD) }
+            isClickable = true
+            setOnClickListener { onClick() }
+        }
+
+    /** Screen header: optional back arrow, title and subtitle, then any [actions] on the right. */
+    fun topBar(ctx: Context, title: String, subtitle: String?, back: (() -> Unit)? = null, vararg actions: View) =
+        LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(ctx, 8), 0, dp(ctx, 8))
+            if (back != null) addView(iconButton(ctx, "←", "Back", onClick = back), LinearLayout.LayoutParams(dp(ctx, 40), dp(ctx, 40)).apply { marginEnd = dp(ctx, 12) })
+            addView(LinearLayout(ctx).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(text(ctx, title, 21f, bold = true))
+                if (subtitle != null) addView(text(ctx, subtitle, 12.5f, MUTED))
+            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            actions.forEach { addView(it, LinearLayout.LayoutParams(dp(ctx, 40), dp(ctx, 40)).apply { marginStart = dp(ctx, 8) }) }
+        }
+
+    /** A suggestion chip: tapping it asks or starts typing a common request. */
+    fun chip(ctx: Context, label: String, onClick: () -> Unit) = TextView(ctx).apply {
+        text = label
+        textSize = 13.5f
+        setTextColor(TEXT)
+        setPadding(dp(ctx, 14), dp(ctx, 9), dp(ctx, 14), dp(ctx, 9))
+        background = GradientDrawable().apply { setColor(CARD); cornerRadius = dp(ctx, 18).toFloat(); setStroke(dp(ctx, 1), FIELD) }
+        isClickable = true
+        setOnClickListener { onClick() }
+    }
+
+    /** A chat bubble: yours on the right in the accent colours, Mehitha's on the left. */
+    fun bubble(ctx: Context, s: String, mine: Boolean, color: Int = TEXT) = text(ctx, s, 15.5f, if (mine) Color.WHITE else color).apply {
+        val p = dp(ctx, 14)
+        setPadding(p, dp(ctx, 10), p, dp(ctx, 10))
+        val r = dp(ctx, 18).toFloat()
+        val small = dp(ctx, 4).toFloat()
+        background = if (mine) GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(ACCENT_1, ACCENT_2))
+                         .apply { cornerRadii = floatArrayOf(r, r, small, small, r, r, r, r) }
+                     else GradientDrawable().apply { setColor(CARD); cornerRadii = floatArrayOf(small, small, r, r, r, r, r, r) }
+        if (!mine) setTextIsSelectable(true)
+    }
 }

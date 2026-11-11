@@ -46,8 +46,8 @@ object Alerts {
         val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         fun web(url: String, code: Int) = PendingIntent.getActivity(ctx, code,
             Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), flags)
-        val open = Intent(ctx, if (ask != null) AssistantActivity::class.java else MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val open = Intent(ctx, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             .apply { if (ask != null) putExtra(AssistantActivity.EXTRA_ASK, ask) }
         val tap = alert.link?.let { web(it, alert.id.hashCode()) }
             ?: PendingIntent.getActivity(ctx, alert.id.hashCode(), open, flags)

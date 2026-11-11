@@ -1,23 +1,18 @@
-# Hi Mehitha
+# Mehitha
 
-A small personal Android app that listens for **"Hi Mehitha"** and opens the Claude app.
+A small personal Android AI assistant. Open the app and chat with Mehitha: type, or tap the mic and speak.
 
-- Speech recognition runs fully on the phone (Vosk, offline). No audio leaves the device.
-- It only listens for "Hi/Hey/Hello Mehitha" (matched through similar-sounding English words, since the offline model has no word "Mehitha").
-- After it opens Claude it pauses for a minute so Claude can use the microphone.
-- If the phone is locked, it turns the screen on and asks you to unlock, then opens Claude.
+- Answers come from Claude (with your Claude API key) plus your phone's own data: spending from SMS, bills, the daily stock scan, WhatsApp and app messages, documents and reminders.
+- Suggestion chips for the common asks: brief me, any alerts, spending report, odd charges, check a stock, what did I miss, weekly review, remind me, find a document.
+- Questions you speak are read back aloud; typed answers have a **Read aloud** button. Each chat keeps its context for follow-ups; **+** starts a new chat.
+- Without an API key, Mehitha hands the question to the Claude app instead (the voice/full builds type it in for you).
+- Nothing listens in the background: the microphone is only on after you tap it.
 
 ## Install
 
-1. Every push to `main` builds the app. Open the repository's **Releases** page on your phone and download `hey-claude-buildN.apk` from the latest build (N is the build number, e.g. `hey-claude-full-build27.apk`).
+1. Every push to `main` builds the app. Open the repository's **Releases** page on your phone and download the APK from the latest build (e.g. `hey-claude-full-build32.apk`).
 2. Open the file and allow "Install unknown apps" for your browser or Files app when asked.
-3. Open **Hi Mehitha** and tap the three setup buttons (microphone, background opening, battery), then **Start listening**.
-
-## Good to know
-
-- A small "Listening" notification stays visible. Android requires this for any app using the microphone in the background.
-- After a phone restart, open Hi Mehitha once and tap Start.
-- On Samsung, also set Settings → Battery → Background usage limits → **Never auto sleeping apps** → add Hi Mehitha.
+3. Open **Mehitha**, tap ⚙ **Settings** and add your Claude API key. Microphone, Dropbox and phone-data access are optional and live there too.
 
 ## Technical charts (swing trading)
 
@@ -46,6 +41,6 @@ The app can copy phone data into a private Dropbox **App folder** (`/Apps/<your 
 | `notifications/DATE.txt` | WhatsApp and other app messages, captured from notifications from the day you enable it | every 30 min |
 | `files/index.tsv` | Path, size and date of every file in Download, Documents, DCIM, Pictures, WhatsApp media… | every 30 min |
 | `files/docs/…` | Documents (PDF, Word, Excel, …, up to 25 MB) from Download, Documents and WhatsApp Documents | every 30 min |
-| `requests/NAME.txt` → `requested/` | Put a phone path or part of a file name in a request file; the phone uploads that file (up to 140 MB) within ~3 minutes | while listening |
+| `requests/NAME.txt` → `requested/` | Put a phone path or part of a file name in a request file; the phone uploads that file (up to 140 MB) within a few minutes (longer while the phone is asleep) | every ~3 min |
 
-Setup: create a Dropbox app (Scoped access → App folder) with `files.content.write`, `files.content.read` and `files.metadata.read`, paste its App key in the app, approve, paste the code back, then grant SMS, all-files and notification access. WhatsApp has no API for chat history, so older chats need **Export chat** into Dropbox.
+Setup: create a Dropbox app (Scoped access → App folder) with `files.content.write`, `files.content.read` and `files.metadata.read`, paste its App key in Mehitha Settings, approve, paste the code back, then grant SMS, all-files and notification access. WhatsApp has no API for chat history, so older chats need **Export chat** into Dropbox.

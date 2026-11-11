@@ -54,15 +54,15 @@ open class PhoneData(private val ctx: Context) {
     /** Today's WhatsApp and app messages captured from notifications, newest last. */
     open fun messagesToday(max: Int = 3500): String {
         val file = File(File(ctx.filesDir, "notifications"), "${today()}.txt")
-        if (!file.exists()) return "none captured today (needs WhatsApp & app messages turned on in Hi Mehitha)"
-        val lines = file.readLines().map { it.split(" | ") }.filter { it.size >= 4 && it[1] != "Hi Mehitha" }
+        if (!file.exists()) return "none captured today (needs WhatsApp & app messages turned on in Mehitha settings)"
+        val lines = file.readLines().map { it.split(" | ") }.filter { it.size >= 4 && it[1] != "Hi Mehitha" && it[1] != "Mehitha" }
             .map { "${it[0]} ${it[1]}, ${it[2]}: ${it[3]}" }
         return lines.joinToString("; ").takeLast(max).ifEmpty { "none today" }
     }
 
     /** Phone file names matching the question. */
     open fun files(question: String): String {
-        if (!Environment.isExternalStorageManager()) return "not searchable (Files and photos not allowed in Hi Mehitha)"
+        if (!Environment.isExternalStorageManager()) return "not searchable (Files and photos not allowed in Mehitha settings)"
         val words = AssistantText.keywords(question).filter { it !in setOf("expire", "expires", "expiry", "renewal", "when", "does") }
         return PhoneTools(ctx).searchFiles(words).take(10).joinToString("; ").ifEmpty { "none" }
     }
