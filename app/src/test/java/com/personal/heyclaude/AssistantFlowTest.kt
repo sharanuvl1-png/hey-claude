@@ -32,7 +32,7 @@ import org.robolectric.shadows.ShadowSpeechRecognizer
 import org.robolectric.shadows.ShadowTextToSpeech
 
 /**
- * Plays the whole "Hi Mehitha" conversation against a fake Claude API, with
+ * Plays the whole voice conversation against a fake Claude API, with
  * Robolectric standing in for the phone's microphone and speaker.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -189,7 +189,7 @@ class AssistantFlowTest {
         val a = start(replies = listOf(401 to FakeApi.BAD_KEY))
         ask("anything")
         waitFor("the error") { status(a).startsWith("Claude didn't accept") }
-        assertEquals("Claude didn't accept the API key. Please check it in the Mehitha app.", spoken().last())
+        assertEquals("Claude didn't accept the API key. Please check it in Settings.", spoken().last())
     }
 
     @Test fun noKeyHandsQuestionToClaudeApp() {

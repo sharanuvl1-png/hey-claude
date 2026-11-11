@@ -16,8 +16,8 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 
 /**
- * Brief assistant pop-up between the wake word and Claude: shows the orb,
- * turns the screen on, asks to unlock if needed, then opens Claude.
+ * Brief pop-up on the way to the Claude app: shows the orb,
+ * asks to unlock if needed, then opens Claude.
  */
 class LaunchClaudeActivity : Activity() {
 
@@ -56,8 +56,8 @@ class LaunchClaudeActivity : Activity() {
                 background = GradientDrawable().apply { setColor(Ui.MUTED); cornerRadius = d(3).toFloat() }
             }, LinearLayout.LayoutParams(d(40), d(5)))
             addView(OrbView(this@LaunchClaudeActivity), LinearLayout.LayoutParams(d(150), d(150)).apply { topMargin = d(12) })
-            addView(Ui.text(this@LaunchClaudeActivity, "Hi, I'm listening", 22f, bold = true).apply { gravity = Gravity.CENTER })
-            addView(Ui.text(this@LaunchClaudeActivity, "Opening Claude voice…", 14f, Ui.MUTED).apply { gravity = Gravity.CENTER; setPadding(0, d(6), 0, 0) })
+            addView(Ui.text(this@LaunchClaudeActivity, "Opening Claude", 22f, bold = true).apply { gravity = Gravity.CENTER })
+            addView(Ui.text(this@LaunchClaudeActivity, "One moment…", 14f, Ui.MUTED).apply { gravity = Gravity.CENTER; setPadding(0, d(6), 0, 0) })
         }
         return FrameLayout(this).apply {
             setOnClickListener { finish() }

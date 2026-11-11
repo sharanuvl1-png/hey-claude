@@ -9,7 +9,10 @@ on:
       - ".github/workflows/scan.yml"
       - ".github/workflows/breakouts.yml"
       - ".github/workflows/backtest.yml"
-      - ".github/workflows/wakecheck.yml"
+  # Pull requests get the tests and the APKs (as a workflow artifact) but no release.
+  pull_request:
+    paths-ignore:
+      - "tools/**"
   workflow_dispatch:
 
 permissions:
@@ -30,26 +33,6 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Download offline speech model
-        run: |
-          curl -sSL -o model.zip https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
-          unzip -q model.zip
-          mkdir -p app/src/main/assets
-          mv vosk-model-small-en-us-0.15 app/src/main/assets/model-en-us
-          echo "small-en-us-0.15" > app/src/main/assets/model-en-us/uuid
-
-      - name: Show which wake word sounds the model knows
-        run: |
-          M=app/src/main/assets/model-en-us
-          find $M -type f | sed "s|$M/||"
-          WORDS=$(find $M -name "words.txt" | head -1)
-          echo "word list: ${WORDS:-none}"
-          if [ -n "$WORDS" ]; then
-            for w in hi hey hello me may hit heat eat a mehta meta mahita mehitha; do
-              if cut -d' ' -f1 "$WORDS" | grep -qx "$w"; then echo "known: $w"; else echo "UNKNOWN: $w"; fi
-            done
-          fi
-
       - name: Run tests
         id: tests
         continue-on-error: true
@@ -58,7 +41,7 @@ jobs:
           gradle :app:testVoiceDebugUnitTest --no-daemon 2>&1 | tee tests.log
 
       - name: Save test results to the charts branch
-        if: always()
+        if: always() && github.ref == 'refs/heads/main'
         run: |
           python3 tools/tests_summary.py app/build/test-results/testVoiceDebugUnitTest tests.log > TESTS.txt || true
           cat TESTS.txt
@@ -97,6 +80,7 @@ jobs:
             hey-claude-full-build${{ github.run_number }}.apk
 
       - name: Publish as a release for easy phone download
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}

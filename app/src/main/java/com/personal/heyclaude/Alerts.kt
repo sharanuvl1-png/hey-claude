@@ -35,9 +35,11 @@ object Alerts {
     private const val CHANNEL = "mehitha_alerts"
     private const val PREFS = "alerts"
     private val TIME = DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.US)
+    /** Set on a tap intent when the answer to EXTRA_ASK should be read aloud straight away. */
+    const val EXTRA_SPEAK = "com.personal.heyclaude.SPEAK"
 
     /** Shows [alert] unless it was shown before. Tapping it asks Mehitha [ask], if given. */
-    fun post(ctx: Context, alert: Alert, ask: String? = null): Boolean {
+    fun post(ctx: Context, alert: Alert, ask: String? = null, speak: Boolean = false): Boolean {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val seen = prefs.getStringSet("seen", emptySet())!!
         if (alert.id in seen) return false
@@ -46,9 +48,9 @@ object Alerts {
         val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         fun web(url: String, code: Int) = PendingIntent.getActivity(ctx, code,
             Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), flags)
-        val open = Intent(ctx, if (ask != null) AssistantActivity::class.java else MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            .apply { if (ask != null) putExtra(AssistantActivity.EXTRA_ASK, ask) }
+        val open = Intent(ctx, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .apply { if (ask != null) putExtra(AssistantActivity.EXTRA_ASK, ask); if (speak) putExtra(EXTRA_SPEAK, true) }
         val tap = alert.link?.let { web(it, alert.id.hashCode()) }
             ?: PendingIntent.getActivity(ctx, alert.id.hashCode(), open, flags)
         val chart = alert.image?.let { picture(it) }
@@ -132,6 +134,16 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
         }
         if (now.dayOfWeek == DayOfWeek.SUNDAY && now.hour in 18..21) once("weekly") {
             Alerts.post(ctx, Alert("weekly:$today", "Your weekly review is ready", "Money, bills, stocks and the week ahead. Tap to hear it."), ask = "weekly review")
+        }
+        // The scan file can land any time in the evening, so keep checking each hour until today's is there.
+        if (now.hour >= 17 && now.dayOfWeek != DayOfWeek.SATURDAY && now.dayOfWeek != DayOfWeek.SUNDAY &&
+            prefs.getString("scan_digest", "") != today.toString()) {
+            try {
+                ScanDigest.alert(fetch(PhoneData.SCAN_URL), today.toString())?.let {
+                    Alerts.post(ctx, it, ask = "today's stock scan", speak = true)
+                    prefs.edit().putString("scan_digest", today.toString()).apply()
+                }
+            } catch (e: Exception) { Log.w("Mehitha", "scan digest failed", e) }
         }
         if (now.hour >= 17 && now.dayOfWeek != DayOfWeek.SATURDAY) once("stocks") {
             stockAlerts(today.toString()).forEach { Alerts.post(ctx, it) }

@@ -28,8 +28,8 @@ import android.widget.TextView
 import java.util.Locale
 
 /**
- * Mehitha's own voice assistant, opened by "Hi Mehitha":
- * greets, listens to the question, asks Claude, then asks whether to read the answer out.
+ * Mehitha's voice sheet, opened from an alert or with Claude's reply from the Claude app:
+ * listens to the question, asks Claude, then asks whether to read the answer out.
  */
 class AssistantActivity : Activity() {
 
@@ -42,7 +42,6 @@ class AssistantActivity : Activity() {
     private var misses = 0
     private var ready = false
     private var gist = ""
-    private var resumeDelayMs = 0L
 
     private lateinit var orb: OrbView
     private lateinit var status: TextView
@@ -59,7 +58,6 @@ class AssistantActivity : Activity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         window.setDimAmount(0.45f)
         setContentView(sheet())
-        WakeWordService.pause(this) // the wake word lets go of the mic while Mehitha listens
 
         tts = TextToSpeech(this) { code ->
             handler.post {
@@ -145,7 +143,7 @@ class AssistantActivity : Activity() {
         } else {
             // Without the helper Mehitha can't type into Claude, so copy the question instead.
             getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Question", question))
-            status.text = "Question copied. Turn on \"Let Mehitha use the Claude app\" in Hi Mehitha so I can type it for you."
+            status.text = "Question copied. Turn on \"Let Mehitha use the Claude app\" in Mehitha settings so I can type it for you."
             say("I copied your question. To let me type it into Claude for you, turn on Let Mehitha use the Claude app, in the Mehitha app.") {
                 LaunchClaudeActivity.openNewChat(this); finish()
             }
@@ -193,21 +191,13 @@ class AssistantActivity : Activity() {
         answerBox.visibility = View.GONE
         val command = Command.parse(text)
         // Things Mehitha answers itself, without Claude.
-        when (command) {
-            is Command.Remember -> {
-                Memory.add(this, command.fact)
-                return localAnswer("Okay, I'll remember that: ${command.fact}.")
-            }
-            is Command.Alerts -> return localAnswer(Alerts.summary(this))
-            is Command.Ask -> Prompts.recall(Memory.all(this), text)?.let { return localAnswer(it) }
-            else -> Unit
-        }
+        Answers.local(this, command, text)?.let { return localAnswer(it) }
         status.text = "Looking that up…"
         orb.active = true
         val b = brain
         Thread {
             // Gathering phone data (SMS, scan) can take a moment, so it happens off the screen thread.
-            val prompt = try { promptFor(command, text) } catch (e: Exception) { Log.w(TAG, "Phone data failed", e); text }
+            val prompt = Answers.safePrompt(this, command, text)
             if (b == null) {
                 handler.post { if (!isDestroyed) handOff(prompt, text) }
                 return@Thread
@@ -222,32 +212,6 @@ class AssistantActivity : Activity() {
         }.start()
     }
 
-    /** The words sent to Claude for [command], with the phone's own data filled in. */
-    private fun promptFor(command: Command, text: String): String {
-        val t = PhoneData.now()
-        val day = t.toLocalDate()
-        val data = phoneData ?: PhoneData(this)
-        fun bills() = (if (data.canReadSms) Money.billsText(data.bills(), day) else PhoneData.NO_SMS).take(300)
-        return when (command) {
-            is Command.Briefing -> Prompts.briefing(t, bills(), Prompts.scanSummary(data.scan()))
-            is Command.Money -> Prompts.money(t, command.question, data.moneyFacts(command.question).take(MAX_DATA))
-            is Command.SpendingReport -> Prompts.spendingReport(t,
-                (if (data.canReadSms) Money.report(data.spends(), day) else PhoneData.NO_SMS).take(MAX_DATA))
-            is Command.OddCharges -> {
-                val spends = data.spends()
-                val flags = Money.oddCharges(spends, t, days = 7).joinToString("; ") { it.text }.ifEmpty { "none" }
-                Prompts.oddCharges(t, if (data.canReadSms) flags else PhoneData.NO_SMS, Money.recentLines(spends, t, 7).take(MAX_DATA))
-            }
-            is Command.StockCheck -> Prompts.stockCheck(t, command.stock, Prompts.scanFor(data.scan(), command.stock))
-            is Command.CatchUp -> Prompts.catchUp(t, data.messagesToday(MAX_DATA))
-            is Command.FindDocument -> Prompts.findDocument(t, command.question, data.files(command.question))
-            is Command.WeeklyReview -> Prompts.weeklyReview(t,
-                (if (data.canReadSms) Money.week(data.spends(), t) else PhoneData.NO_SMS).take(MAX_DATA / 2), bills(), Prompts.scanSummary(data.scan()))
-            is Command.Reminder -> Prompts.reminder(t, command.request)
-            else -> text
-        }
-    }
-
     /** Mehitha's own answer: shown and said straight away. */
     private fun localAnswer(text: String) {
         answer.text = text
@@ -259,15 +223,13 @@ class AssistantActivity : Activity() {
 
     private fun onAnswer(result: Result<String>) {
         val text = result.getOrElse { e ->
-            val msg = problem(e)
+            val msg = Answers.problem(e)
             show(msg, showButtons = true)
             say(msg)
             return
         }
-        val (reminders, rest) = Prompts.reminders(text)
-        val set = try { Reminders.schedule(this, reminders) } catch (e: Exception) { Log.w(TAG, "Reminder failed", e); emptyList() }
-        val reply = AssistantText.forSpeech(rest)
-        answer.text = (listOf(reply.display) + set).joinToString("\n\n")
+        val reply = Answers.reply(this, text)
+        answer.text = reply.display
         gist = reply.speech
         answerBox.visibility = View.VISIBLE
         misses = 0
@@ -315,19 +277,6 @@ class AssistantActivity : Activity() {
         status.text = line
         orb.active = false
         if (showButtons) { readButtons.visibility = View.GONE; buttons.visibility = View.VISIBLE }
-    }
-
-    private fun problem(e: Throwable): String {
-        val m = (e.message ?: e.javaClass.simpleName).lowercase()
-        return when {
-            "401" in m || "authentication" in m || "api key" in m || "x-api-key" in m ->
-                "Claude didn't accept the API key. Please check it in the Mehitha app."
-            "credit" in m || "billing" in m -> "Your Claude API account is out of credit. Please add credit at console dot anthropic dot com."
-            "429" in m || "rate" in m -> "Claude is busy right now. Please try again in a minute."
-            "unknownhost" in m || "unable to resolve" in m || "timeout" in m || "timed out" in m || "connect" in m ->
-                "I couldn't reach Claude. Please check the internet connection."
-            else -> "Something went wrong asking Claude. Please try again."
-        }
     }
 
     // ---- Speech in --------------------------------------------------------------------------
@@ -488,14 +437,13 @@ class AssistantActivity : Activity() {
     private fun openClaudeApp() {
         stopSpeaking()
         cancelListening()
-        resumeDelayMs = WakeWordService.RESUME_AFTER_TRIGGER_MS // leave the mic to Claude for a while
         startActivity(Intent(this, LaunchClaudeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         finish()
     }
 
     override fun onStop() {
         super.onStop()
-        // Leaving the sheet (home button, another app) ends the session so "Hi Mehitha" works again.
+        // Leaving the sheet (home button, another app) ends the session.
         val unlocking = getSystemService(KeyguardManager::class.java).isKeyguardLocked
         if (!isChangingConfigurations && !unlocking) finish()
     }
@@ -506,7 +454,6 @@ class AssistantActivity : Activity() {
         tts?.stop()
         tts?.shutdown()
         tts = null
-        WakeWordService.resume(this, resumeDelayMs)
         super.onDestroy()
     }
 
@@ -516,7 +463,6 @@ class AssistantActivity : Activity() {
         const val EXTRA_QUESTION = "question"
         /** Asks Mehitha this straight away (from tapping an alert). */
         const val EXTRA_ASK = "ask"
-        private const val MAX_DATA = 700
         /** How long to wait for more words after a pause before sending the question. */
         const val MORE_SPEECH_MS = 2_500L
         const val EXTRA_REPLY = "reply"

@@ -2,262 +2,412 @@ package com.personal.heyclaude
 
 import android.Manifest
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import android.text.InputType
 import android.util.Log
-import android.os.Environment
-import android.os.PowerManager
-import android.provider.Settings
 import android.view.Gravity
 import android.view.View
-import android.widget.Button
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import android.graphics.drawable.GradientDrawable
+import java.util.Locale
 
-/** Home screen: the assistant orb with an on/off switch, then setup cards. */
+/**
+ * Home screen: a chat with Mehitha. Type or tap the mic to ask; answers come from Claude
+ * (with your API key) plus the phone's own data, and can be read aloud.
+ */
 class MainActivity : Activity() {
 
-    private val dropbox by lazy { DropboxClient(this) }
-    private lateinit var orb: OrbView
-    private lateinit var headline: TextView
-    private lateinit var subline: TextView
-    private lateinit var toggle: Button
-    private lateinit var micRow: Ui.Row
-    private lateinit var overlayRow: Ui.Row
-    private lateinit var batteryRow: Ui.Row
-    private lateinit var claudeRow: Ui.Row
-    private lateinit var voiceRow: Ui.Row
-    private lateinit var apiRow: Ui.Row
-    private lateinit var apiBox: LinearLayout
-    private lateinit var apiField: EditText
-    private lateinit var voiceDebug: TextView
-    private lateinit var dropboxRow: Ui.Row
-    private lateinit var smsRow: Ui.Row
-    private lateinit var filesRow: Ui.Row
-    private lateinit var notifRow: Ui.Row
-    private lateinit var linkBox: LinearLayout
-    private lateinit var keyField: EditText
-    private lateinit var codeField: EditText
-    private lateinit var syncStatus: TextView
+    private val handler = Handler(Looper.getMainLooper())
+    private var brain: AssistantBrain? = null
+    private var brainKey = ""
+    private var busy = false
+    private var tts: TextToSpeech? = null
+    private var ttsReady = false
+    /** Speech asked for before the engine finished starting (e.g. a tapped alert on a cold start). */
+    private var pendingSpeech: String? = null
+    private var recognizer: SpeechRecognizer? = null
+    private var listening = false
+
+    private lateinit var scroll: ScrollView
+    private lateinit var messages: LinearLayout
+    private lateinit var welcome: View
+    private lateinit var keyBanner: TextView
+    private lateinit var input: EditText
+    private lateinit var mic: TextView
+    private lateinit var send: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Ui.BG
         window.navigationBarColor = Ui.BG
-        val p = Ui.dp(this, 18)
-        val page = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(p, Ui.dp(this@MainActivity, 28), p, Ui.dp(this@MainActivity, 40))
+        setContentView(screen())
+        tts = TextToSpeech(this) { code ->
+            handler.post {
+                ttsReady = code == TextToSpeech.SUCCESS
+                if (ttsReady) tts?.language = Locale("en", "IN") else { tts?.shutdown(); tts = null }
+                pendingSpeech?.let { if (ttsReady) speak(it) }
+                pendingSpeech = null
+            }
         }
-
-        // Hero: orb, status and the main switch.
-        orb = OrbView(this)
-        page.addView(orb, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(this, 220)))
-        headline = Ui.text(this, "", 26f, bold = true).apply { gravity = Gravity.CENTER }
-        subline = Ui.text(this, "", 14.5f, Ui.MUTED).apply { gravity = Gravity.CENTER; setPadding(0, Ui.dp(this@MainActivity, 6), 0, Ui.dp(this@MainActivity, 20)) }
-        page.addView(headline)
-        page.addView(subline)
-        toggle = Ui.gradientButton(this, "") {
-            val on = !WakeWordService.isRunning
-            getSharedPreferences(PREFS_MAIN, MODE_PRIVATE).edit().putBoolean(KEY_LISTEN, on).apply()
-            if (on) WakeWordService.start(this) else WakeWordService.stop(this)
-            toggle.postDelayed({ refresh() }, 300)
-        }
-        page.addView(toggle)
-        page.addView(Ui.spacer(this, 24))
-
-        // Card 1: voice setup.
-        val voice = Ui.card(this, "Voice assistant", "Needed once so Mehitha can listen and answer.")
-        apiRow = Ui.Row(this, "Claude API key", "Add") { apiBox.visibility = View.VISIBLE }
-        apiBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
-        apiField = Ui.field(this, "Paste the key (starts with sk-ant-)")
-        apiBox.addView(apiField)
-        apiBox.addView(Ui.spacer(this, 8))
-        apiBox.addView(Ui.pill(this, "Save key") {
-            val k = apiField.text.toString().trim()
-            if (!k.startsWith("sk-ant-")) toast("That doesn't look like a Claude API key. It starts with sk-ant-")
-            else { AssistantActivity.saveApiKey(this, k); apiField.setText(""); apiBox.visibility = View.GONE; toast("Key saved"); refresh() }
-        })
-        micRow = Ui.Row(this, "Microphone", "Allow") { requestMic() }
-        overlayRow = Ui.Row(this, "Pop up over other apps", "Allow") {
-            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
-        }
-        batteryRow = Ui.Row(this, "Always on", "Allow") {
-            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
-        }
-        claudeRow = Ui.Row(this, "Claude app", "Install") {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${LaunchClaudeActivity.CLAUDE_PACKAGE}")))
-        }
-        voiceRow = Ui.Row(this, "Let Mehitha use the Claude app", "Turn on") {
-            toast("Tap \"Installed apps\" → \"Mehitha voice button\" → turn it on")
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-        }
-        voice.addView(apiRow.view)
-        voice.addView(apiBox)
-        listOf(micRow, overlayRow, batteryRow, claudeRow, voiceRow).forEach { voice.addView(it.view) }
-        if (!hasService(VoiceHelper::class.java)) voiceRow.view.visibility = View.GONE
-        voice.addView(Ui.pill(this, "Test now") { startActivity(Intent(this, AssistantActivity::class.java)) })
-        voiceDebug = Ui.text(this, "", 11.5f, Ui.MUTED).apply { setPadding(0, Ui.dp(this@MainActivity, 8), 0, 0) }
-        voice.addView(voiceDebug)
-        page.addView(voice)
-        page.addView(Ui.spacer(this, 16))
-
-        // Card 2: phone data.
-        val data = Ui.card(this, "Phone data", "Lets Mehitha search your SMS, WhatsApp messages, documents and files through a private Dropbox folder.")
-        dropboxRow = Ui.Row(this, "Dropbox", "Link") { linkBox.visibility = View.VISIBLE }
-        data.addView(dropboxRow.view)
-        linkBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
-        keyField = Ui.field(this, "Dropbox app key").apply { setText(dropbox.appKey) }
-        codeField = Ui.field(this, "Paste the code Dropbox shows")
-        linkBox.addView(keyField)
-        linkBox.addView(Ui.spacer(this, 8))
-        linkBox.addView(Ui.pill(this, "1 · Open Dropbox to approve") {
-            dropbox.appKey = keyField.text.toString()
-            if (dropbox.appKey.isBlank()) toast("Enter the Dropbox app key first")
-            else startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(dropbox.authorizeUrl())))
-        })
-        linkBox.addView(Ui.spacer(this, 8))
-        linkBox.addView(codeField)
-        linkBox.addView(Ui.spacer(this, 8))
-        linkBox.addView(Ui.pill(this, "2 · Finish linking") { finishLink() })
-        data.addView(linkBox)
-        smsRow = Ui.Row(this, "Text messages", "Allow") {
-            requestPermissions(arrayOf(Manifest.permission.READ_SMS, Manifest.permission.READ_CONTACTS), 2)
-        }
-        filesRow = Ui.Row(this, "Files and photos", "Allow") {
-            startActivity(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName")))
-        }
-        notifRow = Ui.Row(this, "WhatsApp & app messages", "Allow") {
-            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-        }
-        listOf(smsRow, filesRow, notifRow).forEach { data.addView(it.view) }
-        // The basic build leaves these out so Play Protect lets it install.
-        if (!declares(Manifest.permission.READ_SMS)) smsRow.view.visibility = View.GONE
-        if (!hasService(NotificationCatcher::class.java)) notifRow.view.visibility = View.GONE
-        syncStatus = Ui.text(this, "", 12.5f, Ui.MUTED).apply { setPadding(0, Ui.dp(this@MainActivity, 8), 0, Ui.dp(this@MainActivity, 10)) }
-        data.addView(syncStatus)
-        data.addView(Ui.pill(this, "Sync now") {
-            if (dropbox.isLinked) { SyncWorker.runNow(this); toast("Sync started") } else toast("Link Dropbox first")
-        })
-        page.addView(data)
-        val build = try { packageManager.getPackageInfo(packageName, 0).longVersionCode } catch (e: Exception) { 0L }
-        page.addView(Ui.text(this, "Mehitha build $build" + if (hasService(VoiceHelper::class.java)) (if (declares(Manifest.permission.READ_SMS)) " (full)" else " (voice)") else " (basic)", 11.5f, Ui.MUTED).apply {
-            gravity = Gravity.CENTER; setPadding(0, Ui.dp(this@MainActivity, 20), 0, 0)
-        })
-
-        setContentView(ScrollView(this).apply {
-            setBackgroundColor(Ui.BG)
-            isFillViewport = true
-            addView(page)
-        })
-        if (dropbox.isLinked) SyncWorker.schedule(this)
+        // Background jobs: phone sync, file requests, and the alerts (Nifty breakouts, bills, reminders).
+        if (DropboxClient(this).isLinked) { SyncWorker.schedule(this); RequestWorker.start(this) }
         Alerts.schedule(this)
+        askFrom(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        askFrom(intent)
+    }
+
+    /** Tapping an alert opens the chat with its question, read aloud when the alert asks for it. */
+    private fun askFrom(i: Intent?) {
+        val asked = i?.getStringExtra(AssistantActivity.EXTRA_ASK) ?: return
+        val speak = i.getBooleanExtra(EXTRA_SPEAK, false)
+        i.removeExtra(AssistantActivity.EXTRA_ASK)
+        i.removeExtra(EXTRA_SPEAK)
+        ask(asked, spoken = speak)
     }
 
     override fun onResume() {
         super.onResume()
-        // Installing an update stops the listener: start it again unless you switched it off.
-        if (!WakeWordService.isRunning && granted(Manifest.permission.RECORD_AUDIO) &&
-            getSharedPreferences(PREFS_MAIN, MODE_PRIVATE).getBoolean(KEY_LISTEN, true)) {
-            try { WakeWordService.start(this) } catch (e: Exception) { Log.w("HeyClaude", "Could not start listening", e) }
-            toggle.postDelayed({ refresh() }, 300)
-        }
-        refresh()
+        keyBanner.visibility = if (AssistantActivity.apiKey(this).isBlank()) View.VISIBLE else View.GONE
     }
 
-    private fun finishLink() {
-        val code = codeField.text.toString()
+    override fun onPause() {
+        super.onPause()
+        stopDictation()
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        recognizer?.destroy()
+        recognizer = null
+        tts?.stop()
+        tts?.shutdown()
+        tts = null
+        super.onDestroy()
+    }
+
+    // ---- Asking -----------------------------------------------------------------------------
+
+    /** Sends [raw] to Mehitha. [spoken] answers are read aloud as well. */
+    private fun ask(raw: String, spoken: Boolean = false) {
+        val text = raw.trim()
+        if (text.isEmpty()) return
+        if (busy) { toast("One moment, I'm still on the last question"); return }
+        input.setText("")
+        hideKeyboard()
+        stopSpeaking()
+        addMine(text)
+        val command = Command.parse(text)
+        Answers.local(this, command, text)?.let { addReply(it, it, spoken); return }
+
+        val b = brain()
+        busy = true
+        updateSend()
+        val thinking = addThinking()
         Thread {
-            val msg = try {
-                dropbox.finishLink(code)
-                SyncWorker.schedule(this)
-                SyncWorker.runNow(this)
-                "Dropbox linked. First sync started."
+            // Gathering phone data (SMS, scan) can take a moment, so it happens off the screen thread.
+            val prompt = Answers.safePrompt(this, command, text)
+            val result: Result<String>? = if (b == null) null else try {
+                Result.success(b.ask(prompt))
             } catch (e: Exception) {
-                "Linking failed: ${e.message?.take(120)}"
+                Log.w(TAG, "Claude request failed", e)
+                Result.failure(e)
             }
-            runOnUiThread { toast(msg); refresh() }
+            handler.post {
+                if (isDestroyed) return@post
+                messages.removeView(thinking)
+                busy = false
+                updateSend()
+                when {
+                    result == null -> handOff(prompt, text)
+                    result.isSuccess -> Answers.reply(this, result.getOrThrow()).let { addReply(it.display, it.speech, spoken) }
+                    else -> addReply(Answers.problem(result.exceptionOrNull()!!), null, spoken, problem = true)
+                }
+            }
         }.start()
     }
 
-    private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-
-    private fun requestMic() {
-        val perms = mutableListOf(Manifest.permission.RECORD_AUDIO)
-        if (Build.VERSION.SDK_INT >= 33) perms += Manifest.permission.POST_NOTIFICATIONS
-        requestPermissions(perms.toTypedArray(), 1)
+    /** One conversation per chat, so follow-up questions keep their context. */
+    private fun brain(): AssistantBrain? {
+        val key = AssistantActivity.apiKey(this)
+        if (key.isBlank()) { brain = null; return null }
+        if (brain == null || key != brainKey) {
+            brain = AssistantBrain(key, AssistantActivity.tools ?: PhoneTools(this), AssistantActivity.apiBaseUrl)
+            brainKey = key
+        }
+        return brain
     }
+
+    /** No API key: type the question into the Claude app, which answers with your own login. */
+    private fun handOff(prompt: String, label: String) {
+        if (VoiceHelper.isEnabled(this)) {
+            VoiceHelper.ask(prompt, label)
+            addReply("I've asked the Claude app. Its reply will pop up when it's ready.", null, false)
+        } else {
+            getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Question", prompt))
+            addReply("I copied your question for the Claude app. Paste it there. To answer right here instead, add your Claude API key in Settings.", null, false)
+        }
+        handler.postDelayed({ if (!isFinishing) LaunchClaudeActivity.openNewChat(this) }, 900)
+    }
+
+    private fun newChat() {
+        if (busy) return
+        stopSpeaking()
+        brain = null
+        messages.removeAllViews()
+        messages.addView(welcome, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+    }
+
+    // ---- Chat bubbles -----------------------------------------------------------------------
+
+    private fun addMine(text: String) {
+        if (welcome.parent != null) messages.removeView(welcome)
+        add(Ui.bubble(this, text, mine = true), mine = true)
+    }
+
+    private fun addThinking(): View = Ui.bubble(this, "Thinking…", mine = false, color = Ui.MUTED).also { add(it, mine = false) }
+
+    /** Mehitha's answer, with Read aloud and Copy underneath. */
+    private fun addReply(display: String, speech: String?, readNow: Boolean, problem: Boolean = false) {
+        if (welcome.parent != null) messages.removeView(welcome)
+        val d = { v: Int -> Ui.dp(this, v) }
+        val block = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        block.addView(Ui.bubble(this, display, mine = false, color = if (problem) Ui.WARN else Ui.TEXT))
+        val say = speech ?: display
+        val actions = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(d(4), d(6), 0, 0)
+            addView(small("🔊 Read aloud") { speak(say) })
+            addView(small("Copy") {
+                getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Mehitha", display))
+                toast("Copied")
+            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { marginStart = d(16) })
+        }
+        block.addView(actions)
+        add(block, mine = false)
+        if (readNow) speak(say)
+    }
+
+    private fun small(label: String, onClick: () -> Unit) = Ui.text(this, label, 12.5f, Ui.MUTED).apply {
+        setPadding(0, Ui.dp(this@MainActivity, 4), 0, Ui.dp(this@MainActivity, 4))
+        isClickable = true
+        setOnClickListener { onClick() }
+    }
+
+    private fun add(v: View, mine: Boolean) {
+        val d = { x: Int -> Ui.dp(this, x) }
+        val maxWidth = (resources.displayMetrics.widthPixels * 0.82).toInt()
+        if (v is TextView) v.maxWidth = maxWidth
+        if (v is LinearLayout) (v.getChildAt(0) as? TextView)?.maxWidth = maxWidth
+        messages.addView(v, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            gravity = if (mine) Gravity.END else Gravity.START
+            topMargin = d(10)
+        })
+        scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
+    }
+
+    // ---- Voice --------------------------------------------------------------------------------
+
+    private fun speak(text: String) {
+        val engine = tts
+        if (engine != null && !ttsReady) { pendingSpeech = text; return }
+        if (!ttsReady || engine == null) { toast("Text to speech isn't ready on this phone"); return }
+        AssistantText.chunksForSpeech(text).forEachIndexed { i, c ->
+            engine.speak(c, if (i == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD, null, "chat$i")
+        }
+    }
+
+    private fun stopSpeaking() { pendingSpeech = null; tts?.stop() }
+
+    /** Tap the mic, speak, and the question is sent when you pause. Tap again to stop. */
+    private fun toggleDictation() {
+        if (listening) { stopDictation(); return }
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MIC_REQUEST)
+            return
+        }
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            toast("This phone has no speech recognition. Install or update the Google app.")
+            return
+        }
+        stopSpeaking()
+        val r = recognizer ?: SpeechRecognizer.createSpeechRecognizer(this).also { recognizer = it }
+        r.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(params: Bundle?) { input.hint = "Listening…" }
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onEndOfSpeech() {}
+            override fun onError(error: Int) { setListening(false); if (error != SpeechRecognizer.ERROR_CLIENT) toast("Didn't catch that. Tap the mic and try again.") }
+            override fun onResults(results: Bundle?) {
+                setListening(false)
+                best(results)?.let { ask(it, spoken = true) }
+            }
+            override fun onPartialResults(partial: Bundle?) { best(partial)?.let { input.setText(it); input.setSelection(it.length) } }
+            override fun onEvent(eventType: Int, params: Bundle?) {}
+        })
+        r.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2500L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 2500L)
+        })
+        setListening(true)
+    }
+
+    private fun stopDictation() {
+        if (!listening) return
+        recognizer?.cancel()
+        setListening(false)
+    }
+
+    private fun setListening(on: Boolean) {
+        listening = on
+        mic.text = if (on) "■" else "🎤"
+        (mic.background as? GradientDrawable)?.setColor(if (on) Ui.ACCENT_1 else Ui.FIELD)
+        if (!on) input.hint = HINT
+    }
+
+    private fun best(b: Bundle?) = b?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.takeIf { it.isNotBlank() }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        refresh()
+        if (requestCode == MIC_REQUEST && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) toggleDictation()
     }
 
-    private fun hasService(cls: Class<*>) = try {
-        packageManager.getServiceInfo(android.content.ComponentName(this, cls), 0); true
-    } catch (e: PackageManager.NameNotFoundException) { false }
+    // ---- Screen -------------------------------------------------------------------------------
 
-    private fun declares(p: String) = try {
-        packageManager.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS).requestedPermissions?.contains(p) == true
-    } catch (e: Exception) { false }
+    private fun screen(): View {
+        val d = { v: Int -> Ui.dp(this, v) }
+        val top = Ui.topBar(this, "Mehitha", "Your personal AI assistant", null,
+            Ui.iconButton(this, "＋", "New chat") { newChat() },
+            Ui.iconButton(this, "⚙", "Settings") { startActivity(Intent(this, SettingsActivity::class.java)) },
+        ).apply { setPadding(d(16), d(10), d(12), d(6)) }
 
-    private fun granted(p: String) = checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED
-
-    private fun refresh() {
-        val mic = granted(Manifest.permission.RECORD_AUDIO)
-        val overlay = Settings.canDrawOverlays(this)
-        val battery = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
-        val claude = packageManager.getLaunchIntentForPackage(LaunchClaudeActivity.CLAUDE_PACKAGE) != null
-        val listening = WakeWordService.isRunning
-
-        orb.active = listening
-        headline.text = if (listening) "Hi, I'm Mehitha" else "Mehitha is paused"
-        subline.text = when {
-            !mic || !overlay -> "Finish the setup below to start"
-            listening -> "Say \"Hi Mehitha\" anytime and ask me anything"
-            else -> "Tap Start to listen for \"Hi Mehitha\""
+        welcome = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(0, d(24), 0, d(8))
+            addView(OrbView(this@MainActivity).apply { active = true }, LinearLayout.LayoutParams(d(130), d(130)))
+            addView(Ui.text(this@MainActivity, "How can I help you today?", 22f, bold = true).apply { gravity = Gravity.CENTER; setPadding(0, d(8), 0, 0) })
+            addView(Ui.text(this@MainActivity, "Ask about your money, stocks, messages, documents or reminders, or anything else.", 14f, Ui.MUTED).apply {
+                gravity = Gravity.CENTER; setPadding(d(12), d(6), d(12), d(18))
+            })
+            keyBanner = Ui.text(this@MainActivity, "Add your Claude API key in Settings so I can answer right here. Until then I'll pass questions to the Claude app.", 13f, Ui.WARN).apply {
+                setPadding(d(14), d(10), d(14), d(10))
+                background = GradientDrawable().apply { setColor(Ui.CARD); cornerRadius = d(14).toFloat() }
+                setOnClickListener { startActivity(Intent(this@MainActivity, SettingsActivity::class.java)) }
+            }
+            addView(keyBanner, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
         }
-        toggle.text = if (listening) "Pause listening" else "Start listening"
-        toggle.isEnabled = mic && overlay
-        toggle.alpha = if (toggle.isEnabled) 1f else 0.4f
+        messages = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(d(16), 0, d(16), d(12))
+            addView(welcome, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        }
+        scroll = ScrollView(this).apply { isFillViewport = true; addView(messages) }
 
-        val hasKey = AssistantActivity.apiKey(this).isNotBlank()
-        apiRow.set(hasKey, "Saved: Mehitha answers by itself. Tap to replace",
-            "Optional. Without a key Mehitha asks the Claude app for you", required = false)
-        apiRow.view.setOnClickListener { apiBox.visibility = View.VISIBLE }
-        micRow.set(mic, "Allowed", "Needed to hear \"Hi Mehitha\"")
-        overlayRow.set(overlay, "Allowed", "Lets Mehitha appear when you say \"Hi Mehitha\"")
-        batteryRow.set(battery, "No battery limits",
-            "Needed so it hears you every time. On Samsung also add Hi Mehitha to Battery → Never sleeping apps")
-        claudeRow.set(claude, "Installed", "Install Claude: Mehitha asks it when there is no API key")
-        voiceRow.set(VoiceHelper.isEnabled(this), "On: types your question into Claude and reads the reply",
-            "Turn on \"Mehitha voice button\" in Accessibility. If it's greyed out: App info → ⋮ → Allow restricted settings")
-        voiceDebug.text = listOfNotNull(
-            LaunchClaudeActivity.lastLaunch?.let { "Claude opened by: $it" },
-            VoiceHelper.lastTapped?.let { "Last tapped in Claude: $it" },
-            VoiceHelper.lastAsk(this)?.let { "Claude app: $it" },
-            VoiceHelper.seenButtons(this)?.let { "Claude buttons seen: $it" },
-        ).joinToString("\n")
+        val chips = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(d(16), d(4), d(16), d(4))
+            SUGGESTIONS.forEach { (label, question) ->
+                addView(Ui.chip(this@MainActivity, label) {
+                    if (question.endsWith(" ")) { input.setText(question); input.setSelection(question.length); showKeyboard() }
+                    else ask(question)
+                }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { marginEnd = d(8) })
+            }
+        }
+        val chipRow = HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(chips) }
 
-        val sms = granted(Manifest.permission.READ_SMS)
-        val files = Environment.isExternalStorageManager()
-        val notif = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")?.contains(packageName) == true
-        dropboxRow.set(dropbox.isLinked, "Linked", "Link your Dropbox app key")
-        if (dropbox.isLinked) linkBox.visibility = View.GONE
-        smsRow.set(sms, "Syncing (OTPs skipped)", "Allow to search your SMS", required = false)
-        filesRow.set(files, "Indexed", "Allow to find documents and photos", required = false)
-        notifRow.set(notif, "Capturing new messages", "Allow to save WhatsApp messages", required = false)
-        syncStatus.text = PhoneSync.lastStatus(this)
+        input = EditText(this).apply {
+            hint = HINT
+            setTextColor(Ui.TEXT)
+            setHintTextColor(Ui.MUTED)
+            textSize = 15.5f
+            // One logical line with a Send key on the keyboard, wrapping onto up to five rows.
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            imeOptions = EditorInfo.IME_ACTION_SEND
+            setHorizontallyScrolling(false)
+            maxLines = 5
+            setOnEditorActionListener { _, action, _ -> if (action == EditorInfo.IME_ACTION_SEND) { ask(text.toString()); true } else false }
+            setPadding(d(16), d(12), d(16), d(12))
+            background = GradientDrawable().apply { setColor(Ui.FIELD); cornerRadius = d(24).toFloat() }
+        }
+        mic = Ui.iconButton(this, "🎤", "Ask by voice") { toggleDictation() }
+        send = Ui.iconButton(this, "➤", "Send", gradient = true) { ask(input.text.toString()) }
+        val composer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.BOTTOM
+            setPadding(d(12), d(6), d(12), d(12))
+            addView(input, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(mic, LinearLayout.LayoutParams(d(46), d(46)).apply { marginStart = d(8) })
+            addView(send, LinearLayout.LayoutParams(d(46), d(46)).apply { marginStart = d(8) })
+        }
+
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Ui.BG)
+            addView(top, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+            addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+            addView(chipRow, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+            addView(composer, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        }
     }
+
+    private fun updateSend() { send.alpha = if (busy) 0.4f else 1f }
+
+    private fun hideKeyboard() {
+        getSystemService(InputMethodManager::class.java)?.hideSoftInputFromWindow(input.windowToken, 0)
+    }
+
+    private fun showKeyboard() {
+        input.requestFocus()
+        getSystemService(InputMethodManager::class.java)?.showSoftInput(input, 0)
+    }
+
+    private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 
     companion object {
-        private const val PREFS_MAIN = "main"
-        private const val KEY_LISTEN = "listen"
+        private const val TAG = "HeyClaude"
+        private const val MIC_REQUEST = 1
+        private const val HINT = "Ask Mehitha anything"
+        /** Set on an alert's tap to read the answer aloud too (same value as Alerts.EXTRA_SPEAK). */
+        const val EXTRA_SPEAK = "com.personal.heyclaude.SPEAK"
+
+        /** Chip label to question. A question ending in a space is put in the box to finish typing. */
+        val SUGGESTIONS = listOf(
+            "☀️ Brief me" to "brief me",
+            "🔔 Any alerts?" to "any alerts",
+            "💸 Spending report" to "spending report",
+            "🧾 Odd charges?" to "any odd charges this week",
+            "📈 Check a stock" to "check ",
+            "💬 What did I miss?" to "what did I miss",
+            "📅 Weekly review" to "weekly review",
+            "⏰ Remind me" to "remind me ",
+            "📄 Find a document" to "find my ",
+        )
     }
 }
