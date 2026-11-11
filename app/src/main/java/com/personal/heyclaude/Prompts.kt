@@ -25,12 +25,16 @@ object Prompts {
     const val RULES = "Facts only: if you can't find something, say so, never guess. Never place orders, trades or payments, and never send messages."
     private const val REMIND_HOW = "If there is a date worth a reminder, add a line exactly like REMIND: YYYY-MM-DD HH:MM | what to remind, and I will set it on my phone."
 
+    /** For answers inside Mehitha, which can't reach Outlook, Slack, Gmail or Drive: use only the phone's data. */
+    private const val PHONE_ONLY = "Use only the facts given here and your tools. Don't mention Outlook, Slack, Gmail or Drive, or that you can't reach them."
+
     private fun now(t: LocalDateTime) = "It is ${t.format(STAMP)} in India."
 
-    fun briefing(t: LocalDateTime, bills: String, scan: String, today: String = "") = oneLine(
+    fun briefing(t: LocalDateTime, bills: String, scan: String, today: String = "", apps: Boolean = true) = oneLine(
         "Give me my morning briefing. ${now(t)} " + (if (today.isBlank()) "" else "From my phone: $today ") +
-            "Check my Outlook calendar for today's meetings, my Outlook email and Slack for anything important or waiting on me, " +
-            "and my Gmail for bills or payments due this week. Bills due from my text messages: $bills. " +
+            (if (apps) "Check my Outlook calendar for today's meetings, my Outlook email and Slack for anything important or waiting on me, " +
+                "and my Gmail for bills or payments due this week. " else "$PHONE_ONLY ") +
+            "Bills due from my messages: $bills. " +
             "My stock watchlist from today's scan: $scan. Keep it to the 5 things that matter most today. $RULES"
     )
 
@@ -54,19 +58,21 @@ object Prompts {
             "Give price levels to watch (support, resistance) and the main risk. This is for my information only, not a trade. $RULES"
     )
 
-    fun catchUp(t: LocalDateTime, messages: String) = oneLine(
-        "Catch me up on what I missed today. ${now(t)} Check Slack for messages to me, mentions and threads I'm in today. " +
+    fun catchUp(t: LocalDateTime, messages: String, apps: Boolean = true) = oneLine(
+        "Catch me up on what I missed today. ${now(t)} " +
+            (if (apps) "Check Slack for messages to me, mentions and threads I'm in today. " else "$PHONE_ONLY ") +
             "My WhatsApp and app messages today from my phone: $messages. Group by person, say what needs a reply, and skip promotions. $RULES"
     )
 
-    fun findDocument(t: LocalDateTime, question: String, files: String) = oneLine(
-        "$question ${now(t)} Search my Gmail and Google Drive for it. Matching file names on my phone: $files. " +
+    fun findDocument(t: LocalDateTime, question: String, files: String, apps: Boolean = true) = oneLine(
+        "$question ${now(t)} " + (if (apps) "Search my Gmail and Google Drive for it. " else "$PHONE_ONLY ") +
+            "Matching file names on my phone: $files. " +
             "Tell me the key date and where the document is. $REMIND_HOW Set it one month before an expiry. $RULES"
     )
 
-    fun weeklyReview(t: LocalDateTime, money: String, bills: String, scan: String) = oneLine(
+    fun weeklyReview(t: LocalDateTime, money: String, bills: String, scan: String, apps: Boolean = true) = oneLine(
         "Give me my weekly review. ${now(t)} My spending: $money. Bills due soon: $bills. My stock watchlist from the latest scan: $scan. " +
-            "Also check my Outlook calendar for next week. Cover money, bills, stocks and the week ahead in a few short points. $RULES"
+            (if (apps) "Also check my Outlook calendar for next week. " else "$PHONE_ONLY ") + "Cover money, bills, stocks and the week ahead in a few short points. $RULES"
     )
 
     fun reminder(t: LocalDateTime, request: String) = oneLine(

@@ -28,14 +28,16 @@ object Answers {
     }
 
     /** The words sent to Claude for [command], with the phone's own data filled in. Slow: run off the screen thread. */
-    fun prompt(ctx: Context, command: Command, text: String): String {
+    /** [inApp]: answered by Claude inside Mehitha (API key), which can't reach Outlook, Slack, Gmail or Drive. */
+    fun prompt(ctx: Context, command: Command, text: String, inApp: Boolean = false): String {
+        val apps = !inApp
         val t = PhoneData.now()
         val day = t.toLocalDate()
         val data = AssistantActivity.phoneData ?: PhoneData(ctx)
         fun bills() = (if (Bills.hasSource(ctx, data)) Money.billsText(Bills.upcoming(ctx, data, day), day) else PhoneData.NO_SMS).take(300)
         return when (command) {
             is Command.Briefing -> Prompts.briefing(t, bills(), Prompts.scanSummary(data.scan()),
-                try { Today.answer(ctx, "all") } catch (e: Exception) { "" })
+                try { Today.answer(ctx, "all") } catch (e: Exception) { "" }, apps)
             is Command.Money -> Prompts.money(t, command.question, data.moneyFacts(command.question).take(MAX_DATA))
             is Command.SpendingReport -> Prompts.spendingReport(t,
                 (if (data.canReadSms) Money.report(data.spends(), day) else PhoneData.NO_SMS).take(MAX_DATA))
@@ -45,18 +47,18 @@ object Answers {
                 Prompts.oddCharges(t, if (data.canReadSms) flags else PhoneData.NO_SMS, Money.recentLines(spends, t, 7).take(MAX_DATA))
             }
             is Command.StockCheck -> Prompts.stockCheck(t, command.stock, Prompts.scanFor(data.scan(), command.stock))
-            is Command.CatchUp -> Prompts.catchUp(t, data.messagesToday(MAX_DATA))
-            is Command.FindDocument -> Prompts.findDocument(t, command.question, data.files(command.question))
+            is Command.CatchUp -> Prompts.catchUp(t, data.messagesToday(MAX_DATA), apps)
+            is Command.FindDocument -> Prompts.findDocument(t, command.question, data.files(command.question), apps)
             is Command.WeeklyReview -> Prompts.weeklyReview(t,
-                (if (data.canReadSms) Money.week(data.spends(), t) else PhoneData.NO_SMS).take(MAX_DATA / 2), bills(), Prompts.scanSummary(data.scan()))
+                (if (data.canReadSms) Money.week(data.spends(), t) else PhoneData.NO_SMS).take(MAX_DATA / 2), bills(), Prompts.scanSummary(data.scan()), apps)
             is Command.Reminder -> Prompts.reminder(t, command.request)
             else -> text
         }
     }
 
     /** [prompt], falling back to the plain question if the phone data can't be read. */
-    fun safePrompt(ctx: Context, command: Command, text: String): String =
-        try { prompt(ctx, command, text) } catch (e: Exception) { Log.w(TAG, "Phone data failed", e); text }
+    fun safePrompt(ctx: Context, command: Command, text: String, inApp: Boolean = false): String =
+        try { prompt(ctx, command, text, inApp) } catch (e: Exception) { Log.w(TAG, "Phone data failed", e); text }
 
     /** Claude's [text], with any reminders in it set, ready to show and to say. */
     fun reply(ctx: Context, text: String): AssistantText.Reply {

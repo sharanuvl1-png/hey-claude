@@ -156,7 +156,7 @@ class MainActivity : Activity() {
         val thinking = addThinking()
         Thread {
             // Gathering phone data (SMS, scan) can take a moment, so it happens off the screen thread.
-            val prompt = Answers.safePrompt(this, command, text)
+            val prompt = Answers.safePrompt(this, command, text, inApp = b != null)
             val result: Result<String>? = if (b == null) null else try {
                 Result.success(b.ask(prompt))
             } catch (e: Exception) {
