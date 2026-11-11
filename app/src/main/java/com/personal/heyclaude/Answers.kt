@@ -12,7 +12,7 @@ object Answers {
     private const val MAX_DATA = 700
 
     /** Mehitha's own answer for [command], without Claude; null when Claude is needed. */
-    fun local(ctx: Context, command: Command, text: String): String? = when (command) {
+    fun local(ctx: Context, command: Command, text: String): String? = missing(ctx, command) ?: when (command) {
         is Command.Remember -> {
             Memory.add(ctx, command.fact)
             "Okay, I'll remember that: ${command.fact}."
@@ -25,6 +25,33 @@ object Answers {
         is Command.Orders -> Orders.answer(Orders.recent(AssistantActivity.phoneData ?: PhoneData(ctx)), PhoneData.today(), command.shop)
         is Command.Ask -> Prompts.recall(Memory.all(ctx), text)
         else -> null
+    }
+
+    /**
+     * When [command] needs SMS or WhatsApp that this phone or this version of Mehitha can't read,
+     * says plainly what's missing and how to fix it, instead of asking Claude with no data.
+     */
+    fun missing(ctx: Context, command: Command): String? {
+        val needsMoney = command is Command.Money || command is Command.SpendingReport || command is Command.OddCharges
+        val needsChats = command is Command.CatchUp
+        val needsAny = command is Command.Orders
+        if (!needsMoney && !needsChats && !needsAny) return null
+        val data = AssistantActivity.phoneData ?: PhoneData(ctx)
+        val sms = data.canReadSms
+        val chats = data.canReadMessages
+        val smsInBuild = SettingsActivity.declares(ctx, android.Manifest.permission.READ_SMS)
+        val chatsInBuild = SettingsActivity.hasService(ctx, NotificationCatcher::class.java)
+        val full = "Install the full version of Mehitha (the hey-claude-full APK on the latest build page) to get this."
+        return when {
+            needsChats && !chats -> if (chatsInBuild) "I can't see your WhatsApp messages yet. Turn on \"WhatsApp & app messages\" in Settings, Phone data. It saves new messages from then on."
+                else "This version of Mehitha can't see WhatsApp messages. $full"
+            (needsMoney || needsAny) && !sms && !chats -> when {
+                !smsInBuild && !chatsInBuild -> "This version of Mehitha can't read your SMS or WhatsApp, so I have nothing to go on. $full"
+                smsInBuild -> "Allow \"Text messages\" in Settings, Phone data, so I can read your bank and shop messages."
+                else -> "Turn on \"WhatsApp & app messages\" in Settings, Phone data, so I can read your bank and shop messages."
+            }
+            else -> null
+        }
     }
 
     /** The words sent to Claude for [command], with the phone's own data filled in. Slow: run off the screen thread. */

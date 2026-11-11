@@ -274,6 +274,7 @@ class AssistantFlowTest {
 
     private inner class FakePhone(val spends: List<Spend> = emptyList(), val scanMd: String = "") : PhoneData(RuntimeEnvironment.getApplication()) {
         override val canReadSms get() = true
+        override val canReadMessages get() = true
         override fun spends(days: Long) = spends
         override fun bills(days: Long) = listOf(Bill("ICICIB", 12400.0, PhoneData.today().plusDays(2), "due"))
         override fun scan() = scanMd

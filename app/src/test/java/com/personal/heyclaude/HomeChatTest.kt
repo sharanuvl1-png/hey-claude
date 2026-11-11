@@ -159,6 +159,16 @@ class HomeChatTest {
         assertEquals(1, ChatStore.all(app).size)
     }
 
+    @Test fun saysWhatIsMissingInsteadOfAskingClaudeWithNoData() {
+        val a = open()
+        type(a, "spending report")
+        // This test build (voice) can't read SMS or WhatsApp.
+        assertTrue(chat(a).any { it.contains("can't read your SMS or WhatsApp") && it.contains("full version") })
+        type(a, "what did I miss")
+        assertTrue(chat(a).any { it.contains("can't see WhatsApp messages") })
+        assertEquals(null, api)
+    }
+
     @Test fun spokenQuestionIsReadAloud() {
         val a = open(replies = listOf(200 to text("Nifty closed higher today.")))
         field<View>(a, "mic").performClick()
