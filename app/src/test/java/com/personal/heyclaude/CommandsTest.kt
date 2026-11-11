@@ -45,6 +45,16 @@ class CommandsTest {
         assertEquals(Command.Ask("make a chart"), c("make a chart"))
     }
 
+    @Test fun today() {
+        assertEquals(Command.Today("all"), c("What's on today?"))
+        assertEquals(Command.Today("all"), c("my schedule today"))
+        assertEquals(Command.Today("meetings"), c("any meetings today"))
+        assertEquals(Command.Today("meetings"), c("when is my next meeting"))
+        assertEquals(Command.Today("deliveries"), c("any deliveries today"))
+        assertEquals(Command.Today("deliveries"), c("what's arriving today"))
+        assertEquals(Command.Ask("what's the weather today"), c("what's the weather today"))
+    }
+
     @Test fun everythingElse() {
         assertEquals(Command.CatchUp, c("What did I miss today?"))
         assertEquals(Command.CatchUp, c("catch me up"))

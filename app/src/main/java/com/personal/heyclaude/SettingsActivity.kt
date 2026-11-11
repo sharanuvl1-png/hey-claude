@@ -36,6 +36,7 @@ class SettingsActivity : Activity() {
     private lateinit var voiceDebug: TextView
     private lateinit var dropboxRow: Ui.Row
     private lateinit var smsRow: Ui.Row
+    private lateinit var calendarRow: Ui.Row
     private lateinit var filesRow: Ui.Row
     private lateinit var notifRow: Ui.Row
     private lateinit var linkBox: LinearLayout
@@ -102,7 +103,7 @@ class SettingsActivity : Activity() {
         page.addView(Ui.spacer(this, 16))
 
         // Card 2: phone data.
-        val data = Ui.card(this, "Phone data", "Lets Mehitha search your SMS, WhatsApp messages, documents and files through a private Dropbox folder.")
+        val data = Ui.card(this, "Phone data", "Lets Mehitha read your calendar, SMS, WhatsApp messages and files on the phone. Dropbox is optional: it copies them so the Claude app can search them too.")
         dropboxRow = Ui.Row(this, "Dropbox", "Link") { linkBox.visibility = View.VISIBLE }
         data.addView(dropboxRow.view)
         linkBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
@@ -129,7 +130,10 @@ class SettingsActivity : Activity() {
         notifRow = Ui.Row(this, "WhatsApp & app messages", "Allow") {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
         }
-        listOf(smsRow, filesRow, notifRow).forEach { data.addView(it.view) }
+        calendarRow = Ui.Row(this, "Calendar", "Allow") {
+            requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), 3)
+        }
+        listOf(calendarRow, smsRow, filesRow, notifRow).forEach { data.addView(it.view) }
         // The basic build leaves these out so Play Protect lets it install.
         if (!declares(Manifest.permission.READ_SMS)) smsRow.view.visibility = View.GONE
         if (!hasService(NotificationCatcher::class.java)) notifRow.view.visibility = View.GONE
@@ -248,6 +252,8 @@ class SettingsActivity : Activity() {
         val notif = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")?.contains(packageName) == true
         dropboxRow.set(dropbox.isLinked, "Linked", "Link your Dropbox app key", required = false)
         if (dropbox.isLinked) linkBox.visibility = View.GONE
+        calendarRow.set(granted(Manifest.permission.READ_CALENDAR), "Meeting reminders on",
+            "Allow for meeting reminders and \"what's on today\". Add your work calendar in the phone's Calendar or Outlook app", required = false)
         smsRow.set(sms, "Syncing (OTPs skipped)", "Allow to search your SMS", required = false)
         filesRow.set(files, "Indexed", "Allow to find documents and photos", required = false)
         notifRow.set(notif, "Capturing new messages", "Allow to save WhatsApp messages", required = false)

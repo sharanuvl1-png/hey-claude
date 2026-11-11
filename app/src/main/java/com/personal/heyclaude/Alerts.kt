@@ -98,6 +98,8 @@ object Alerts {
     fun schedule(ctx: Context) {
         val work = PeriodicWorkRequestBuilder<AlertWorker>(1, TimeUnit.HOURS).build()
         WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("mehitha-alerts", ExistingPeriodicWorkPolicy.KEEP, work)
+        val today = PeriodicWorkRequestBuilder<TodayWorker>(15, TimeUnit.MINUTES).build()
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("mehitha-today", ExistingPeriodicWorkPolicy.KEEP, today)
         val breakouts = PeriodicWorkRequestBuilder<BreakoutWorker>(15, TimeUnit.MINUTES).build()
         WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("mehitha-breakouts", ExistingPeriodicWorkPolicy.KEEP, breakouts)
     }
@@ -130,7 +132,15 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
             Log.w("Mehitha", "SMS checks failed", e)
         }
         if (now.hour in 7..10) once("brief") {
-            Alerts.post(ctx, Alert("brief:$today", "Good morning", "Tap for your briefing: meetings, messages, bills and stocks."), ask = "good morning")
+            val day = try {
+                val meetings = Today.meetings(ctx, today)
+                val deliveries = Today.deliveries(ctx, data, today)
+                listOfNotNull(
+                    meetings.size.takeIf { it > 0 }?.let { n -> "$n meeting${if (n > 1) "s" else ""}" + (meetings.firstOrNull { !it.allDay }?.let { ", first at ${Today.time(it.start)}" } ?: "") },
+                    deliveries.size.takeIf { it > 0 }?.let { n -> "$n deliver${if (n > 1) "ies" else "y"} expected" },
+                ).joinToString(". ").let { if (it.isEmpty()) "" else "$it. " }
+            } catch (e: Exception) { "" }
+            Alerts.post(ctx, Alert("brief:$today", "Good morning", "${day}Tap for your briefing: meetings, messages, bills and stocks."), ask = "good morning")
         }
         if (now.dayOfWeek == DayOfWeek.SUNDAY && now.hour in 18..21) once("weekly") {
             Alerts.post(ctx, Alert("weekly:$today", "Your weekly review is ready", "Money, bills, stocks and the week ahead. Tap to hear it."), ask = "weekly review")

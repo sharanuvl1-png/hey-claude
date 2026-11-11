@@ -470,6 +470,7 @@ class MainActivity : Activity() {
         /** Chip label to question. A question ending in a space is put in the box to finish typing. */
         val SUGGESTIONS = listOf(
             "☀️ Brief me" to "brief me",
+            "🗓️ What's on today?" to "what's on today",
             "🔔 Any alerts?" to "any alerts",
             "💸 Spending report" to "spending report",
             "🧾 Odd charges?" to "any odd charges this week",

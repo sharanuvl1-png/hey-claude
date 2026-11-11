@@ -29,6 +29,9 @@ open class PhoneData(private val ctx: Context) {
         Money.billDue(sender, body, time.toLocalDate())
     }
 
+    /** Text messages from the last [days] days (OTPs skipped): time, sender, text. */
+    open fun recentSms(days: Long): List<Triple<LocalDateTime, String, String>> = sms(days)
+
     private fun sms(days: Long): List<Triple<LocalDateTime, String, String>> {
         if (!canReadSms) return emptyList()
         val since = System.currentTimeMillis() - days * 24 * 3600 * 1000

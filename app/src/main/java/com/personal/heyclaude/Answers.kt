@@ -18,6 +18,7 @@ object Answers {
             "Okay, I'll remember that: ${command.fact}."
         }
         is Command.Alerts -> Alerts.summary(ctx)
+        is Command.Today -> Today.answer(ctx, command.what)
         is Command.Ask -> Prompts.recall(Memory.all(ctx), text)
         else -> null
     }
@@ -29,7 +30,8 @@ object Answers {
         val data = AssistantActivity.phoneData ?: PhoneData(ctx)
         fun bills() = (if (data.canReadSms) Money.billsText(data.bills(), day) else PhoneData.NO_SMS).take(300)
         return when (command) {
-            is Command.Briefing -> Prompts.briefing(t, bills(), Prompts.scanSummary(data.scan()))
+            is Command.Briefing -> Prompts.briefing(t, bills(), Prompts.scanSummary(data.scan()),
+                try { Today.answer(ctx, "all") } catch (e: Exception) { "" })
             is Command.Money -> Prompts.money(t, command.question, data.moneyFacts(command.question).take(MAX_DATA))
             is Command.SpendingReport -> Prompts.spendingReport(t,
                 (if (data.canReadSms) Money.report(data.spends(), day) else PhoneData.NO_SMS).take(MAX_DATA))

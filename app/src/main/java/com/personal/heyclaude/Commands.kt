@@ -11,6 +11,8 @@ sealed class Command {
     data class Money(val question: String) : Command()
     data class StockCheck(val stock: String) : Command()
     data class Chart(val stock: String) : Command()
+    /** Today's meetings and/or deliveries: [what] is "meetings", "deliveries" or "all". */
+    data class Today(val what: String) : Command()
     data class FindDocument(val question: String) : Command()
     data class Remember(val fact: String) : Command()
     data class Reminder(val request: String) : Command()
@@ -28,6 +30,9 @@ sealed class Command {
         private val REPORT = re("\\b(spending|expense|expenses|money|monthly) report\\b|where did (all )?my money go")
         private val WEEKLY = re("\\b(weekly|week'?s) review\\b|review (of )?my week|\\bmy week\\b.*\\b(review|summary)\\b")
         private val CATCH_UP = re("\\bwhat did i miss\\b|\\bcatch me up\\b|^catch up\\b|\\bwhat'?s new on (whatsapp|slack)\\b")
+        private val MEETINGS = re("\\b(any |my |next |today'?s )meetings?\\b|\\bmeetings? today\\b|\\b(what'?s|anything) on my calendar\\b|\\bwhen is my next meeting\\b")
+        private val DELIVERIES = re("\\b(any|my|today'?s) (deliveries|delivery|parcels?|packages?|orders? (arriving|coming))\\b|\\b(deliveries|parcels?|packages?) today\\b|\\bwhat'?s (being )?delivered today\\b|\\bwhat'?s arriving today\\b")
+        private val TODAY = re("^(so )?what'?s (on |happening )?(for )?today\\W*$|^what('?s| is) on today\\b|\\bmy (day|schedule) today\\b|^what('?s| is) my (day|schedule)( like)?( today)?\\W*$")
         private val REMEMBER = re("^(please )?remember( that)?\\s+(.{3,})$")
         private val REMIND = re("^(please )?(remind me|set (a )?reminder)\\b.{3,}")
         private val MONEY = re("\\b(spen[dt]|spending|expenses?|subscriptions?|how much (did|have) i (pay|paid)|paid for|my money)\\b")
@@ -56,6 +61,9 @@ sealed class Command {
             if (WEEKLY.containsMatchIn(t)) return WeeklyReview
             if (CATCH_UP.containsMatchIn(t)) return CatchUp
             if (MONEY.containsMatchIn(t)) return Money(t)
+            if (TODAY.containsMatchIn(t)) return Today("all")
+            if (MEETINGS.containsMatchIn(t)) return Today("meetings")
+            if (DELIVERIES.containsMatchIn(t)) return Today("deliveries")
             if (DOC.containsMatchIn(t)) return FindDocument(t)
             for (p in CHART) p.find(t)?.groups?.get("s")?.let { return Chart(it.value.trim()) }
             for (p in STOCK) p.find(t)?.groups?.get("s")?.let { return StockCheck(it.value.trim()) }

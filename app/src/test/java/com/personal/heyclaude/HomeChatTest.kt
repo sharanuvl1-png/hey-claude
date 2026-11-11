@@ -179,6 +179,13 @@ class HomeChatTest {
         assertTrue(api!!.requests[0].contains("claude-opus-5-5"))
     }
 
+    @Test fun answersWhatsOnTodayByItself() {
+        val a = open()
+        type(a, "what's on today")
+        assertTrue(chat(a).any { it.contains("calendar") && it.contains("deliveries", ignoreCase = true) })
+        assertEquals(null, api)
+    }
+
     @Test fun answersAlertsByItself() {
         val a = open()
         type(a, "any alerts")
@@ -223,5 +230,6 @@ class HomeChatTest {
         val wm = WorkManager.getInstance(app)
         assertEquals(1, wm.getWorkInfosForUniqueWork("mehitha-breakouts").get().size)
         assertEquals(1, wm.getWorkInfosForUniqueWork("mehitha-alerts").get().size)
+        assertEquals(1, wm.getWorkInfosForUniqueWork("mehitha-today").get().size)
     }
 }

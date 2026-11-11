@@ -27,8 +27,9 @@ object Prompts {
 
     private fun now(t: LocalDateTime) = "It is ${t.format(STAMP)} in India."
 
-    fun briefing(t: LocalDateTime, bills: String, scan: String) = oneLine(
-        "Give me my morning briefing. ${now(t)} Check my Outlook calendar for today's meetings, my Outlook email and Slack for anything important or waiting on me, " +
+    fun briefing(t: LocalDateTime, bills: String, scan: String, today: String = "") = oneLine(
+        "Give me my morning briefing. ${now(t)} " + (if (today.isBlank()) "" else "From my phone: $today ") +
+            "Check my Outlook calendar for today's meetings, my Outlook email and Slack for anything important or waiting on me, " +
             "and my Gmail for bills or payments due this week. Bills due from my text messages: $bills. " +
             "My stock watchlist from today's scan: $scan. Keep it to the 5 things that matter most today. $RULES"
     )
