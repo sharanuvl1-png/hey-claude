@@ -78,8 +78,16 @@ class MainActivity : Activity() {
         askFrom(intent)
     }
 
-    /** Tapping an alert opens the chat with its question, read aloud when the alert asks for it. */
+    /**
+     * Tapping an alert opens the chat with its question, read aloud when the alert asks for it.
+     * Opened as the phone's assistant (long-press power or home), Mehitha starts listening.
+     */
     private fun askFrom(i: Intent?) {
+        if (i?.action == Intent.ACTION_ASSIST || i?.action == Intent.ACTION_VOICE_COMMAND) {
+            i.action = Intent.ACTION_MAIN // only once, not again when the screen is recreated
+            handler.post { if (!listening && !isFinishing) toggleDictation() }
+            return
+        }
         val asked = i?.getStringExtra(AssistantActivity.EXTRA_ASK) ?: return
         val speak = i.getBooleanExtra(EXTRA_SPEAK, false)
         i.removeExtra(AssistantActivity.EXTRA_ASK)

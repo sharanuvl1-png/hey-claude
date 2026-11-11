@@ -2,6 +2,7 @@ package com.personal.heyclaude
 
 import android.Manifest
 import android.app.Activity
+import android.app.role.RoleManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -27,6 +28,7 @@ class SettingsActivity : Activity() {
     private lateinit var apiBox: LinearLayout
     private lateinit var apiField: EditText
     private lateinit var micRow: Ui.Row
+    private lateinit var assistantRow: Ui.Row
     private lateinit var claudeRow: Ui.Row
     private lateinit var voiceRow: Ui.Row
     private lateinit var overlayRow: Ui.Row
@@ -65,6 +67,7 @@ class SettingsActivity : Activity() {
             else { AssistantActivity.saveApiKey(this, k); apiField.setText(""); apiBox.visibility = View.GONE; toast("Key saved"); refresh() }
         })
         micRow = Ui.Row(this, "Microphone", "Allow") { requestMic() }
+        assistantRow = Ui.Row(this, "Phone's assistant", "Set") { openAssistantSettings() }
         claudeRow = Ui.Row(this, "Claude app", "Install") {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${LaunchClaudeActivity.CLAUDE_PACKAGE}")))
         }
@@ -77,7 +80,7 @@ class SettingsActivity : Activity() {
         }
         brain.addView(apiRow.view)
         brain.addView(apiBox)
-        listOf(micRow, claudeRow, voiceRow, overlayRow).forEach { brain.addView(it.view) }
+        listOf(assistantRow, micRow, claudeRow, voiceRow, overlayRow).forEach { brain.addView(it.view) }
         // The basic build has no Claude app helper, so these two rows don't apply.
         if (!hasService(VoiceHelper::class.java)) { voiceRow.view.visibility = View.GONE; overlayRow.view.visibility = View.GONE }
         voiceDebug = Ui.text(this, "", 11.5f, Ui.MUTED).apply { setPadding(0, d(8), 0, 0) }
@@ -155,6 +158,19 @@ class SettingsActivity : Activity() {
         }.start()
     }
 
+    /** Opens Android's "Digital assistant app" setting, where you can pick Mehitha. */
+    private fun openAssistantSettings() {
+        toast("Tap \"Digital assistant app\" (or \"Device assistance app\") and choose Mehitha")
+        val tries = listOf(Settings.ACTION_VOICE_INPUT_SETTINGS, Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS, Settings.ACTION_SETTINGS)
+        for (a in tries) {
+            try { startActivity(Intent(a)); return } catch (e: Exception) { /* try the next one */ }
+        }
+    }
+
+    private fun isAssistant(): Boolean = try {
+        getSystemService(RoleManager::class.java)?.isRoleHeld(RoleManager.ROLE_ASSISTANT) == true
+    } catch (e: Exception) { false }
+
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
 
     private fun requestMic() {
@@ -179,6 +195,9 @@ class SettingsActivity : Activity() {
         apiRow.set(hasKey, "Saved: Mehitha answers right in the chat. Tap to replace",
             "Recommended. Without a key Mehitha asks the Claude app for you", required = false)
         apiRow.view.setOnClickListener { apiBox.visibility = View.VISIBLE }
+        assistantRow.set(isAssistant(), "On: long-press power or home to talk to Mehitha",
+            "Make Mehitha open when you long-press power or home. On Samsung also set Side button → Press and hold → Digital assistant",
+            required = false)
         micRow.set(granted(Manifest.permission.RECORD_AUDIO), "Allowed", "Needed to ask by voice", required = false)
         val claude = packageManager.getLaunchIntentForPackage(LaunchClaudeActivity.CLAUDE_PACKAGE) != null
         claudeRow.set(claude, "Installed", "Install Claude: Mehitha asks it when there is no API key", required = !hasKey)

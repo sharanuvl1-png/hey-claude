@@ -190,6 +190,12 @@ class HomeChatTest {
         assertEquals("Nifty closed higher today.", spoken().last())
     }
 
+    @Test fun openedAsPhoneAssistantStartsListening() {
+        val a = open(intent = Intent(Intent.ACTION_ASSIST).setClass(app, MainActivity::class.java))
+        assertTrue(field<Boolean>(a, "listening"))
+        assertEquals(Intent.ACTION_MAIN, a.intent.action) // not again on a screen rotation
+    }
+
     @Test fun keepsTheBreakoutAlertsScheduled() {
         open()
         val wm = WorkManager.getInstance(app)
