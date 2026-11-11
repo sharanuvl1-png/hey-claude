@@ -16,7 +16,7 @@ object AssistantText {
     /** What to show on screen, the shorter, casual version to say out loud, and pictures to show. */
     data class Reply(val display: String, val speech: String, val images: List<String> = emptyList())
 
-    private val IMAGE = Regex("(?im)^[\\s*_>-]*image[\\s*_]*:\\s*<?(https://\\S+?)>?\\s*$")
+    private val IMAGE = Regex("(?im)^[ \\t*_>-]*image[ \\t*_]*:[ \\t]*<?(https://\\S+?)>?[ \\t]*(\\r?\\n|\\z)")
 
     /** Picture links on "IMAGE: <link>" lines, and the text without those lines. */
     fun images(reply: String): Pair<String, List<String>> {
