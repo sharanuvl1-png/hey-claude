@@ -40,6 +40,8 @@ class MainActivity : Activity() {
     private var busy = false
     private var tts: TextToSpeech? = null
     private var ttsReady = false
+    /** Speech asked for before the engine finished starting (e.g. a tapped alert on a cold start). */
+    private var pendingSpeech: String? = null
     private var recognizer: SpeechRecognizer? = null
     private var listening = false
 
@@ -59,7 +61,9 @@ class MainActivity : Activity() {
         tts = TextToSpeech(this) { code ->
             handler.post {
                 ttsReady = code == TextToSpeech.SUCCESS
-                if (ttsReady) tts?.language = Locale("en", "IN")
+                if (ttsReady) tts?.language = Locale("en", "IN") else { tts?.shutdown(); tts = null }
+                pendingSpeech?.let { if (ttsReady) speak(it) }
+                pendingSpeech = null
             }
         }
         // Background jobs: phone sync, file requests, and the alerts (Nifty breakouts, bills, reminders).
@@ -227,13 +231,14 @@ class MainActivity : Activity() {
 
     private fun speak(text: String) {
         val engine = tts
+        if (engine != null && !ttsReady) { pendingSpeech = text; return }
         if (!ttsReady || engine == null) { toast("Text to speech isn't ready on this phone"); return }
         AssistantText.chunksForSpeech(text).forEachIndexed { i, c ->
             engine.speak(c, if (i == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD, null, "chat$i")
         }
     }
 
-    private fun stopSpeaking() { tts?.stop() }
+    private fun stopSpeaking() { pendingSpeech = null; tts?.stop() }
 
     /** Tap the mic, speak, and the question is sent when you pause. Tap again to stop. */
     private fun toggleDictation() {
