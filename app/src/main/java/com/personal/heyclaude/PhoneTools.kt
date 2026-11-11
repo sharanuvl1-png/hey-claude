@@ -50,8 +50,6 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
             (if (notes.isEmpty()) "" else "\n\n" + notes.joinToString("\n"))
     }
 
-    override fun portfolio(): String = Zerodha.answer(ctx)
-
     override fun stockChart(stock: String): String {
         val scan = try { stockScan() } catch (e: Exception) { "" }
         val chart = Charts.find(stock, scan) ?: return "No chart found for $stock. It can be made with the Technical chart action on GitHub."

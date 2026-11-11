@@ -45,14 +45,6 @@ class CommandsTest {
         assertEquals(Command.Ask("make a chart"), c("make a chart"))
     }
 
-    @Test fun spendsAndPortfolio() {
-        assertEquals(Command.LogSpend(250.0, "lunch", "UPI"), c("spent 250 on lunch by UPI"))
-        assertEquals(Command.LogSpend(1200.0, "petrol", "Not said"), c("I spent ₹1,200 on petrol"))
-        assertEquals(Command.LogSpend(500.0, "groceries", "UPI"), c("paid 500 for groceries via gpay"))
-        assertEquals(Command.Portfolio, c("how is my portfolio"))
-        assertEquals(Command.Portfolio, c("show my holdings"))
-    }
-
     @Test fun today() {
         assertEquals(Command.Today("all"), c("What's on today?"))
         assertEquals(Command.Today("all"), c("my schedule today"))

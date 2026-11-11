@@ -129,11 +129,6 @@ object Prompts {
 
     data class ScanRow(val name: String, val symbol: String, val close: String, val verdict: String, val grade: String, val entry: String, val stop: String, val target: String)
 
-    /** Stop-loss price per NSE symbol from the scan's watchlist. */
-    fun stops(md: String): Map<String, Double> = if (md.isBlank()) emptyMap() else watchlistRows(md).mapNotNull { r ->
-        r.stop.replace(",", "").let { Regex("[0-9]+(\\.[0-9]+)?").find(it)?.value?.toDoubleOrNull() }?.let { r.symbol.trim() to it }
-    }.toMap()
-
     private fun watchlistRows(md: String): List<ScanRow> {
         val section = md.substringAfter("## Watchlist", "").substringBefore("\n## ")
         return section.lines().filter { it.startsWith("|") && !it.startsWith("|---") && !it.startsWith("| Group") }.mapNotNull { line ->

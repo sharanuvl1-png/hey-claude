@@ -28,8 +28,6 @@ class SettingsActivity : Activity() {
     private lateinit var apiBox: LinearLayout
     private lateinit var apiField: EditText
     private lateinit var speedText: TextView
-    private lateinit var sheetStatus: TextView
-    private lateinit var kiteStatus: TextView
     private lateinit var passStatus: TextView
     private lateinit var micRow: Ui.Row
     private lateinit var assistantRow: Ui.Row
@@ -147,10 +145,6 @@ class SettingsActivity : Activity() {
         })
         page.addView(data)
         page.addView(Ui.spacer(this, 16))
-        page.addView(moneyCard())
-        page.addView(Ui.spacer(this, 16))
-        page.addView(zerodhaCard())
-        page.addView(Ui.spacer(this, 16))
         page.addView(passcodeCard())
         page.addView(Ui.text(this, buildLabel(this), 11.5f, Ui.MUTED).apply {
             gravity = Gravity.CENTER; setPadding(0, d(20), 0, 0)
@@ -185,63 +179,6 @@ class SettingsActivity : Activity() {
     }
 
     /** Opens Android's "Digital assistant app" setting, where you can pick Mehitha. */
-    /** Card: bank and UPI spends added to the "Mehitha Expenses" Google Sheet by themselves. */
-    private fun moneyCard(): LinearLayout {
-        val d = { v: Int -> Ui.dp(this, v) }
-        val card = Ui.card(this, "Expense sheet",
-            "New bank and UPI spends from SMS and WhatsApp go into your Mehitha Expenses sheet by themselves, and so does \"spent 250 on lunch by UPI\". Only new spends, never a backlog.")
-        sheetStatus = Ui.text(this, "", 12.5f, Ui.MUTED).apply { setPadding(0, d(4), 0, d(8)) }
-        card.addView(sheetStatus)
-        card.addView(Ui.text(this, "1. Open the sheet → Extensions → Apps Script, paste the script, Save.\n" +
-            "2. Deploy → New deployment → Web app → Execute as: Me, Who has access: Anyone → Deploy, allow.\n" +
-            "3. Copy the Web app URL and paste it below.", 12.5f, Ui.MUTED).apply { setPadding(0, 0, 0, d(8)) })
-        card.addView(Ui.pill(this, "Copy the script") {
-            getSystemService(android.content.ClipboardManager::class.java)
-                .setPrimaryClip(android.content.ClipData.newPlainText("Apps Script", ExpenseSheet.SCRIPT))
-            toast("Script copied")
-        })
-        card.addView(Ui.spacer(this, 8))
-        val field = Ui.field(this, "https://script.google.com/macros/s/…/exec")
-        card.addView(field)
-        card.addView(Ui.spacer(this, 8))
-        card.addView(Ui.pill(this, "Save link") {
-            val link = field.text.toString().trim()
-            if (!ExpenseSheet.isLinkValid(link)) toast("That doesn't look like an Apps Script web app link (…/exec)")
-            else { ExpenseSheet.save(this, link); field.setText(""); toast("Linked. New spends will be added"); refresh() }
-        })
-        return card
-    }
-
-    /** Card: Zerodha holdings, read-only. */
-    private fun zerodhaCard(): LinearLayout {
-        val d = { v: Int -> Ui.dp(this, v) }
-        val card = Ui.card(this, "Zerodha (read-only)",
-            "Holdings and P&L in your briefing, \"my portfolio\", and alerts when a stock you hold breaks out or drops below its stop-loss. Mehitha can't place or change orders.")
-        kiteStatus = Ui.text(this, "", 12.5f, Ui.MUTED).apply { setPadding(0, d(4), 0, d(8)) }
-        card.addView(kiteStatus)
-        card.addView(Ui.text(this, "Create a free personal app at developers.kite.trade with redirect URL ${Zerodha.REDIRECT}, then paste its API key and secret.",
-            12.5f, Ui.MUTED).apply { setPadding(0, 0, 0, d(8)) })
-        val key = Ui.field(this, "API key").apply { setText(Zerodha.apiKey(this@SettingsActivity)) }
-        val secret = Ui.field(this, "API secret").apply {
-            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-        }
-        card.addView(key)
-        card.addView(Ui.spacer(this, 8))
-        card.addView(secret)
-        card.addView(Ui.spacer(this, 8))
-        card.addView(LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            addView(Ui.pill(this@SettingsActivity, "Save") {
-                if (key.text.isBlank() || secret.text.isBlank()) toast("Paste both the API key and the secret")
-                else { Zerodha.saveKeys(this@SettingsActivity, key.text.toString(), secret.text.toString()); secret.setText(""); toast("Saved"); refresh() }
-            })
-            addView(Ui.pill(this@SettingsActivity, "Log in for today") {
-                startActivity(Intent(this@SettingsActivity, ZerodhaLoginActivity::class.java))
-            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { marginStart = d(8) })
-        })
-        return card
-    }
-
     /** Card: the passcode Mehitha asks for before sharing confidential details. */
     private fun passcodeCard(): LinearLayout {
         val d = { v: Int -> Ui.dp(this, v) }
@@ -344,12 +281,6 @@ class SettingsActivity : Activity() {
         filesRow.set(files, "Indexed", "Allow to find documents and photos", required = false)
         notifRow.set(notif, "Capturing new messages", "Allow to save WhatsApp messages", required = false)
         syncStatus.text = PhoneSync.lastStatus(this)
-        sheetStatus.text = if (ExpenseSheet.url(this).isNotEmpty()) "Linked: new spends are added every hour" else "Not linked yet"
-        kiteStatus.text = when {
-            !Zerodha.isSetUp(this) -> "Not connected"
-            Zerodha.isLoggedIn(this) -> "Logged in for today"
-            else -> "Connected. Log in for today (Zerodha asks once a day)"
-        }
         passStatus.text = if (Passcode.isSet(this)) "Passcode set" else "Not set: confidential details stay hidden"
     }
 

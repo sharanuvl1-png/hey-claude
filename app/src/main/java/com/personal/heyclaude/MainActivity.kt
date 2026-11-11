@@ -142,8 +142,6 @@ class MainActivity : Activity() {
         val command = Command.parse(text)
         Answers.local(this, command, text)?.let { addReply(it, it, spoken); return }
         if (command is Command.Chart) { showChart(command.stock, spoken); return }
-        if (command is Command.LogSpend) { logSpend(command, spoken); return }
-        if (command is Command.Portfolio) { slowLocal(spoken) { Zerodha.answer(this) }; return }
 
         val b = brain()
         busy = true
@@ -172,38 +170,6 @@ class MainActivity : Activity() {
                     result.isSuccess -> Answers.reply(this, result.getOrThrow()).let { addReply(it.display, it.speech, spoken, images = it.images) }
                     else -> addReply(Answers.problem(result.exceptionOrNull()!!), null, spoken, problem = true)
                 }
-            }
-        }.start()
-    }
-
-    /** "Spent 250 on lunch by UPI": added to your expense sheet, or given back as a row to paste. */
-    private fun logSpend(c: Command.LogSpend, spoken: Boolean) {
-        val category = ExpenseSheet.category(c.what)
-        val amount = Money.rupees(c.amount)
-        slowLocal(spoken) {
-            when {
-                ExpenseSheet.url(this).isEmpty() ->
-                    "Your expense sheet isn't linked yet, so here's the row to paste: " +
-                        "${PhoneData.today()}, ${"%.0f".format(c.amount)}, $category, ${c.what}, ${c.via}. Link the sheet in Settings to add these automatically."
-                ExpenseSheet.addSpoken(this, c.amount, c.what, c.via, category) -> "Added $amount for ${c.what} under $category."
-                else -> "I couldn't reach your expense sheet. Please check the internet and try again."
-            }
-        }
-    }
-
-    /** Runs [work] off the screen thread (it may use the network) and shows its answer. */
-    private fun slowLocal(spoken: Boolean, work: () -> String) {
-        busy = true
-        updateSend()
-        val thinking = addThinking()
-        Thread {
-            val answer = try { work() } catch (e: Exception) { Log.w(TAG, "Local answer failed", e); "Something went wrong. Please try again." }
-            handler.post {
-                if (isDestroyed) return@post
-                messages.removeView(thinking)
-                busy = false
-                updateSend()
-                addReply(answer, answer, spoken)
             }
         }.start()
     }

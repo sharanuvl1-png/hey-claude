@@ -27,9 +27,6 @@ interface MehithaTools {
 
     /** The newest technical chart for a stock: its picture link and the written analysis. */
     fun stockChart(stock: String): String = "No charts available."
-
-    /** Sharan's Zerodha holdings and P&L, read-only. */
-    fun portfolio(): String = "Zerodha isn't connected."
 }
 
 /**
@@ -88,10 +85,6 @@ class AssistantBrain(
             "Today's swing-trading stock scan: watchlist verdicts, entry, stop-loss, targets, and top picks " +
                 "from Nifty 50, Midcap 150 and Smallcap 100. Use for any question about stocks or the market scan.",
             null, null))
-        .addTool(tool("get_portfolio",
-            "Sharan's Zerodha holdings: value, today's change, overall profit or loss and biggest movers. " +
-                "Read-only. Use for questions about his own stocks, portfolio or P&L.",
-            null, null))
         .addTool(tool("get_stock_chart",
             "The newest technical chart for one NSE stock: the chart picture link and the written analysis " +
                 "(trend, levels, entry, stop-loss, targets, verdict). Use when Sharan asks about a stock's chart or setup.",
@@ -118,7 +111,6 @@ class AssistantBrain(
                 when (use.name()) {
                     "search_phone_data" -> tools.searchPhoneData(stringArg(use._input(), "query")) to false
                     "get_stock_scan" -> tools.stockScan() to false
-                    "get_portfolio" -> tools.portfolio() to false
                     "get_stock_chart" -> tools.stockChart(stringArg(use._input(), "stock")) to false
                     else -> "Unknown tool ${use.name()}" to true
                 }

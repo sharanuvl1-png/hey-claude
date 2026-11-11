@@ -31,7 +31,7 @@ object Answers {
         fun bills() = (if (Bills.hasSource(ctx, data)) Money.billsText(Bills.upcoming(ctx, data, day), day) else PhoneData.NO_SMS).take(300)
         return when (command) {
             is Command.Briefing -> Prompts.briefing(t, bills(), Prompts.scanSummary(data.scan()),
-                (try { Today.answer(ctx, "all") } catch (e: Exception) { "" }) + " " + Zerodha.briefLine(ctx))
+                try { Today.answer(ctx, "all") } catch (e: Exception) { "" })
             is Command.Money -> Prompts.money(t, command.question, data.moneyFacts(command.question).take(MAX_DATA))
             is Command.SpendingReport -> Prompts.spendingReport(t,
                 (if (data.canReadSms) Money.report(data.spends(), day) else PhoneData.NO_SMS).take(MAX_DATA))

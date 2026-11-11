@@ -49,10 +49,6 @@
         </activity>
 
         <activity
-            android:name=".ZerodhaLoginActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".SettingsActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />

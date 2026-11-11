@@ -39,7 +39,7 @@ object Alerts {
     const val EXTRA_SPEAK = "com.personal.heyclaude.SPEAK"
 
     /** Shows [alert] unless it was shown before. Tapping it asks Mehitha [ask], if given. */
-    fun post(ctx: Context, alert: Alert, ask: String? = null, speak: Boolean = false, opens: Intent? = null): Boolean {
+    fun post(ctx: Context, alert: Alert, ask: String? = null, speak: Boolean = false): Boolean {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val seen = prefs.getStringSet("seen", emptySet())!!
         if (alert.id in seen) return false
@@ -52,7 +52,7 @@ object Alerts {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             .apply { if (ask != null) putExtra(AssistantActivity.EXTRA_ASK, ask); if (speak) putExtra(EXTRA_SPEAK, true) }
         val tap = alert.link?.let { web(it, alert.id.hashCode()) }
-            ?: PendingIntent.getActivity(ctx, alert.id.hashCode(), opens?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) ?: open, flags)
+            ?: PendingIntent.getActivity(ctx, alert.id.hashCode(), open, flags)
         val chart = alert.image?.let { picture(it) }
         val builder = Notification.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_mehitha)
@@ -137,21 +137,6 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
         } catch (e: Exception) {
             Log.w("Mehitha", "Bill checks failed", e)
         }
-        try {
-            val added = ExpenseSheet.sync(ctx, data)
-            if (added > 0) Log.i("Mehitha", "Added $added spends to the expense sheet")
-        } catch (e: Exception) { Log.w("Mehitha", "Expense sheet sync failed", e) }
-        val weekday = now.dayOfWeek != DayOfWeek.SATURDAY && now.dayOfWeek != DayOfWeek.SUNDAY
-        if (weekday && Zerodha.isSetUp(ctx) && !Zerodha.isLoggedIn(ctx) && now.hour in 8..10) once("kite_login") {
-            Alerts.post(ctx, Alert("kite:$today", "Log in to Zerodha", "Tap to log in for today's portfolio and stop-loss alerts. Read-only."),
-                opens = Intent(ctx, ZerodhaLoginActivity::class.java))
-        }
-        if (weekday && Zerodha.isLoggedIn(ctx) && now.hour in 9..15) try {
-            Zerodha.holdings(ctx)?.let { h ->
-                Zerodha.stopLossAlerts(h, Prompts.stops(fetch(PhoneData.SCAN_URL)), today.toString())
-                    .forEach { Alerts.post(ctx, it, ask = "my portfolio") }
-            }
-        } catch (e: Exception) { Log.w("Mehitha", "Stop-loss check failed", e) }
         if (now.hour in 7..10) once("brief") {
             val day = try {
                 val meetings = Today.meetings(ctx, today)
@@ -219,9 +204,7 @@ class BreakoutWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, param
             return Result.success()
         }
         try {
-            val held = Zerodha.heldSymbols(applicationContext)
             val alerts = AlertWorker.parseStockAlerts(AlertWorker.fetch(PhoneData.BREAKOUTS_URL), now.toLocalDate().toString())
-                .map { a -> if (held.any { s -> Regex("\\b${Regex.escape(s)}\\b").containsMatchIn(a.title + " " + a.text) }) a.copy(title = "📌 You hold this: " + a.title) else a }
             alerts.forEach { Alerts.post(applicationContext, it) }
             MehithaWidget.saveBreakouts(applicationContext, now.toLocalDate(), alerts)
             MehithaWidget.refresh(applicationContext)
