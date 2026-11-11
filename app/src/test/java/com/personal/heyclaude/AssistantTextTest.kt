@@ -47,6 +47,15 @@ class AssistantTextTest {
         assertEquals("Nifty 50 closed at 24,310, up 0.8%. Banks led.", r.display)
     }
 
+    @Test fun imageLinesBecomePictures() {
+        val r = AssistantText.forSpeech("SPOKEN: Here's the chart.\n\nPC Jeweller is in an uptrend.\nIMAGE: https://raw.githubusercontent.com/x/charts/PCJEWELLER/2026-11-10.png\nWatch 18 rupees.")
+        assertEquals(listOf("https://raw.githubusercontent.com/x/charts/PCJEWELLER/2026-11-10.png"), r.images)
+        assertEquals("PC Jeweller is in an uptrend.\nWatch 18 rupees.", r.display)
+        assertEquals("Here's the chart.", r.speech)
+        // Only https links, and a plain sentence mentioning an image is left alone.
+        assertEquals(emptyList<String>(), AssistantText.images("The image: looks good\nIMAGE: http://x.png").second)
+    }
+
     @Test fun gistFallsBackToFirstTwoSentences() {
         val r = AssistantText.forSpeech("One. Two! Three? Four.")
         assertEquals("One. Two!", r.speech)

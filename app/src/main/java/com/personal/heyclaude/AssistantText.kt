@@ -13,8 +13,18 @@ object AssistantText {
         else -> null
     }
 
-    /** What to show on screen, and the shorter, casual version to say out loud. */
-    data class Reply(val display: String, val speech: String)
+    /** What to show on screen, the shorter, casual version to say out loud, and pictures to show. */
+    data class Reply(val display: String, val speech: String, val images: List<String> = emptyList())
+
+    private val IMAGE = Regex("(?im)^[\\s*_>-]*image[\\s*_]*:\\s*<?(https://\\S+?)>?\\s*$")
+
+    /** Picture links on "IMAGE: <link>" lines, and the text without those lines. */
+    fun images(reply: String): Pair<String, List<String>> {
+        val urls = IMAGE.findAll(reply).map { it.groupValues[1] }.distinct().take(MAX_IMAGES).toList()
+        return reply.replace(IMAGE, "").replace(Regex("\\n{3,}"), "\n\n").trim() to urls
+    }
+
+    private const val MAX_IMAGES = 4
 
     private val SPOKEN = Regex("(?im)^[\\s*_#>-]*spoken[\\s*_]*:[\\s*_]*(.+)$")
 
@@ -22,15 +32,16 @@ object AssistantText {
      * Claude is asked to start with a "SPOKEN:" line: a casual gist to read aloud.
      * Without one, the first two sentences are read.
      */
-    fun forSpeech(reply: String): Reply {
+    fun forSpeech(full: String): Reply {
+        val (reply, pictures) = images(full)
         val m = SPOKEN.find(reply)
         if (m != null) {
             val speech = m.groupValues[1].trim().trim('*', '_').trim()
             val display = reply.removeRange(m.range).trim().ifBlank { speech }
-            return Reply(display, speech)
+            return Reply(display, speech, pictures)
         }
         val sentences = reply.replace(Regex("\\s+"), " ").trim().split(Regex("(?<=[.!?])\\s+"))
-        return Reply(reply.trim(), sentences.take(2).joinToString(" "))
+        return Reply(reply.trim(), sentences.take(2).joinToString(" "), pictures)
     }
 
     /** Splits text into chunks the speech engine accepts, breaking at sentence ends. */

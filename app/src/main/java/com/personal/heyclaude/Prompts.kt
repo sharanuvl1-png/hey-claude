@@ -122,6 +122,10 @@ object Prompts {
         return "${row.name} (${row.symbol}) closed ${row.close}, verdict ${row.verdict}, grade ${row.grade}, entry ${row.entry}, stop-loss ${row.stop}, target ${row.target}"
     }
 
+    /** Company name and NSE symbol for each stock in the scan's watchlist. */
+    fun scanNames(md: String): List<Pair<String, String>> =
+        if (md.isBlank()) emptyList() else watchlistRows(md).map { it.name to it.symbol }
+
     data class ScanRow(val name: String, val symbol: String, val close: String, val verdict: String, val grade: String, val entry: String, val stop: String, val target: String)
 
     private fun watchlistRows(md: String): List<ScanRow> {

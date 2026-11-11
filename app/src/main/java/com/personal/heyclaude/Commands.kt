@@ -10,6 +10,7 @@ sealed class Command {
     object WeeklyReview : Command()
     data class Money(val question: String) : Command()
     data class StockCheck(val stock: String) : Command()
+    data class Chart(val stock: String) : Command()
     data class FindDocument(val question: String) : Command()
     data class Remember(val fact: String) : Command()
     data class Reminder(val request: String) : Command()
@@ -39,6 +40,11 @@ sealed class Command {
             re("^(please )?(check|analy[sz]e) (?!$NOT_STOCK)(?<s>[\\w&.'-]+( [\\w&.'-]+){0,3})\\W*$"),
         )
 
+        private val CHART = listOf(
+            re("^(please )?((show|open|get|send|give)( me)? )?(the )?(latest |newest |technical |swing )*chart (of|for) (the )?(?<s>.+?)( stock| shares?)?\\W*$"),
+            re("^(please )?((show|open|get|send|give)( me)? )?(the )?(?!$NOT_STOCK|(show|open|get|send|give|me|make|draw|create|plot|pie|bar|line)\\b)(?<s>[\\w&.'-]+( [\\w&.'-]+){0,3}?)( stock| shares?)?( technical| swing)? chart\\W*$"),
+        )
+
         fun parse(heard: String): Command {
             val t = heard.trim().replace(Regex("\\s+"), " ")
             REMEMBER.find(t)?.let { return Remember(it.groupValues[3].trim().trimEnd('.')) }
@@ -51,6 +57,7 @@ sealed class Command {
             if (CATCH_UP.containsMatchIn(t)) return CatchUp
             if (MONEY.containsMatchIn(t)) return Money(t)
             if (DOC.containsMatchIn(t)) return FindDocument(t)
+            for (p in CHART) p.find(t)?.groups?.get("s")?.let { return Chart(it.value.trim()) }
             for (p in STOCK) p.find(t)?.groups?.get("s")?.let { return StockCheck(it.value.trim()) }
             return Ask(t)
         }

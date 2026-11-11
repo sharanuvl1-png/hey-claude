@@ -11,6 +11,7 @@ import com.anthropic.models.messages.OutputConfig
 import com.anthropic.models.messages.StopReason
 import com.anthropic.models.messages.Tool
 import com.anthropic.models.messages.ToolResultBlockParam
+import com.anthropic.models.messages.WebSearchTool20250305
 import com.anthropic.models.messages.WebSearchTool20260209
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -23,6 +24,9 @@ interface MehithaTools {
 
     /** Today's stock scan (watchlist and top picks) from the daily GitHub run. */
     fun stockScan(): String
+
+    /** The newest technical chart for a stock: its picture link and the written analysis. */
+    fun stockChart(stock: String): String = "No charts available."
 }
 
 /**
@@ -34,6 +38,7 @@ class AssistantBrain(
     private val tools: MehithaTools,
     baseUrl: String? = null,
     private val now: () -> ZonedDateTime = { ZonedDateTime.now(ZoneId.of("Asia/Kolkata")) },
+    private val model: String = MODEL,
 ) {
     private val client: AnthropicClient = AnthropicOkHttpClient.builder()
         .apiKey(apiKey)
@@ -59,11 +64,15 @@ class AssistantBrain(
     }
 
     private fun request(): MessageCreateParams = MessageCreateParams.builder()
-        .model(MODEL)
+        .model(model)
         .maxTokens(4000L)
         .system(SYSTEM + "\nCurrent date and time in India: " + now().format(STAMP) + ".")
         .outputConfig(OutputConfig.builder().effort(OutputConfig.Effort.LOW).build())
-        .addTool(WebSearchTool20260209.builder().maxUses(3L).build())
+        .apply {
+            // Haiku takes the basic web search; the newer one (with filtering) needs Sonnet or Opus.
+            if (model.startsWith("claude-haiku")) addTool(WebSearchTool20250305.builder().maxUses(3L).build())
+            else addTool(WebSearchTool20260209.builder().maxUses(3L).build())
+        }
         .addTool(tool("search_phone_data",
             "Search Sharan's phone data synced to Dropbox: text messages (OTPs removed), WhatsApp and other app " +
                 "messages captured from notifications, and the list of files and photos on the phone. " +
@@ -73,6 +82,10 @@ class AssistantBrain(
             "Today's swing-trading stock scan: watchlist verdicts, entry, stop-loss, targets, and top picks " +
                 "from Nifty 50, Midcap 150 and Smallcap 100. Use for any question about stocks or the market scan.",
             null, null))
+        .addTool(tool("get_stock_chart",
+            "The newest technical chart for one NSE stock: the chart picture link and the written analysis " +
+                "(trend, levels, entry, stop-loss, targets, verdict). Use when Sharan asks about a stock's chart or setup.",
+            "stock", "Company name or NSE symbol, e.g. PC Jeweller or PCJEWELLER"))
         .messages(history)
         .build()
 
@@ -95,6 +108,7 @@ class AssistantBrain(
                 when (use.name()) {
                     "search_phone_data" -> tools.searchPhoneData(stringArg(use._input(), "query")) to false
                     "get_stock_scan" -> tools.stockScan() to false
+                    "get_stock_chart" -> tools.stockChart(stringArg(use._input(), "stock")) to false
                     else -> "Unknown tool ${use.name()}" to true
                 }
             } catch (e: Exception) {
@@ -117,13 +131,21 @@ class AssistantBrain(
 
     companion object {
         const val MODEL = "claude-opus-5-5"
+
+        /** The models Mehitha can answer with, fastest first: label to model id. */
+        val MODELS = listOf(
+            "Fast (Haiku 5.5)" to "claude-haiku-5-5",
+            "Balanced (Sonnet 5.5)" to "claude-sonnet-5-5",
+            "Best (Opus 5.5)" to "claude-opus-5-5",
+        )
+        const val DEFAULT_MODEL = "claude-haiku-5-5"
         private const val MAX_ROUNDS = 8
         private const val MAX_TOOL_CHARS = 12_000
         private val STAMP = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy, h:mm a")
 
         private val SYSTEM = """
             You are Mehitha, Sharan's personal voice assistant in India. Your answer is shown on screen
-            and may be read aloud, so write plain sentences with no markdown, tables, symbols or links.
+            and may be read aloud, so write plain sentences with no markdown, tables, symbols or links (except IMAGE lines, below).
             Start with one line beginning "SPOKEN:" that gives a casual one or two sentence gist to say
             out loud, then the answer. Keep it under 120 words unless Sharan asks for detail.
             Use the tools to look things up. Never make up facts, numbers, prices or dates: if a tool
@@ -132,6 +154,9 @@ class AssistantBrain(
             Do not read out passwords, OTPs, card, bank account, PAN or Aadhaar numbers, or salary details;
             say these need the passcode in the Claude app.
             Say amounts in rupees as words a speaker would use, for example "2,500 rupees".
+            When a picture would help, such as a stock chart from get_stock_chart or an image link you
+            found, put its direct https link alone on its own line as "IMAGE: <link>" and the app shows it.
+            Only use links you actually got from a tool, never guessed ones.
         """.trimIndent()
     }
 }

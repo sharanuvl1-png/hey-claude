@@ -19,7 +19,9 @@ import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.net.Uri
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -37,6 +39,7 @@ class MainActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
     private var brain: AssistantBrain? = null
     private var brainKey = ""
+    private var brainModel = ""
     private var busy = false
     private var tts: TextToSpeech? = null
     private var ttsReady = false
@@ -128,6 +131,7 @@ class MainActivity : Activity() {
         addMine(text)
         val command = Command.parse(text)
         Answers.local(this, command, text)?.let { addReply(it, it, spoken); return }
+        if (command is Command.Chart) { showChart(command.stock, spoken); return }
 
         val b = brain()
         busy = true
@@ -149,9 +153,31 @@ class MainActivity : Activity() {
                 updateSend()
                 when {
                     result == null -> handOff(prompt, text)
-                    result.isSuccess -> Answers.reply(this, result.getOrThrow()).let { addReply(it.display, it.speech, spoken) }
+                    result.isSuccess -> Answers.reply(this, result.getOrThrow()).let { addReply(it.display, it.speech, spoken, images = it.images) }
                     else -> addReply(Answers.problem(result.exceptionOrNull()!!), null, spoken, problem = true)
                 }
+            }
+        }.start()
+    }
+
+    /** The newest technical chart for [stock], straight from the charts branch (no API key needed). */
+    private fun showChart(stock: String, spoken: Boolean) {
+        busy = true
+        updateSend()
+        val thinking = addThinking()
+        Thread {
+            val found = try { (AssistantActivity.tools ?: PhoneTools(this)).stockChart(stock) } catch (e: Exception) {
+                Log.w(TAG, "Chart lookup failed", e); "I couldn't reach the charts right now. Please check the internet connection."
+            }
+            val (rest, pictures) = AssistantText.images(found)
+            val line = rest.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty().trim()
+            val say = if (pictures.isEmpty()) line else "$line Ask me to explain it if you'd like the analysis."
+            handler.post {
+                if (isDestroyed) return@post
+                messages.removeView(thinking)
+                busy = false
+                updateSend()
+                addReply(say, say, spoken, problem = pictures.isEmpty(), images = pictures)
             }
         }.start()
     }
@@ -160,9 +186,11 @@ class MainActivity : Activity() {
     private fun brain(): AssistantBrain? {
         val key = AssistantActivity.apiKey(this)
         if (key.isBlank()) { brain = null; return null }
-        if (brain == null || key != brainKey) {
-            brain = AssistantBrain(key, AssistantActivity.tools ?: PhoneTools(this), AssistantActivity.apiBaseUrl)
+        val model = AssistantActivity.model(this)
+        if (brain == null || key != brainKey || model != brainModel) {
+            brain = AssistantBrain(key, AssistantActivity.tools ?: PhoneTools(this), AssistantActivity.apiBaseUrl, model = model)
             brainKey = key
+            brainModel = model
         }
         return brain
     }
@@ -197,11 +225,13 @@ class MainActivity : Activity() {
     private fun addThinking(): View = Ui.bubble(this, "Thinking…", mine = false, color = Ui.MUTED).also { add(it, mine = false) }
 
     /** Mehitha's answer, with Read aloud and Copy underneath. */
-    private fun addReply(display: String, speech: String?, readNow: Boolean, problem: Boolean = false) {
+    private fun addReply(display: String, speech: String?, readNow: Boolean, problem: Boolean = false, images: List<String> = emptyList()) {
         if (welcome.parent != null) messages.removeView(welcome)
         val d = { v: Int -> Ui.dp(this, v) }
         val block = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         block.addView(Ui.bubble(this, display, mine = false, color = if (problem) Ui.WARN else Ui.TEXT))
+        val imageWidth = (resources.displayMetrics.widthPixels * 0.82).toInt()
+        images.forEach { url -> block.addView(picture(url), LinearLayout.LayoutParams(imageWidth, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = d(8) }) }
         val say = speech ?: display
         val actions = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -215,6 +245,38 @@ class MainActivity : Activity() {
         block.addView(actions)
         add(block, mine = false)
         if (readNow) speak(say)
+    }
+
+    /** A picture from the web in the chat: loads in the background, tap to open it full size. */
+    private fun picture(url: String): View {
+        val d = { v: Int -> Ui.dp(this, v) }
+        val holder = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable().apply { setColor(Ui.CARD); cornerRadius = d(14).toFloat() }
+            setPadding(d(6), d(6), d(6), d(6))
+            contentDescription = "Picture: $url"
+            isClickable = true
+            setOnClickListener {
+                try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("No app can open this picture") }
+            }
+        }
+        val status = Ui.text(this, "Loading picture…", 13f, Ui.MUTED).apply { setPadding(d(8), d(8), d(8), d(8)) }
+        holder.addView(status)
+        Thread {
+            val bmp = Charts.picture(url)
+            handler.post {
+                if (isDestroyed) return@post
+                if (bmp == null) { status.text = "Couldn't load the picture. Tap to open it in the browser."; return@post }
+                holder.removeView(status)
+                holder.addView(ImageView(this).apply {
+                    setImageBitmap(bmp)
+                    adjustViewBounds = true
+                    scaleType = ImageView.ScaleType.FIT_CENTER
+                    contentDescription = "Picture"
+                }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+            }
+        }.start()
+        return holder
     }
 
     private fun small(label: String, onClick: () -> Unit) = Ui.text(this, label, 12.5f, Ui.MUTED).apply {
@@ -412,6 +474,7 @@ class MainActivity : Activity() {
             "💸 Spending report" to "spending report",
             "🧾 Odd charges?" to "any odd charges this week",
             "📈 Check a stock" to "check ",
+            "📊 Show a chart" to "show chart of ",
             "💬 What did I miss?" to "what did I miss",
             "📅 Weekly review" to "weekly review",
             "⏰ Remind me" to "remind me ",

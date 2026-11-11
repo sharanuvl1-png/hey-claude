@@ -35,6 +35,16 @@ class CommandsTest {
         assertEquals(Command.Ask("check if I have meetings tomorrow"), c("check if I have meetings tomorrow"))
     }
 
+    @Test fun charts() {
+        assertEquals(Command.Chart("Reliance"), c("show chart of Reliance"))
+        assertEquals(Command.Chart("PC Jeweller"), c("Show me the latest chart for PC Jeweller"))
+        assertEquals(Command.Chart("PCJEWELLER"), c("PCJEWELLER chart"))
+        assertEquals(Command.Chart("Tata Motors"), c("Tata Motors stock chart"))
+        assertEquals(Command.Chart("TCS"), c("open the TCS technical chart."))
+        assertEquals(Command.Ask("show me the chart"), c("show me the chart"))
+        assertEquals(Command.Ask("make a chart"), c("make a chart"))
+    }
+
     @Test fun everythingElse() {
         assertEquals(Command.CatchUp, c("What did I miss today?"))
         assertEquals(Command.CatchUp, c("catch me up"))

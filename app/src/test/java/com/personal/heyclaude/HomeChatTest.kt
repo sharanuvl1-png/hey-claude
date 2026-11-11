@@ -157,6 +157,28 @@ class HomeChatTest {
         assertEquals("Nifty closed higher today.", spoken().last())
     }
 
+    @Test fun showsAChartWithoutAsking() {
+        val a = open()
+        type(a, "show chart of PC Jeweller")
+        waitFor("the chart") { chat(a).any { it.startsWith("Chart for PCJEWELLER made on 2026-11-10.") } }
+        assertEquals(null, api) // straight from the charts, no Claude call
+        waitFor("the picture to give up") { chat(a).any { it.startsWith("Couldn't load the picture") } }
+    }
+
+    @Test fun usesTheChosenModel() {
+        val a = open(replies = listOf(200 to text("Quick answer.")))
+        type(a, "hello")
+        waitFor("the answer") { chat(a).contains("Quick answer.") }
+        assertTrue(api!!.requests[0].contains("claude-haiku-5-5"))
+        AssistantActivity.saveModel(app, "claude-opus-5-5")
+        api!!.stop()
+        api = FakeApi(listOf(200 to text("Deep answer.")))
+        AssistantActivity.apiBaseUrl = api!!.url
+        type(a, "again")
+        waitFor("the answer") { chat(a).contains("Deep answer.") }
+        assertTrue(api!!.requests[0].contains("claude-opus-5-5"))
+    }
+
     @Test fun answersAlertsByItself() {
         val a = open()
         type(a, "any alerts")

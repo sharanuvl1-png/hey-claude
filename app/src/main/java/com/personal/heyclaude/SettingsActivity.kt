@@ -27,6 +27,7 @@ class SettingsActivity : Activity() {
     private lateinit var apiRow: Ui.Row
     private lateinit var apiBox: LinearLayout
     private lateinit var apiField: EditText
+    private lateinit var speedText: TextView
     private lateinit var micRow: Ui.Row
     private lateinit var assistantRow: Ui.Row
     private lateinit var claudeRow: Ui.Row
@@ -80,6 +81,18 @@ class SettingsActivity : Activity() {
         }
         brain.addView(apiRow.view)
         brain.addView(apiBox)
+        speedText = Ui.text(this, "", 12.5f, Ui.MUTED)
+        brain.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, d(10), 0, d(10))
+            addView(LinearLayout(this@SettingsActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(Ui.text(this@SettingsActivity, "Answer speed", 15f))
+                addView(speedText)
+            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = d(22) })
+            addView(Ui.pill(this@SettingsActivity, "Change") { chooseModel() })
+        })
         listOf(assistantRow, micRow, claudeRow, voiceRow, overlayRow).forEach { brain.addView(it.view) }
         // The basic build has no Claude app helper, so these two rows don't apply.
         if (!hasService(VoiceHelper::class.java)) { voiceRow.view.visibility = View.GONE; overlayRow.view.visibility = View.GONE }
@@ -159,6 +172,21 @@ class SettingsActivity : Activity() {
     }
 
     /** Opens Android's "Digital assistant app" setting, where you can pick Mehitha. */
+    /** Pick the Claude model: Haiku is quickest, Opus thinks hardest. */
+    private fun chooseModel() {
+        val models = AssistantBrain.MODELS
+        val current = models.indexOfFirst { it.second == AssistantActivity.model(this) }
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Answer speed")
+            .setSingleChoiceItems(models.map { it.first }.toTypedArray(), current) { dlg, i ->
+                AssistantActivity.saveModel(this, models[i].second)
+                dlg.dismiss()
+                refresh()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun openAssistantSettings() {
         toast("Tap \"Digital assistant app\" (or \"Device assistance app\") and choose Mehitha")
         val tries = listOf(Settings.ACTION_VOICE_INPUT_SETTINGS, Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS, Settings.ACTION_SETTINGS)
@@ -191,6 +219,9 @@ class SettingsActivity : Activity() {
     private fun granted(p: String) = checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED
 
     private fun refresh() {
+        val m = AssistantActivity.model(this)
+        speedText.text = (AssistantBrain.MODELS.firstOrNull { it.second == m }?.first ?: m) +
+            if (m == AssistantBrain.DEFAULT_MODEL) ": quickest answers" else ": slower, more thorough answers"
         val hasKey = AssistantActivity.apiKey(this).isNotBlank()
         apiRow.set(hasKey, "Saved: Mehitha answers right in the chat. Tap to replace",
             "Recommended. Without a key Mehitha asks the Claude app for you", required = false)

@@ -35,6 +35,22 @@ class AssistantBrainTest {
         assertTrue(api.requests[2].contains("\"tool_use_id\":\"tu_2\"") && api.requests[2].contains("TVBN78163260"))
     }
 
+    @Test fun fastModelUsesBasicWebSearchAndCanFetchCharts() {
+        val api = FakeApi.ok(
+            msg("tool_use", """{"type":"tool_use","id":"tu_1","name":"get_stock_chart","input":{"stock":"PC Jeweller"}}"""),
+            text("Here it is."),
+        )
+        val tools = FakeTools()
+        AssistantBrain("k", tools, api.url, clock, model = AssistantBrain.DEFAULT_MODEL).ask("show PC Jeweller chart")
+        api.stop()
+        val first = api.requests[0]
+        assertTrue(first.contains("\"model\":\"claude-haiku-5-5\""))
+        assertTrue(first.contains("web_search_20250305") && !first.contains("web_search_20260209"))
+        assertTrue(first.contains("get_stock_chart"))
+        assertEquals(listOf("chart:PC Jeweller"), tools.calls)
+        assertTrue(api.requests[1].contains("PCJEWELLER/2026-11-10.png"))
+    }
+
     @Test fun followUpKeepsConversation() {
         val api = FakeApi.ok(text("Hello Sharan."))
         val brain = AssistantBrain("k", FakeTools(), api.url, clock)
