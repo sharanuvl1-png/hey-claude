@@ -176,6 +176,20 @@ class HomeChatTest {
         assertTrue(chat(a).contains("any alerts"))
     }
 
+    @Test fun tappedAlertCanReadTheAnswerAloud() {
+        val i = Intent(app, MainActivity::class.java)
+            .putExtra(AssistantActivity.EXTRA_ASK, "how did the market do")
+            .putExtra(MainActivity.EXTRA_SPEAK, true)
+        AssistantActivity.saveApiKey(app, "sk-ant-test")
+        api = FakeApi(listOf(200 to text("Nifty closed higher today.")))
+        AssistantActivity.apiBaseUrl = api!!.url
+        controller = Robolectric.buildActivity(MainActivity::class.java, i).setup()
+        ShadowTextToSpeech.getLastTextToSpeechInstance()?.let { shadowOf(it).onInitListener.onInit(TextToSpeech.SUCCESS) }
+        val a = controller!!.get()
+        waitFor("the answer") { chat(a).contains("Nifty closed higher today.") }
+        assertEquals("Nifty closed higher today.", spoken().last())
+    }
+
     @Test fun keepsTheBreakoutAlertsScheduled() {
         open()
         val wm = WorkManager.getInstance(app)

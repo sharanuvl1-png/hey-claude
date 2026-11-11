@@ -74,11 +74,13 @@ class MainActivity : Activity() {
         askFrom(intent)
     }
 
-    /** Tapping an alert opens the chat with its question. */
+    /** Tapping an alert opens the chat with its question, read aloud when the alert asks for it. */
     private fun askFrom(i: Intent?) {
         val asked = i?.getStringExtra(AssistantActivity.EXTRA_ASK) ?: return
+        val speak = i.getBooleanExtra(EXTRA_SPEAK, false)
         i.removeExtra(AssistantActivity.EXTRA_ASK)
-        ask(asked)
+        i.removeExtra(EXTRA_SPEAK)
+        ask(asked, spoken = speak)
     }
 
     override fun onResume() {
@@ -387,6 +389,8 @@ class MainActivity : Activity() {
         private const val TAG = "HeyClaude"
         private const val MIC_REQUEST = 1
         private const val HINT = "Ask Mehitha anything"
+        /** Set on an alert's tap to read the answer aloud too (same value as Alerts.EXTRA_SPEAK). */
+        const val EXTRA_SPEAK = "com.personal.heyclaude.SPEAK"
 
         /** Chip label to question. A question ending in a space is put in the box to finish typing. */
         val SUGGESTIONS = listOf(
