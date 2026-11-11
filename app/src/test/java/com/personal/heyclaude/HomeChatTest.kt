@@ -144,6 +144,21 @@ class HomeChatTest {
         assertFalse(api!!.requests[1].contains("First answer."))
     }
 
+    @Test fun chatIsStillThereAfterReopeningAndKeepsItsContext() {
+        val a = open(replies = listOf(200 to text("Your bus leaves at 6:30 PM."), 200 to text("Platform 4.")))
+        type(a, "when is my bus")
+        waitFor("the answer") { chat(a).contains("Your bus leaves at 6:30 PM.") }
+        controller!!.pause().stop().destroy()
+        controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val b = controller!!.get()
+        idle()
+        assertTrue(chat(b).contains("when is my bus") && chat(b).contains("Your bus leaves at 6:30 PM."))
+        type(b, "which platform")
+        waitFor("the follow-up") { chat(b).contains("Platform 4.") }
+        assertTrue(api!!.requests[1].contains("Your bus leaves at 6:30 PM.") && api!!.requests[1].contains("which platform"))
+        assertEquals(1, ChatStore.all(app).size)
+    }
+
     @Test fun spokenQuestionIsReadAloud() {
         val a = open(replies = listOf(200 to text("Nifty closed higher today.")))
         field<View>(a, "mic").performClick()

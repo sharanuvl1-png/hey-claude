@@ -72,6 +72,21 @@ class MoreFeaturesTest {
         assertEquals("I don't see any Blinkit order updates from the last 10 days.", Orders.answer(ups, day, "blinkit"))
     }
 
+    @Test fun chatsSaveAndLoad() {
+        val app = RuntimeEnvironment.getApplication()
+        val entries = listOf(
+            ChatEntry(true, "add milk on blinkit"),
+            ChatEntry(false, "Opening Blinkit.", "Opening Blinkit.", links = listOf("milk" to "https://blinkit.com/s/?q=milk")),
+            ChatEntry(true, "show chart"),
+            ChatEntry(false, "Chart for TCS.", images = listOf("https://x/y.png")),
+        )
+        assertEquals(entries, ChatStore.fromJson(ChatStore.toJson(entries)))
+        ChatStore.save(app, SavedChat(5L, entries))
+        assertEquals("add milk on blinkit", ChatStore.all(app).single().title)
+        assertEquals(listOf(true to "q", false to "a"),
+            ChatStore.turns(listOf(ChatEntry(true, "q"), ChatEntry(false, "a"), ChatEntry(false, "oops", problem = true), ChatEntry(true, "••••••"))))
+    }
+
     @Test fun passcodeIsCheckedNotStored() {
         val app = RuntimeEnvironment.getApplication()
         assertFalse(Passcode.isSet(app))

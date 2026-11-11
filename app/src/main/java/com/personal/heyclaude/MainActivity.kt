@@ -42,6 +42,10 @@ class MainActivity : Activity() {
     private var brainModel = ""
     /** The question waiting for the passcode, if Mehitha just asked for it. */
     private var waitingPasscodeFor: String? = null
+    /** The chat on screen, saved on the phone as it grows. */
+    private var chatId = 0L
+    private val entries = mutableListOf<ChatEntry>()
+    private var restoring = false
     private var busy = false
     private var tts: TextToSpeech? = null
     private var ttsReady = false
@@ -63,6 +67,8 @@ class MainActivity : Activity() {
         window.statusBarColor = Ui.BG
         window.navigationBarColor = Ui.BG
         setContentView(screen())
+        chatId = ChatStore.currentId(this)
+        show(ChatStore.load(this, chatId))
         tts = TextToSpeech(this) { code ->
             handler.post {
                 ttsReady = code == TextToSpeech.SUCCESS
@@ -227,6 +233,7 @@ class MainActivity : Activity() {
         val model = AssistantActivity.model(this)
         if (brain == null || key != brainKey || model != brainModel) {
             brain = AssistantBrain(key, AssistantActivity.tools ?: PhoneTools(this), AssistantActivity.apiBaseUrl, model = model)
+                .also { it.seed(ChatStore.turns(entries.dropLastWhile { e -> e.mine })) }
             brainKey = key
             brainModel = model
         }
@@ -247,16 +254,60 @@ class MainActivity : Activity() {
 
     private fun newChat() {
         if (busy) return
+        chatId = ChatStore.newChat(this)
+        show(SavedChat(chatId, emptyList()))
+    }
+
+    /** Puts [chat] on screen (without reading it out) and makes it the one new questions go to. */
+    private fun show(chat: SavedChat) {
         stopSpeaking()
         brain = null
         waitingPasscodeFor = null
+        entries.clear()
         messages.removeAllViews()
         messages.addView(welcome, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        restoring = true
+        chat.entries.forEach { e ->
+            if (e.mine) addMine(e.text) else addReply(e.text, e.speech, false, e.problem, e.images, e.links)
+        }
+        restoring = false
+        entries += chat.entries
+    }
+
+    /** Past chats, newest first; tap one to continue it. */
+    private fun showHistory() {
+        if (busy) return
+        val chats = ChatStore.all(this)
+        if (chats.isEmpty()) { toast("No saved chats yet"); return }
+        val day = java.text.SimpleDateFormat("d MMM, h:mm a", Locale.US)
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Chat history")
+            .setItems(chats.map { "${it.title}\n${day.format(java.util.Date(it.id))}" }.toTypedArray()) { _, i ->
+                chatId = chats[i].id
+                ChatStore.setCurrent(this, chatId)
+                show(chats[i])
+            }
+            .setNeutralButton("Delete all") { _, _ ->
+                ChatStore.clear(this)
+                newChat()
+                toast("Chat history deleted")
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    /** Saves a new bubble in the current chat. Answers given after the passcode are never saved. */
+    private fun remember(e: ChatEntry) {
+        if (restoring) return
+        val kept = if (!e.mine && brain?.unlocked == true) e.copy(text = ChatStore.HIDDEN, speech = null, images = emptyList()) else e
+        entries += kept
+        try { ChatStore.save(this, SavedChat(chatId, entries.toList())) } catch (e2: Exception) { Log.w(TAG, "Couldn't save the chat", e2) }
     }
 
     // ---- Chat bubbles -----------------------------------------------------------------------
 
     private fun addMine(text: String) {
+        remember(ChatEntry(true, text))
         if (welcome.parent != null) messages.removeView(welcome)
         add(Ui.bubble(this, text, mine = true), mine = true)
     }
@@ -266,6 +317,7 @@ class MainActivity : Activity() {
     /** Mehitha's answer, with Read aloud and Copy underneath. */
     private fun addReply(display: String, speech: String?, readNow: Boolean, problem: Boolean = false,
                          images: List<String> = emptyList(), links: List<Pair<String, String>> = emptyList()) {
+        remember(ChatEntry(false, display, speech, images, links, problem))
         if (welcome.parent != null) messages.removeView(welcome)
         val d = { v: Int -> Ui.dp(this, v) }
         val block = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -423,6 +475,7 @@ class MainActivity : Activity() {
     private fun screen(): View {
         val d = { v: Int -> Ui.dp(this, v) }
         val top = Ui.topBar(this, "Mehitha", "Your personal AI assistant", null,
+            Ui.iconButton(this, "🕘", "Chat history") { showHistory() },
             Ui.iconButton(this, "＋", "New chat") { newChat() },
             Ui.iconButton(this, "⚙", "Settings") { startActivity(Intent(this, SettingsActivity::class.java)) },
         ).apply { setPadding(d(16), d(10), d(12), d(6)) }
