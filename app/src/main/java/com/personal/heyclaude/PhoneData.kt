@@ -17,6 +17,10 @@ import java.util.Date
 /** Reads the phone's own data for Mehitha's commands, right on the phone (no Dropbox needed). */
 open class PhoneData(private val ctx: Context) {
 
+    /** True when WhatsApp and app messages are being saved from notifications. */
+    open val canReadMessages: Boolean get() =
+        android.provider.Settings.Secure.getString(ctx.contentResolver, "enabled_notification_listeners")?.contains(ctx.packageName) == true
+
     open val canReadSms get() = ctx.checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
 
     /** Spends from bank and UPI SMS in the last [days] days. */

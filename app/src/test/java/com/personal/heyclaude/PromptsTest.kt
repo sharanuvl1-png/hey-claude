@@ -33,6 +33,14 @@ class PromptsTest {
         assertTrue(Prompts.money(t, "How much on Swiggy", "facts").startsWith("How much on Swiggy."))
     }
 
+    @Test fun inAppPromptsUseOnlyPhoneData() {
+        for (p in listOf(Prompts.briefing(t, "none", "none", apps = false), Prompts.catchUp(t, "none", apps = false),
+                         Prompts.weeklyReview(t, "x", "y", "z", apps = false), Prompts.findDocument(t, "find my passport", "none", apps = false))) {
+            assertFalse(p, p.contains("Check my Outlook") || p.contains("Check Slack") || p.contains("Search my Gmail"))
+            assertTrue(p, p.contains("Use only the facts given here"))
+        }
+    }
+
     @Test fun scanSummaryPutsBuysFirst() {
         val s = Prompts.scanSummary(scan)
         assertTrue(s, s.startsWith("scan of 2026-10-26: HCL Technologies Limited 1417.0 rupees BUY NOW, entry 1385.9–1406.1, stop 1162.7 (17%), target 1659.4"))

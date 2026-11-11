@@ -25,6 +25,7 @@
     <application
         android:allowBackup="false"
         android:icon="@drawable/ic_mehitha"
+        android:roundIcon="@drawable/ic_mehitha"
         android:label="Mehitha"
         android:theme="@android:style/Theme.Material.NoActionBar">
 

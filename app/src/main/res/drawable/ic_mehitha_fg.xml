@@ -1,0 +1,7 @@
+<!-- Mehitha app icon: a big and a small sparkle. Also used as the themed (monochrome) icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M52,36 C55.78,53.22 55.78,53.22 73,57 C55.78,60.78 55.78,60.78 52,78 C48.22,60.78 48.22,60.78 31,57 C48.22,53.22 48.22,53.22 52,36Z" android:fillColor="#FFFFFFFF"/>
+    <path android:pathData="M70,29.5 C71.35,35.65 71.35,35.65 77.5,37 C71.35,38.35 71.35,38.35 70,44.5 C68.65,38.35 68.65,38.35 62.5,37 C68.65,35.65 68.65,35.65 70,29.5Z" android:fillColor="#E6FFFFFF"/>
+</vector>

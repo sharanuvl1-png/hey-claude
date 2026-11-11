@@ -50,6 +50,25 @@ class AssistantBrain(
     /** Set once Sharan has said the right passcode in this chat: confidential details may then be shared. */
     @Volatile var unlocked = false
 
+    /**
+     * Starts the conversation from an earlier chat's turns (true = Sharan's), so follow-ups keep
+     * their context. Turns from the same side are joined, and it starts with Sharan and ends with Mehitha.
+     */
+    fun seed(turns: List<Pair<Boolean, String>>) {
+        if (history.isNotEmpty()) return
+        val merged = mutableListOf<Pair<Boolean, String>>()
+        turns.filter { it.second.isNotBlank() }.takeLast(20).forEach { t ->
+            if (merged.isNotEmpty() && merged.last().first == t.first) merged[merged.lastIndex] = t.first to merged.last().second + "\n\n" + t.second
+            else merged += t
+        }
+        while (merged.isNotEmpty() && !merged.first().first) merged.removeAt(0)
+        while (merged.isNotEmpty() && merged.last().first) merged.removeAt(merged.lastIndex)
+        merged.forEach { (mine, text) ->
+            history += if (mine) MessageParam.ofUser(text)
+                       else MessageParam.ofAssistant(text)
+        }
+    }
+
     /** Answers one spoken question, running tools as needed. Returns plain text. */
     fun ask(question: String): String {
         history += MessageParam.ofUser(question)

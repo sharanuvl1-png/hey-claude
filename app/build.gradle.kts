@@ -53,6 +53,14 @@ android {
     // Robolectric runs the assistant's conversation tests on the build machine.
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        // Print the full reason when a test fails, so CI logs show which check broke.
+        unitTests.all {
+            it.testLogging {
+                events("failed")
+                exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+                showStandardStreams = false
+            }
+        }
     }
     // The Claude SDK's libraries each ship the same licence files.
     packaging {

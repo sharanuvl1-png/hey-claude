@@ -197,7 +197,7 @@ class AssistantActivity : Activity() {
         val b = brain
         Thread {
             // Gathering phone data (SMS, scan) can take a moment, so it happens off the screen thread.
-            val prompt = Answers.safePrompt(this, command, text)
+            val prompt = Answers.safePrompt(this, command, text, inApp = b != null)
             if (b == null) {
                 handler.post { if (!isDestroyed) handOff(prompt, text) }
                 return@Thread
