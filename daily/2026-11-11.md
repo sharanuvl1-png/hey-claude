@@ -60,7 +60,7 @@ Your own stocks plus the strongest 20 Nifty 50, 10 Midcap 150, 10 Smallcap 100 s
 | 4 | Bajaj Auto Limited (BAJAJ-AUTO) | ₹11040.0 | 🟡 BUY ON DIP | ₹10534.2–10585.2 | ₹9842.8 (7%) | ₹11792.8 | 36% | 0.70 | 64% | 57% | 24 |
 | 5 | Apollo Hospitals Enterprise Limited (APOLLOHOSP) | ₹8604.0 | 🟡 BUY ON DIP | ₹8185.2–8278.6 | ₹7412.6 (10%) | ₹9460.8 | 23% | 0.73 | 32% | 21% | 55 |
 
-49 liquid stocks scanned; 16 had a buy setup with risk under 12%.
+49 liquid stocks scanned; 15 had a buy setup with risk under 12%.
 
 ## Top 5 buy setups today: Midcap 150
 

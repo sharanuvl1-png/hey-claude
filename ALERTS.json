@@ -2,41 +2,6 @@
  "date": "2026-11-11",
  "alerts": [
   {
-   "id": "buyzone:EICHERMOT:2026-11-11",
-   "title": "Eicher Motors is in the buy zone",
-   "text": "Eicher Motors moved from buy on dip to buy now at ₹7,592.0."
-  },
-  {
-   "id": "buyzone:JSWSTEEL:2026-11-11",
-   "title": "JSW Steel is in the buy zone",
-   "text": "JSW Steel moved from buy on dip to buy now at ₹1,353.3."
-  },
-  {
-   "id": "buyzone:BAJFINANCE:2026-11-11",
-   "title": "Bajaj Finance is in the buy zone",
-   "text": "Bajaj Finance moved from buy on dip to buy now at ₹1,078.8."
-  },
-  {
-   "id": "buyzone:LAURUSLABS:2026-11-11",
-   "title": "Laurus Labs is in the buy zone",
-   "text": "Laurus Labs moved from buy on dip to buy now at ₹2,429.0."
-  },
-  {
-   "id": "buyzone:AUROPHARMA:2026-11-11",
-   "title": "Aurobindo Pharma is in the buy zone",
-   "text": "Aurobindo Pharma moved from buy on dip to buy now at ₹1,827.5."
-  },
-  {
-   "id": "target:KARURVYSYA:2026-11-11",
-   "title": "The Karur Vysya Bank reached its target",
-   "text": "The Karur Vysya Bank closed at ₹384.4, at or above the target of ₹371.1."
-  },
-  {
-   "id": "buyzone:KARURVYSYA:2026-11-11",
-   "title": "The Karur Vysya Bank is in the buy zone",
-   "text": "The Karur Vysya Bank moved from buy on dip to buy now at ₹384.4."
-  },
-  {
    "id": "results:EICHERMOT:2026-11-13",
    "title": "Eicher Motors results 13 Nov",
    "text": "Eicher Motors reports quarterly results 13 Nov."
