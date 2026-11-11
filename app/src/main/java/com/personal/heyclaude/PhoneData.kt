@@ -20,14 +20,19 @@ open class PhoneData(private val ctx: Context) {
     open val canReadSms get() = ctx.checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
 
     /** Spends from bank and UPI SMS in the last [days] days. */
-    open fun spends(days: Long = 100): List<Spend> = sms(days).mapNotNull { (time, sender, body) ->
-        PhoneSync.expenseRow(Date.from(time.atZone(IST).toInstant()), sender, body)?.let { Money.parseRow(it) }
-    }
+    open fun spends(days: Long = 100): List<Spend> = Chats.merge(
+        sms(days).mapNotNull { (time, sender, body) ->
+            PhoneSync.expenseRow(Date.from(time.atZone(IST).toInstant()), sender, body)?.let { Money.parseRow(it) }
+        },
+        try { Chats.spends(chats(days)) } catch (e: Exception) { emptyList() })
+
+    /** WhatsApp, Gmail and other app messages saved from notifications in the last [days] days. */
+    open fun chats(days: Long): List<Chat> = Chats.read(File(ctx.filesDir, "notifications"), today(), days)
 
     /** Bills with a due date, from SMS in the last [days] days. */
     open fun bills(days: Long = 40): List<Bill> = sms(days).mapNotNull { (time, sender, body) ->
         Money.billDue(sender, body, time.toLocalDate())
-    }
+    } + try { Chats.bills(chats(days)) } catch (e: Exception) { emptyList() }
 
     /** Text messages from the last [days] days (OTPs skipped): time, sender, text. */
     open fun recentSms(days: Long): List<Triple<LocalDateTime, String, String>> = sms(days)

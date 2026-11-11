@@ -13,6 +13,10 @@ sealed class Command {
     data class Chart(val stock: String) : Command()
     /** Today's meetings and/or deliveries: [what] is "meetings", "deliveries" or "all". */
     data class Today(val what: String) : Command()
+    /** "Spent 250 on lunch by UPI": a spend to add to the expense sheet. */
+    data class LogSpend(val amount: Double, val what: String, val via: String) : Command()
+    /** Your Zerodha holdings and P&L. */
+    object Portfolio : Command()
     data class FindDocument(val question: String) : Command()
     data class Remember(val fact: String) : Command()
     data class Reminder(val request: String) : Command()
@@ -33,6 +37,8 @@ sealed class Command {
         private val MEETINGS = re("\\b(any |my |next |today'?s )meetings?\\b|\\bmeetings? today\\b|\\b(what'?s|anything) on my calendar\\b|\\bwhen is my next meeting\\b")
         private val DELIVERIES = re("\\b(any|my|today'?s) (deliveries|delivery|parcels?|packages?|orders? (arriving|coming))\\b|\\b(deliveries|parcels?|packages?) today\\b|\\bwhat'?s (being )?delivered today\\b|\\bwhat'?s arriving today\\b")
         private val TODAY = re("^(so )?what'?s (on |happening )?(for )?today\\W*$|^what('?s| is) on today\\b|\\bmy (day|schedule) today\\b|^what('?s| is) my (day|schedule)( like)?( today)?\\W*$")
+        private val LOG_SPEND = re("^(please )?(log |add |note )?(i )?(just )?(spent|paid) (rs\\.? ?|₹ ?|inr ?)?(?<a>\\d[\\d,]*(\\.\\d{1,2})?)( rupees| rs\\.?| bucks)? (on|for) (?<w>.+?)( (by|via|using|with|through|on) (?<v>upi|cash|card|credit card|debit card|gpay|google pay|phonepe|paytm|net ?banking))?\\W*$")
+        private val PORTFOLIO = re("\\b(my|zerodha) (portfolio|holdings|investments|positions)\\b|\\bhow (are|is) my (stocks|shares|portfolio|holdings)\\b|\\bmy (p ?&? ?l|profit|loss)\\b.*\\b(today|stocks|portfolio)\\b")
         private val REMEMBER = re("^(please )?remember( that)?\\s+(.{3,})$")
         private val REMIND = re("^(please )?(remind me|set (a )?reminder)\\b.{3,}")
         private val MONEY = re("\\b(spen[dt]|spending|expenses?|subscriptions?|how much (did|have) i (pay|paid)|paid for|my money)\\b")
@@ -55,6 +61,14 @@ sealed class Command {
             REMEMBER.find(t)?.let { return Remember(it.groupValues[3].trim().trimEnd('.')) }
             if (REMIND.containsMatchIn(t)) return Reminder(t)
             if (BRIEFING.matches(t)) return Briefing
+            LOG_SPEND.find(t)?.let { m ->
+                val amount = m.groups["a"]!!.value.replace(",", "").toDouble()
+                val via = m.groups["v"]?.value?.let { v -> when (v.lowercase()) {
+                    "upi", "gpay", "google pay", "phonepe", "paytm" -> "UPI"; "cash" -> "Cash"; "credit card" -> "Credit card"
+                    "netbanking", "net banking" -> "Bank transfer"; else -> "Card" } } ?: "Not said"
+                return LogSpend(amount, m.groups["w"]!!.value.trim(), via)
+            }
+            if (PORTFOLIO.containsMatchIn(t)) return Portfolio
             if (ALERTS.containsMatchIn(t) && !MONEY.containsMatchIn(t)) return Alerts
             if (ODD.containsMatchIn(t)) return OddCharges
             if (REPORT.containsMatchIn(t)) return SpendingReport

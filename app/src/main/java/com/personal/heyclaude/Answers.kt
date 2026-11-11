@@ -28,10 +28,10 @@ object Answers {
         val t = PhoneData.now()
         val day = t.toLocalDate()
         val data = AssistantActivity.phoneData ?: PhoneData(ctx)
-        fun bills() = (if (data.canReadSms) Money.billsText(data.bills(), day) else PhoneData.NO_SMS).take(300)
+        fun bills() = (if (Bills.hasSource(ctx, data)) Money.billsText(Bills.upcoming(ctx, data, day), day) else PhoneData.NO_SMS).take(300)
         return when (command) {
             is Command.Briefing -> Prompts.briefing(t, bills(), Prompts.scanSummary(data.scan()),
-                try { Today.answer(ctx, "all") } catch (e: Exception) { "" })
+                (try { Today.answer(ctx, "all") } catch (e: Exception) { "" }) + " " + Zerodha.briefLine(ctx))
             is Command.Money -> Prompts.money(t, command.question, data.moneyFacts(command.question).take(MAX_DATA))
             is Command.SpendingReport -> Prompts.spendingReport(t,
                 (if (data.canReadSms) Money.report(data.spends(), day) else PhoneData.NO_SMS).take(MAX_DATA))
@@ -56,6 +56,8 @@ object Answers {
 
     /** Claude's [text], with any reminders in it set, ready to show and to say. */
     fun reply(ctx: Context, text: String): AssistantText.Reply {
+        // The voice sheet can't take a passcode; the chat handles it before calling this.
+        if (Passcode.isNeeded(text)) return AssistantText.Reply(Passcode.USE_CHAT, Passcode.USE_CHAT)
         val (reminders, rest) = Prompts.reminders(text)
         val set = try { Reminders.schedule(ctx, reminders) } catch (e: Exception) { Log.w(TAG, "Reminder failed", e); emptyList() }
         val reply = AssistantText.forSpeech(rest)

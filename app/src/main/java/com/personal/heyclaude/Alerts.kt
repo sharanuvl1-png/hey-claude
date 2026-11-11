@@ -39,7 +39,7 @@ object Alerts {
     const val EXTRA_SPEAK = "com.personal.heyclaude.SPEAK"
 
     /** Shows [alert] unless it was shown before. Tapping it asks Mehitha [ask], if given. */
-    fun post(ctx: Context, alert: Alert, ask: String? = null, speak: Boolean = false): Boolean {
+    fun post(ctx: Context, alert: Alert, ask: String? = null, speak: Boolean = false, opens: Intent? = null): Boolean {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val seen = prefs.getStringSet("seen", emptySet())!!
         if (alert.id in seen) return false
@@ -52,7 +52,7 @@ object Alerts {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             .apply { if (ask != null) putExtra(AssistantActivity.EXTRA_ASK, ask); if (speak) putExtra(EXTRA_SPEAK, true) }
         val tap = alert.link?.let { web(it, alert.id.hashCode()) }
-            ?: PendingIntent.getActivity(ctx, alert.id.hashCode(), open, flags)
+            ?: PendingIntent.getActivity(ctx, alert.id.hashCode(), opens?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) ?: open, flags)
         val chart = alert.image?.let { picture(it) }
         val builder = Notification.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_mehitha)
@@ -106,7 +106,8 @@ object Alerts {
 }
 
 /**
- * Every hour: odd charges, unusual spending and bills due from SMS; after market close,
+ * Every hour: odd charges and unusual spending from SMS; bills and renewals due (SMS and
+ * Gmail notifications); after market close,
  * the stock alerts from the daily scan; a morning briefing nudge; and the Sunday review nudge.
  */
 class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
@@ -125,12 +126,32 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
             if (data.canReadSms) {
                 val spends = data.spends()
                 Money.oddCharges(spends, now, days = 1).forEach { Alerts.post(ctx, it, ask = "any odd charges") }
-                Money.billAlerts(data.bills(), today).forEach { Alerts.post(ctx, it) }
                 if (now.hour >= 19) Money.unusualSpending(spends, today).forEach { Alerts.post(ctx, it, ask = "spending report") }
             }
         } catch (e: Exception) {
             Log.w("Mehitha", "SMS checks failed", e)
         }
+        try {
+            Money.billAlerts(Bills.upcoming(ctx, data, today), today)
+                .forEach { Alerts.post(ctx, it, ask = "which bills and renewals are due this week") }
+        } catch (e: Exception) {
+            Log.w("Mehitha", "Bill checks failed", e)
+        }
+        try {
+            val added = ExpenseSheet.sync(ctx, data)
+            if (added > 0) Log.i("Mehitha", "Added $added spends to the expense sheet")
+        } catch (e: Exception) { Log.w("Mehitha", "Expense sheet sync failed", e) }
+        val weekday = now.dayOfWeek != DayOfWeek.SATURDAY && now.dayOfWeek != DayOfWeek.SUNDAY
+        if (weekday && Zerodha.isSetUp(ctx) && !Zerodha.isLoggedIn(ctx) && now.hour in 8..10) once("kite_login") {
+            Alerts.post(ctx, Alert("kite:$today", "Log in to Zerodha", "Tap to log in for today's portfolio and stop-loss alerts. Read-only."),
+                opens = Intent(ctx, ZerodhaLoginActivity::class.java))
+        }
+        if (weekday && Zerodha.isLoggedIn(ctx) && now.hour in 9..15) try {
+            Zerodha.holdings(ctx)?.let { h ->
+                Zerodha.stopLossAlerts(h, Prompts.stops(fetch(PhoneData.SCAN_URL)), today.toString())
+                    .forEach { Alerts.post(ctx, it, ask = "my portfolio") }
+            }
+        } catch (e: Exception) { Log.w("Mehitha", "Stop-loss check failed", e) }
         if (now.hour in 7..10) once("brief") {
             val day = try {
                 val meetings = Today.meetings(ctx, today)
@@ -158,6 +179,7 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
         if (now.hour >= 17 && now.dayOfWeek != DayOfWeek.SATURDAY) once("stocks") {
             stockAlerts(today.toString()).forEach { Alerts.post(ctx, it) }
         }
+        try { MehithaWidget.refresh(ctx) } catch (e: Exception) { Log.w("Mehitha", "Widget refresh failed", e) }
         return Result.success()
     }
 
@@ -197,8 +219,12 @@ class BreakoutWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, param
             return Result.success()
         }
         try {
-            AlertWorker.parseStockAlerts(AlertWorker.fetch(PhoneData.BREAKOUTS_URL), now.toLocalDate().toString())
-                .forEach { Alerts.post(applicationContext, it) }
+            val held = Zerodha.heldSymbols(applicationContext)
+            val alerts = AlertWorker.parseStockAlerts(AlertWorker.fetch(PhoneData.BREAKOUTS_URL), now.toLocalDate().toString())
+                .map { a -> if (held.any { s -> Regex("\\b${Regex.escape(s)}\\b").containsMatchIn(a.title + " " + a.text) }) a.copy(title = "📌 You hold this: " + a.title) else a }
+            alerts.forEach { Alerts.post(applicationContext, it) }
+            MehithaWidget.saveBreakouts(applicationContext, now.toLocalDate(), alerts)
+            MehithaWidget.refresh(applicationContext)
         } catch (e: Exception) {
             Log.w("Mehitha", "Breakout check failed", e)
         }

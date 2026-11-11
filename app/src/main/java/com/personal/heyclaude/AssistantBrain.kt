@@ -27,6 +27,9 @@ interface MehithaTools {
 
     /** The newest technical chart for a stock: its picture link and the written analysis. */
     fun stockChart(stock: String): String = "No charts available."
+
+    /** Sharan's Zerodha holdings and P&L, read-only. */
+    fun portfolio(): String = "Zerodha isn't connected."
 }
 
 /**
@@ -47,6 +50,9 @@ class AssistantBrain(
 
     private val history = mutableListOf<MessageParam>()
 
+    /** Set once Sharan has said the right passcode in this chat: confidential details may then be shared. */
+    @Volatile var unlocked = false
+
     /** Answers one spoken question, running tools as needed. Returns plain text. */
     fun ask(question: String): String {
         history += MessageParam.ofUser(question)
@@ -66,7 +72,7 @@ class AssistantBrain(
     private fun request(): MessageCreateParams = MessageCreateParams.builder()
         .model(model)
         .maxTokens(4000L)
-        .system(SYSTEM + "\nCurrent date and time in India: " + now().format(STAMP) + ".")
+        .system(SYSTEM + "\n" + (if (unlocked) UNLOCKED else LOCKED) + "\nCurrent date and time in India: " + now().format(STAMP) + ".")
         .outputConfig(OutputConfig.builder().effort(OutputConfig.Effort.LOW).build())
         .apply {
             // Haiku takes the basic web search; the newer one (with filtering) needs Sonnet or Opus.
@@ -81,6 +87,10 @@ class AssistantBrain(
         .addTool(tool("get_stock_scan",
             "Today's swing-trading stock scan: watchlist verdicts, entry, stop-loss, targets, and top picks " +
                 "from Nifty 50, Midcap 150 and Smallcap 100. Use for any question about stocks or the market scan.",
+            null, null))
+        .addTool(tool("get_portfolio",
+            "Sharan's Zerodha holdings: value, today's change, overall profit or loss and biggest movers. " +
+                "Read-only. Use for questions about his own stocks, portfolio or P&L.",
             null, null))
         .addTool(tool("get_stock_chart",
             "The newest technical chart for one NSE stock: the chart picture link and the written analysis " +
@@ -108,6 +118,7 @@ class AssistantBrain(
                 when (use.name()) {
                     "search_phone_data" -> tools.searchPhoneData(stringArg(use._input(), "query")) to false
                     "get_stock_scan" -> tools.stockScan() to false
+                    "get_portfolio" -> tools.portfolio() to false
                     "get_stock_chart" -> tools.stockChart(stringArg(use._input(), "stock")) to false
                     else -> "Unknown tool ${use.name()}" to true
                 }
@@ -151,12 +162,24 @@ class AssistantBrain(
             Use the tools to look things up. Never make up facts, numbers, prices or dates: if a tool
             returns nothing or fails, say plainly that you couldn't find it and what Sharan could give you.
             Never place orders, payments or trades, and never send messages on Sharan's behalf.
-            Do not read out passwords, OTPs, card, bank account, PAN or Aadhaar numbers, or salary details;
-            say these need the passcode in the Claude app.
+            Never read out OTPs or passwords.
             Say amounts in rupees as words a speaker would use, for example "2,500 rupees".
             When a picture would help, such as a stock chart from get_stock_chart or an image link you
             found, put its direct https link alone on its own line as "IMAGE: <link>" and the app shows it.
             Only use links you actually got from a tool, never guessed ones.
+        """.trimIndent()
+
+        private val LOCKED = """
+            Confidential details need Sharan's passcode first: card, bank account, IFSC or UPI ID numbers,
+            PAN, Aadhaar, salary or payslips, policy numbers, ID documents, tax returns, medical records
+            and similar. If a question asks for any of these, do not reveal, hint at or summarise them:
+            answer with exactly one line, PASSCODE_NEEDED, and nothing else. You may still say that a
+            document exists. Never ask for, guess or mention what the passcode is.
+        """.trimIndent()
+
+        private val UNLOCKED = """
+            Sharan has said the right passcode in this chat, so you may share confidential details
+            (card, bank, PAN, Aadhaar, salary, policy numbers and similar) found with the tools.
         """.trimIndent()
     }
 }

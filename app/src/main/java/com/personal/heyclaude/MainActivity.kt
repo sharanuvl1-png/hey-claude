@@ -40,6 +40,8 @@ class MainActivity : Activity() {
     private var brain: AssistantBrain? = null
     private var brainKey = ""
     private var brainModel = ""
+    /** The question waiting for the passcode, if Mehitha just asked for it. */
+    private var waitingPasscodeFor: String? = null
     private var busy = false
     private var tts: TextToSpeech? = null
     private var ttsReady = false
@@ -121,17 +123,27 @@ class MainActivity : Activity() {
     // ---- Asking -----------------------------------------------------------------------------
 
     /** Sends [raw] to Mehitha. [spoken] answers are read aloud as well. */
-    private fun ask(raw: String, spoken: Boolean = false) {
+    private fun ask(raw: String, spoken: Boolean = false, echo: Boolean = true) {
         val text = raw.trim()
         if (text.isEmpty()) return
         if (busy) { toast("One moment, I'm still on the last question"); return }
         input.setText("")
         hideKeyboard()
         stopSpeaking()
-        addMine(text)
+        waitingPasscodeFor?.let { question ->
+            // The passcode itself is never shown in the chat or sent anywhere.
+            waitingPasscodeFor = null
+            addMine("••••••")
+            if (Passcode.check(this, text)) { brain()?.unlocked = true; ask(question, spoken, echo = false) }
+            else addReply(Passcode.WRONG, null, spoken, problem = true)
+            return
+        }
+        if (echo) addMine(text)
         val command = Command.parse(text)
         Answers.local(this, command, text)?.let { addReply(it, it, spoken); return }
         if (command is Command.Chart) { showChart(command.stock, spoken); return }
+        if (command is Command.LogSpend) { logSpend(command, spoken); return }
+        if (command is Command.Portfolio) { slowLocal(spoken) { Zerodha.answer(this) }; return }
 
         val b = brain()
         busy = true
@@ -153,9 +165,45 @@ class MainActivity : Activity() {
                 updateSend()
                 when {
                     result == null -> handOff(prompt, text)
+                    result.isSuccess && Passcode.isNeeded(result.getOrThrow()) -> when {
+                        !Passcode.isSet(this) -> addReply(Passcode.NOT_SET, null, spoken)
+                        else -> { waitingPasscodeFor = text; addReply(Passcode.ASK, null, spoken) }
+                    }
                     result.isSuccess -> Answers.reply(this, result.getOrThrow()).let { addReply(it.display, it.speech, spoken, images = it.images) }
                     else -> addReply(Answers.problem(result.exceptionOrNull()!!), null, spoken, problem = true)
                 }
+            }
+        }.start()
+    }
+
+    /** "Spent 250 on lunch by UPI": added to your expense sheet, or given back as a row to paste. */
+    private fun logSpend(c: Command.LogSpend, spoken: Boolean) {
+        val category = ExpenseSheet.category(c.what)
+        val amount = Money.rupees(c.amount)
+        slowLocal(spoken) {
+            when {
+                ExpenseSheet.url(this).isEmpty() ->
+                    "Your expense sheet isn't linked yet, so here's the row to paste: " +
+                        "${PhoneData.today()}, ${"%.0f".format(c.amount)}, $category, ${c.what}, ${c.via}. Link the sheet in Settings to add these automatically."
+                ExpenseSheet.addSpoken(this, c.amount, c.what, c.via, category) -> "Added $amount for ${c.what} under $category."
+                else -> "I couldn't reach your expense sheet. Please check the internet and try again."
+            }
+        }
+    }
+
+    /** Runs [work] off the screen thread (it may use the network) and shows its answer. */
+    private fun slowLocal(spoken: Boolean, work: () -> String) {
+        busy = true
+        updateSend()
+        val thinking = addThinking()
+        Thread {
+            val answer = try { work() } catch (e: Exception) { Log.w(TAG, "Local answer failed", e); "Something went wrong. Please try again." }
+            handler.post {
+                if (isDestroyed) return@post
+                messages.removeView(thinking)
+                busy = false
+                updateSend()
+                addReply(answer, answer, spoken)
             }
         }.start()
     }
@@ -211,6 +259,7 @@ class MainActivity : Activity() {
         if (busy) return
         stopSpeaking()
         brain = null
+        waitingPasscodeFor = null
         messages.removeAllViews()
         messages.addView(welcome, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
     }
