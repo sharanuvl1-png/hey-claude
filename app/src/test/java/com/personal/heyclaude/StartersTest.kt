@@ -85,9 +85,11 @@ class StartersTest {
     private fun <T> field(a: MainActivity, name: String): T =
         MainActivity::class.java.getDeclaredField(name).apply { isAccessible = true }.get(a) as T
 
-    private fun chat(a: MainActivity): List<String> {
+    private fun chat(a: MainActivity, withWelcome: Boolean = true): List<String> {
         val out = mutableListOf<String>()
+        val welcome = field<View>(a, "welcome")
         fun walk(v: View) {
+            if (!withWelcome && v === welcome) return
             if (v is TextView) out += v.text.toString()
             if (v is ViewGroup) for (i in 0 until v.childCount) walk(v.getChildAt(i))
         }
@@ -96,7 +98,7 @@ class StartersTest {
     }
 
     /** The bubbles only (Mehitha's answers and your questions), without Read aloud, Copy and shop buttons. */
-    private fun answers(a: MainActivity) = chat(a).filter { it != "🔊 Read aloud" && it != "Copy" && !it.startsWith("🛒 ") }
+    private fun answers(a: MainActivity) = chat(a, withWelcome = false).filter { it != "🔊 Read aloud" && it != "Copy" && !it.startsWith("🛒 ") }
 
     private val bad = listOf("Something went wrong", "can't read", "can't see", "full version", "isn't linked",
         "couldn't reach", "Sorry", "Thinking…", "didn't accept", "Please check")
