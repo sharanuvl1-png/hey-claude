@@ -125,7 +125,9 @@ def check(symbol, frame, rules, session_frac, market=None):
     turnover = float((hist["Close"] * hist["Volume"]).iloc[-20:].mean() / 1e7)
     atr = float(df["ATR"].iloc[-2])
     rsi = float(last["RSI"]) if not np.isnan(last["RSI"]) else 50.0
-    stop = level - rules["stop_atr_below_level"] * atr
+    # Stop 1 ATR under the breakout level, never more than max_risk_pct under the price (as in the backtest).
+    stop = max(level - rules["stop_atr_below_level"] * atr, price * (1 - rules.get("max_risk_pct", 100) / 100))
+    trail = float(frame["Low"].iloc[-10:].min())
     day_range = float(bar["High"] - bar["Low"])
     close_pos = (price - float(bar["Low"])) / day_range if day_range > 0 else 1.0
     hi52 = float(frame["High"].iloc[-250:].max())
@@ -136,7 +138,7 @@ def check(symbol, frame, rules, session_frac, market=None):
     r = {"symbol": symbol, "price": price, "prev_close": prev_close, "level": level, "level_name": level_name,
          "vol_ratio": vol_ratio, "rsi": rsi, "turnover": turnover, "atr": atr,
          "ext_pct": 100 * (price / level - 1), "stop": stop, "risk_pct": 100 * (price - stop) / price,
-         "close_pos": close_pos, "from_hi52_pct": 100 * (1 - price / hi52), "rs": rs, "base_depth": base_depth,
+         "close_pos": close_pos, "trail": trail, "from_hi52_pct": 100 * (1 - price / hi52), "rs": rs, "base_depth": base_depth,
          "date": frame.index[-1].date().isoformat()}
     r["crossed"] = price > level >= prev_close
     r["above"] = {n: price > float(last[f"EMA{n}"]) for n in (20, 50, 200)}
@@ -144,7 +146,8 @@ def check(symbol, frame, rules, session_frac, market=None):
     # Each rule: (name, passed). Optional rules switch off with null / false in breakout_rules.json.
     tests = [("volume", vol_ratio >= rules["volume_multiple"]),
              ("above EMAs", all(price > float(last[f"EMA{n}"]) for n in rules["require_above_ema"])),
-             ("RSI", rules["rsi_min"] <= rsi <= rules["rsi_max"]),
+             ("RSI", (rules.get("rsi_min") is None or rsi >= rules["rsi_min"])
+                     and (rules.get("rsi_max") is None or rsi <= rules["rsi_max"])),
              ("liquidity", turnover >= rules["min_turnover_cr"])]
     if rules.get("require_ema200_rising"):
         tests.append(("EMA200 rising", float(df["EMA200"].iloc[-1]) > float(df["EMA200"].iloc[-21])))
@@ -188,7 +191,7 @@ def describe(r, rules, when, chart=None, market=None):
                      f"Trend {chart['trend'].lower()} (daily), {str(chart['h4_trend']).lower()} (4H); "
                      f"MACD {'above' if chart['macd_up'] else 'below'} signal.")
         lines.append(f"Entry {money(s['entry'][0])}–{money(s['entry'][1])} or retest {money(s['alt'][0])}–{money(s['alt'][1])}. "
-                     f"Stop-loss {money(s['stop_cons'])} (aggressive {money(s['stop_aggr'])}). "
+                     f"Chart stop-loss {money(s['stop_cons'])} (aggressive {money(s['stop_aggr'])}). "
                      f"Targets {money(t[0])} / {money(t[1])} / {money(t[2])}.")
         lines.append(f"Support {money(lv['immediate'][0])}–{money(lv['immediate'][1])}, strong support "
                      f"{money(lv['strong'][0])}–{money(lv['strong'][1])}, next resistance "
@@ -197,13 +200,10 @@ def describe(r, rules, when, chart=None, market=None):
         if seen:
             lines.append("Signals: " + ", ".join(dict.fromkeys(seen)) + ".")
         lines.append("Why: " + "; ".join(chart["reasons"]) + f". Next: {chart['next']}.")
-        mid = sum(s["entry"]) / 2
-        risk = 100 * (mid - s["stop_cons"]) / mid
-        if risk > rules.get("max_risk_pct", 100):
-            lines.append(f"Careful: the chart stop is {risk:.0f}% under the entry, wider than your {rules['max_risk_pct']:.0f}% limit. "
-                         f"Tighter rule stop {money(r['stop'])} ({r['risk_pct']:.1f}%).")
-    else:
-        lines.append(f"Rule stop {money(r['stop'])} ({r['risk_pct']:.1f}% risk).")
+    lines.append(f"Breakout stop {money(r['stop'])} ({r['risk_pct']:.1f}% risk, 1 ATR under the level, max "
+                 f"{rules.get('max_risk_pct', 100):.0f}%).")
+    lines.append(f"Exit plan (best in the backtest): keep the stop, then sell on a daily close under the "
+                 f"10-day low, now {money(r['trail'])}, instead of a fixed target.")
     if market and not market["up"]:
         lines.append("Market caution: Nifty 50 is below its 50-day EMA.")
     return " ".join(lines)

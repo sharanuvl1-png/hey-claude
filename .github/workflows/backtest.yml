@@ -6,13 +6,6 @@ on:
       years:
         description: "Years of history to test"
         default: "4"
-  push:
-    branches: ["claude/**"]
-    paths:
-      - "tools/techchart/backtest.py"
-      - "tools/techchart/breakouts.py"
-      - ".github/workflows/backtest.yml"
-
 permissions:
   contents: read
 
