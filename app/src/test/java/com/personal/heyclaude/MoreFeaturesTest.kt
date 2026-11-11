@@ -12,7 +12,7 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/** WhatsApp and Gmail messages, and the passcode. */
+/** WhatsApp and Gmail messages, shopping, order status and the passcode. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class MoreFeaturesTest {
@@ -41,6 +41,35 @@ class MoreFeaturesTest {
         val bills = Chats.bills(chats)
         assertEquals(listOf("BESCOM", "HDFC Life"), bills.map { it.sender })
         assertEquals(LocalDate.of(2026, 11, 20), bills[1].due)
+    }
+
+    @Test fun shoppingListAndSearchLinks() {
+        val app = RuntimeEnvironment.getApplication()
+        assertEquals(listOf("milk", "bread", "2 dozen eggs"), Shopping.items("milk, bread and 2 dozen eggs"))
+        Shopping.add(app, listOf("milk", "bread"))
+        assertEquals(listOf("milk", "bread", "eggs"), Shopping.add(app, listOf("Milk", "eggs")))
+        assertEquals("Your shopping list has 3 items: milk, bread and eggs.", Shopping.listAnswer(app))
+        Shopping.clear(app)
+        assertEquals("Your shopping list is empty.", Shopping.listAnswer(app))
+        assertEquals("https://blinkit.com/s/?q=amul%20milk", Shopping.searchUrl("Blinkit", "amul milk"))
+        assertEquals("https://www.amazon.in/s?k=boat%20earbuds", Shopping.searchUrl("amazon", "boat earbuds"))
+    }
+
+    @Test fun orderStatusFromMessages() {
+        val t = LocalDateTime.of(2026, 11, 11, 9, 40)
+        assertEquals("out for delivery", Orders.update("messages", "AX-AMAZON", "Your package with boAt earbuds is out for delivery today", t)!!.status)
+        assertEquals("shipped", Orders.update("Flipkart", "Flipkart", "Your order for Realme buds has been shipped", t)!!.status)
+        assertEquals("delivered", Orders.update("blinkit", "blinkit", "Your order has been delivered. Enjoy!", t)!!.status)
+        assertNull(Orders.update("messages", "AX-AMAZON", "Big sale! 50% off on earbuds, shop now", t))
+        assertNull(Orders.update("Outlook", "Amazon", "Your order has been shipped", t))
+        val ups = listOf(
+            OrderUpdate("Amazon", "shipped", t.minusDays(1), ""),
+            OrderUpdate("Amazon", "out for delivery", t, ""),
+            OrderUpdate("Flipkart", "placed", t.minusDays(3), ""),
+        )
+        assertEquals("Amazon: out for delivery, last update at 9:40 AM today. Flipkart: placed, last update on 8 Nov.",
+            Orders.answer(ups, day))
+        assertEquals("I don't see any Blinkit order updates from the last 10 days.", Orders.answer(ups, day, "blinkit"))
     }
 
     @Test fun passcodeIsCheckedNotStored() {

@@ -45,6 +45,18 @@ class CommandsTest {
         assertEquals(Command.Ask("make a chart"), c("make a chart"))
     }
 
+    @Test fun shopping() {
+        assertEquals(Command.Shop(listOf("milk", "bread", "eggs"), "blinkit"), c("add milk, bread and eggs on Blinkit"))
+        assertEquals(Command.Shop(listOf("boat earbuds"), "amazon"), c("search for boat earbuds on amazon"))
+        assertEquals(Command.ListSend("blinkit"), c("add my list to blinkit"))
+        assertEquals(Command.ListAdd(listOf("atta", "dal")), c("add atta and dal to my grocery list"))
+        assertEquals(Command.ListShow, c("what's on my shopping list"))
+        assertEquals(Command.ListClear, c("clear my list"))
+        assertEquals(Command.Orders(null), c("where is my order"))
+        assertEquals(Command.Orders("amazon"), c("where's my amazon order"))
+        assertEquals(Command.Orders("flipkart"), c("track my flipkart orders"))
+    }
+
     @Test fun today() {
         assertEquals(Command.Today("all"), c("What's on today?"))
         assertEquals(Command.Today("all"), c("my schedule today"))

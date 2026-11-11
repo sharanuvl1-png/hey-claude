@@ -19,6 +19,10 @@ object Answers {
         }
         is Command.Alerts -> Alerts.summary(ctx)
         is Command.Today -> Today.answer(ctx, command.what)
+        is Command.ListAdd -> Shopping.add(ctx, command.items).let { "Added ${Shopping.said(command.items)}. Your list has ${it.size} item${if (it.size > 1) "s" else ""}." }
+        is Command.ListShow -> Shopping.listAnswer(ctx)
+        is Command.ListClear -> { Shopping.clear(ctx); "Cleared your shopping list." }
+        is Command.Orders -> Orders.answer(Orders.recent(AssistantActivity.phoneData ?: PhoneData(ctx)), PhoneData.today(), command.shop)
         is Command.Ask -> Prompts.recall(Memory.all(ctx), text)
         else -> null
     }

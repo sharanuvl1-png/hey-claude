@@ -142,6 +142,13 @@ class MainActivity : Activity() {
         val command = Command.parse(text)
         Answers.local(this, command, text)?.let { addReply(it, it, spoken); return }
         if (command is Command.Chart) { showChart(command.stock, spoken); return }
+        if (command is Command.Shop) { openShop(command.items, command.shop, spoken); return }
+        if (command is Command.ListSend) {
+            val items = Shopping.list(this)
+            if (items.isEmpty()) addReply("Your shopping list is empty. Say \"add milk to my list\" first.", null, spoken)
+            else openShop(items, command.shop, spoken)
+            return
+        }
 
         val b = brain()
         busy = true
@@ -172,6 +179,23 @@ class MainActivity : Activity() {
                 }
             }
         }.start()
+    }
+
+    /**
+     * Opens [shop]'s search for the first item and shows a button for each of the rest, so you
+     * pick the exact product and tap Add yourself. Mehitha never goes to checkout or orders.
+     */
+    private fun openShop(items: List<String>, shop: String, spoken: Boolean) {
+        val name = Shopping.shopName(shop)
+        val links = items.map { it to Shopping.searchUrl(shop, it) }
+        val text = if (items.size == 1) "Opening $name for ${items[0]}. Tap Add on the one you want. I never place orders."
+            else "Opening $name for ${items[0]} first. Come back and tap the next item. Tap Add on the ones you want; I never place orders."
+        addReply(text, text, spoken, links = links)
+        openLink(links[0].second)
+    }
+
+    private fun openLink(url: String) {
+        try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("Couldn't open the shop") }
     }
 
     /** The newest technical chart for [stock], straight from the charts branch (no API key needed). */
@@ -240,12 +264,23 @@ class MainActivity : Activity() {
     private fun addThinking(): View = Ui.bubble(this, "Thinking…", mine = false, color = Ui.MUTED).also { add(it, mine = false) }
 
     /** Mehitha's answer, with Read aloud and Copy underneath. */
-    private fun addReply(display: String, speech: String?, readNow: Boolean, problem: Boolean = false, images: List<String> = emptyList()) {
+    private fun addReply(display: String, speech: String?, readNow: Boolean, problem: Boolean = false,
+                         images: List<String> = emptyList(), links: List<Pair<String, String>> = emptyList()) {
         if (welcome.parent != null) messages.removeView(welcome)
         val d = { v: Int -> Ui.dp(this, v) }
         val block = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         block.addView(Ui.bubble(this, display, mine = false, color = if (problem) Ui.WARN else Ui.TEXT))
         val imageWidth = (resources.displayMetrics.widthPixels * 0.82).toInt()
+        if (links.isNotEmpty()) block.addView(HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                links.forEach { (label, url) ->
+                    addView(Ui.chip(this@MainActivity, "🛒 $label") { openLink(url) },
+                        LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { marginEnd = d(8) })
+                }
+            })
+        }, LinearLayout.LayoutParams(imageWidth, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = d(8) })
         images.forEach { url -> block.addView(picture(url), LinearLayout.LayoutParams(imageWidth, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = d(8) }) }
         val say = speech ?: display
         val actions = LinearLayout(this).apply {
@@ -491,6 +526,8 @@ class MainActivity : Activity() {
             "🧾 Odd charges?" to "any odd charges this week",
             "📈 Check a stock" to "check ",
             "📊 Show a chart" to "show chart of ",
+            "🛒 Shopping list" to "what's on my shopping list",
+            "📦 Where's my order?" to "where is my order",
             "💬 What did I miss?" to "what did I miss",
             "📅 Weekly review" to "weekly review",
             "⏰ Remind me" to "remind me ",
