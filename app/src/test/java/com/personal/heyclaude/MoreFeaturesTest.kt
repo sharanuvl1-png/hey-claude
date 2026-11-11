@@ -70,7 +70,7 @@ class MoreFeaturesTest {
         assertEquals(listOf("TCS", "PCJEWELLER"), h.map { it.symbol })
         val s = Zerodha.summary(h)
         assertTrue(s, s.startsWith("Your 2 holdings are worth 34,500 rupees"))
-        assertTrue(s, s.contains("Overall you're up 2,500 rupees (8.1%) on 32,000 rupees invested"))
+        assertTrue(s, s.contains("Overall you're up 2,500 rupees (7.8%) on 32,000 rupees invested"))
         assertTrue(s, s.contains("PCJEWELLER down 4.0%"))
         val alerts = Zerodha.stopLossAlerts(h, mapOf("PCJEWELLER" to 16.0, "TCS" to 3000.0), "2026-11-11")
         assertEquals(listOf("PCJEWELLER is below its stop-loss"), alerts.map { it.title })
