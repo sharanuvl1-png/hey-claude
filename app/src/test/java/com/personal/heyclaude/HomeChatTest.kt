@@ -157,6 +157,58 @@ class HomeChatTest {
         assertEquals("Nifty closed higher today.", spoken().last())
     }
 
+    @Test fun showsAChartWithoutAsking() {
+        val a = open()
+        type(a, "show chart of PC Jeweller")
+        waitFor("the chart") { chat(a).any { it.startsWith("Chart for PCJEWELLER made on 2026-11-10.") } }
+        assertEquals(null, api) // straight from the charts, no Claude call
+        waitFor("the picture to give up") { chat(a).any { it.startsWith("Couldn't load the picture") } }
+    }
+
+    @Test fun usesTheChosenModel() {
+        val a = open(replies = listOf(200 to text("Quick answer.")))
+        type(a, "hello")
+        waitFor("the answer") { chat(a).contains("Quick answer.") }
+        assertTrue(api!!.requests[0].contains("claude-haiku-5-5"))
+        AssistantActivity.saveModel(app, "claude-opus-5-5")
+        api!!.stop()
+        api = FakeApi(listOf(200 to text("Deep answer.")))
+        AssistantActivity.apiBaseUrl = api!!.url
+        type(a, "again")
+        waitFor("the answer") { chat(a).contains("Deep answer.") }
+        assertTrue(api!!.requests[0].contains("claude-opus-5-5"))
+    }
+
+    @Test fun answersWhatsOnTodayByItself() {
+        val a = open()
+        type(a, "what's on today")
+        assertTrue(chat(a).any { it.contains("calendar") && it.contains("deliveries", ignoreCase = true) })
+        assertEquals(null, api)
+    }
+
+    @Test fun asksForThePasscodeBeforeConfidentialDetails() {
+        val a = open(replies = listOf(200 to text("PASSCODE_NEEDED"), 200 to text("Your PAN card is in Dropbox, number on file.")))
+        Passcode.set(app, "4321")
+        type(a, "what is my PAN number")
+        waitFor("the passcode question") { chat(a).contains(Passcode.ASK) }
+        type(a, "43 21")
+        waitFor("the answer") { chat(a).contains("Your PAN card is in Dropbox, number on file.") }
+        assertFalse(chat(a).contains("43 21")) // never shown
+        assertFalse(api!!.requests[0].contains("said the right passcode"))
+        assertTrue(api!!.requests[1].contains("said the right passcode"))
+        assertFalse(api!!.requests.any { it.contains("4321") })
+    }
+
+    @Test fun wrongPasscodeSharesNothing() {
+        val a = open(replies = listOf(200 to text("PASSCODE_NEEDED")))
+        Passcode.set(app, "4321")
+        type(a, "what is my PAN number")
+        waitFor("the passcode question") { chat(a).contains(Passcode.ASK) }
+        type(a, "1111")
+        assertTrue(chat(a).contains(Passcode.WRONG))
+        assertEquals(1, api!!.requests.size)
+    }
+
     @Test fun answersAlertsByItself() {
         val a = open()
         type(a, "any alerts")
@@ -190,10 +242,17 @@ class HomeChatTest {
         assertEquals("Nifty closed higher today.", spoken().last())
     }
 
+    @Test fun openedAsPhoneAssistantStartsListening() {
+        val a = open(intent = Intent(Intent.ACTION_ASSIST).setClass(app, MainActivity::class.java))
+        assertTrue(field<Boolean>(a, "listening"))
+        assertEquals(Intent.ACTION_MAIN, a.intent.action) // not again on a screen rotation
+    }
+
     @Test fun keepsTheBreakoutAlertsScheduled() {
         open()
         val wm = WorkManager.getInstance(app)
         assertEquals(1, wm.getWorkInfosForUniqueWork("mehitha-breakouts").get().size)
         assertEquals(1, wm.getWorkInfosForUniqueWork("mehitha-alerts").get().size)
+        assertEquals(1, wm.getWorkInfosForUniqueWork("mehitha-today").get().size)
     }
 }

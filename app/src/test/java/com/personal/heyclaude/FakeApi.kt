@@ -44,4 +44,8 @@ class FakeTools : MehithaTools {
     val calls: MutableList<String> = Collections.synchronizedList(mutableListOf())
     override fun searchPhoneData(query: String): String { calls += "phone:$query"; return "SMS 25 Oct from redBus: ticket TVBN78163260, 6:30 PM" }
     override fun stockScan(): String { calls += "scan"; return "# Mehitha daily stock scan, 2026-10-26\nHCLTECH BUY NOW" }
+    override fun stockChart(stock: String): String {
+        calls += "chart:$stock"
+        return "Chart for PCJEWELLER made on 2026-11-10.\nIMAGE: https://127.0.0.1:1/PCJEWELLER/2026-11-10.png\n\n# Analysis\nUptrend."
+    }
 }

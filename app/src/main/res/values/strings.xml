@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="voice_helper_description">When Mehitha asks the Claude app a question for you, types it in and brings the reply back. It only looks at the Claude app, only while Mehitha is asking.</string>
+    <string name="widget_description">Ask Mehitha in one tap, with bills due and today\'s breakouts.</string>
 </resources>

@@ -11,8 +11,10 @@ import kotlin.math.roundToLong
 /** One spend read from a bank or UPI SMS (see PhoneSync.expenseRow). */
 data class Spend(val time: LocalDateTime, val amount: Double, val category: String, val merchant: String, val via: String)
 
-/** A bill found in an SMS, with the date it is due. */
-data class Bill(val sender: String, val amount: Double?, val due: LocalDate, val text: String)
+/** A bill or renewal found in an SMS or email, with the date it is due. [kind] is "bill" or "renewal". */
+data class Bill(val sender: String, val amount: Double?, val due: LocalDate, val text: String, val kind: String = "bill") {
+    val isRenewal get() = kind == "renewal"
+}
 
 /** Something Mehitha should tell you about, with an id so it is only said once. */
 /** [image]: chart picture URL shown in the notification; [link]: full analysis opened on tap. */
@@ -159,7 +161,11 @@ object Money {
     // ---- Bills due ----------------------------------------------------------------------
 
     private val DUE = Regex("(?i)\\b(due|payable|pay by|last date)\\b")
-    private val PAID = Regex("(?i)\\b(received|thank you for (your )?payment|has been paid|successfully paid|payment of .* received)\\b")
+    private val PAID = Regex("(?i)\\b(received|thank you for (your )?payment|has been paid|successfully paid|renewed|has been renewed|payment of .* received)\\b")
+    // Renewals (insurance, subscriptions, licences) only count when the message says what is renewing,
+    // so offers that merely "expire" are left out.
+    private val RENEW = Regex("(?i)\\b(renew(al)?|expir(y|es|ing)|lapse[sd]?)\\b")
+    private val RENEW_WHAT = Regex("(?i)\\b(policy|premium|insurance|subscription|plan|membership|licen[cs]e|registration|fastag|domain|warranty)\\b")
     private val BILL_AMOUNT = Regex("(?i)(?:rs\\.?|inr|₹)\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)")
     private val DATES = listOf(
         Regex("\\b(\\d{1,2})[-/ ]([A-Za-z]{3})[A-Za-z]*[-/ ,]*(\\d{2,4})?\\b") to "dmy-name",
@@ -167,14 +173,19 @@ object Money {
     )
     private val MONTHS = listOf("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
 
-    /** A bill due date and amount from an SMS such as "Total amount due Rs 12,400 by 05-Nov-26". */
+    /**
+     * A bill due date and amount from an SMS such as "Total amount due Rs 12,400 by 05-Nov-26",
+     * or a renewal such as "Your policy 1234 is due for renewal on 20-Nov-26".
+     */
     fun billDue(sender: String, body: String, received: LocalDate): Bill? {
-        if (!DUE.containsMatchIn(body) || PAID.containsMatchIn(body)) return null
-        val after = body.substring(DUE.find(body)!!.range.first)
+        if (PAID.containsMatchIn(body)) return null
+        val renewal = RENEW.containsMatchIn(body) && RENEW_WHAT.containsMatchIn(body)
+        val hit = DUE.find(body) ?: (if (renewal) RENEW.find(body) else null) ?: return null
+        val after = body.substring(hit.range.first)
         val due = dateIn(after, received) ?: dateIn(body, received) ?: return null
         if (due.isBefore(received.minusDays(1)) || due.isAfter(received.plusDays(62))) return null
         val amount = BILL_AMOUNT.find(body)?.groupValues?.get(1)?.replace(",", "")?.toDoubleOrNull()
-        return Bill(sender.substringAfterLast('-').trim(), amount, due, body)
+        return Bill(sender.substringAfterLast('-').trim(), amount, due, body, if (renewal) "renewal" else "bill")
     }
 
     private fun dateIn(text: String, received: LocalDate): LocalDate? {
@@ -193,20 +204,21 @@ object Money {
         return null
     }
 
-    /** Bills due in the next [within] days, one alert each. */
+    /** Bills due in the next [within] days, and renewals in the next week, one alert each. */
     fun billAlerts(bills: List<Bill>, today: LocalDate, within: Long = 3): List<Alert> =
-        bills.filter { !it.due.isBefore(today) && !it.due.isAfter(today.plusDays(within)) }
+        bills.filter { !it.due.isBefore(today) && !it.due.isAfter(today.plusDays(if (it.isRenewal) maxOf(within, 7) else within)) }
             .distinctBy { "${it.sender}:${it.due}" }
             .map { b ->
                 val whenDue = when (ChronoUnit.DAYS.between(today, b.due)) {
                     0L -> "today"; 1L -> "tomorrow"; else -> "on ${b.due.format(DAY)}"
                 }
-                Alert("bill:${b.sender}:${b.due}", "Bill due $whenDue",
-                    "${b.sender} bill" + (b.amount?.let { " of ${rupees(it)}" } ?: "") + " is due $whenDue.")
+                val what = if (b.isRenewal) "renewal" else "bill"
+                Alert("bill:${b.sender}:${b.due}", "${what.replaceFirstChar { it.uppercase() }} due $whenDue",
+                    "${b.sender} $what" + (b.amount?.let { " of ${rupees(it)}" } ?: "") + " is due $whenDue.")
             }
 
     fun billsText(bills: List<Bill>, today: LocalDate): String =
         bills.filter { !it.due.isBefore(today) && !it.due.isAfter(today.plusDays(7)) }.distinctBy { "${it.sender}:${it.due}" }
-            .joinToString("; ") { "${it.sender}" + (it.amount?.let { a -> " ${rupees(a)}" } ?: "") + " due ${it.due.format(DAY)}" }
+            .joinToString("; ") { "${it.sender}" + (if (it.isRenewal) " renewal" else "") + (it.amount?.let { a -> " ${rupees(a)}" } ?: "") + " due ${it.due.format(DAY)}" }
             .ifEmpty { "none found in text messages" }
 }

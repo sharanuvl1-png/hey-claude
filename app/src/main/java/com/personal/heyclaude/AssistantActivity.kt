@@ -105,7 +105,7 @@ class AssistantActivity : Activity() {
             }
             else -> {
                 ready = true
-                if (key.isNotBlank()) brain = AssistantBrain(key, tools ?: PhoneTools(this), apiBaseUrl)
+                if (key.isNotBlank()) brain = AssistantBrain(key, tools ?: PhoneTools(this), apiBaseUrl, model = model(this))
                 val asked = intent.getStringExtra(EXTRA_ASK)
                 intent.removeExtra(EXTRA_ASK)
                 when {
@@ -479,5 +479,15 @@ class AssistantActivity : Activity() {
 
         fun saveApiKey(ctx: Context, key: String) =
             ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, key.trim()).apply()
+
+        private const val MODEL_KEY = "claude_model"
+
+        /** The Claude model answers come from: fast Haiku unless changed in Settings. */
+        fun model(ctx: Context): String =
+            ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(MODEL_KEY, null)
+                ?.takeIf { m -> AssistantBrain.MODELS.any { it.second == m } } ?: AssistantBrain.DEFAULT_MODEL
+
+        fun saveModel(ctx: Context, model: String) =
+            ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(MODEL_KEY, model).apply()
     }
 }

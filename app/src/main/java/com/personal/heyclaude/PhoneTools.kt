@@ -50,6 +50,13 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
             (if (notes.isEmpty()) "" else "\n\n" + notes.joinToString("\n"))
     }
 
+    override fun stockChart(stock: String): String {
+        val scan = try { stockScan() } catch (e: Exception) { "" }
+        val chart = Charts.find(stock, scan) ?: return "No chart found for $stock. It can be made with the Technical chart action on GitHub."
+        val report = try { Charts.text(chart.reportUrl) } catch (e: Exception) { "" }
+        return "Chart for ${chart.symbol} made on ${chart.date}.\nIMAGE: ${chart.imageUrl}\n\n" + report.take(6000)
+    }
+
     override fun stockScan(): String {
         val conn = URL(SCAN_URL).openConnection() as HttpURLConnection
         conn.connectTimeout = 15_000

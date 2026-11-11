@@ -35,6 +35,38 @@ class CommandsTest {
         assertEquals(Command.Ask("check if I have meetings tomorrow"), c("check if I have meetings tomorrow"))
     }
 
+    @Test fun charts() {
+        assertEquals(Command.Chart("Reliance"), c("show chart of Reliance"))
+        assertEquals(Command.Chart("PC Jeweller"), c("Show me the latest chart for PC Jeweller"))
+        assertEquals(Command.Chart("PCJEWELLER"), c("PCJEWELLER chart"))
+        assertEquals(Command.Chart("Tata Motors"), c("Tata Motors stock chart"))
+        assertEquals(Command.Chart("TCS"), c("open the TCS technical chart."))
+        assertEquals(Command.Ask("show me the chart"), c("show me the chart"))
+        assertEquals(Command.Ask("make a chart"), c("make a chart"))
+    }
+
+    @Test fun shopping() {
+        assertEquals(Command.Shop(listOf("milk", "bread", "eggs"), "blinkit"), c("add milk, bread and eggs on Blinkit"))
+        assertEquals(Command.Shop(listOf("boat earbuds"), "amazon"), c("search for boat earbuds on amazon"))
+        assertEquals(Command.ListSend("blinkit"), c("add my list to blinkit"))
+        assertEquals(Command.ListAdd(listOf("atta", "dal")), c("add atta and dal to my grocery list"))
+        assertEquals(Command.ListShow, c("what's on my shopping list"))
+        assertEquals(Command.ListClear, c("clear my list"))
+        assertEquals(Command.Orders(null), c("where is my order"))
+        assertEquals(Command.Orders("amazon"), c("where's my amazon order"))
+        assertEquals(Command.Orders("flipkart"), c("track my flipkart orders"))
+    }
+
+    @Test fun today() {
+        assertEquals(Command.Today("all"), c("What's on today?"))
+        assertEquals(Command.Today("all"), c("my schedule today"))
+        assertEquals(Command.Today("meetings"), c("any meetings today"))
+        assertEquals(Command.Today("meetings"), c("when is my next meeting"))
+        assertEquals(Command.Today("deliveries"), c("any deliveries today"))
+        assertEquals(Command.Today("deliveries"), c("what's arriving today"))
+        assertEquals(Command.Ask("what's the weather today"), c("what's the weather today"))
+    }
+
     @Test fun everythingElse() {
         assertEquals(Command.CatchUp, c("What did I miss today?"))
         assertEquals(Command.CatchUp, c("catch me up"))

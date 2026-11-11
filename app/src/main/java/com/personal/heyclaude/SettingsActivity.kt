@@ -2,6 +2,7 @@ package com.personal.heyclaude
 
 import android.Manifest
 import android.app.Activity
+import android.app.role.RoleManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -26,13 +27,17 @@ class SettingsActivity : Activity() {
     private lateinit var apiRow: Ui.Row
     private lateinit var apiBox: LinearLayout
     private lateinit var apiField: EditText
+    private lateinit var speedText: TextView
+    private lateinit var passStatus: TextView
     private lateinit var micRow: Ui.Row
+    private lateinit var assistantRow: Ui.Row
     private lateinit var claudeRow: Ui.Row
     private lateinit var voiceRow: Ui.Row
     private lateinit var overlayRow: Ui.Row
     private lateinit var voiceDebug: TextView
     private lateinit var dropboxRow: Ui.Row
     private lateinit var smsRow: Ui.Row
+    private lateinit var calendarRow: Ui.Row
     private lateinit var filesRow: Ui.Row
     private lateinit var notifRow: Ui.Row
     private lateinit var linkBox: LinearLayout
@@ -65,6 +70,7 @@ class SettingsActivity : Activity() {
             else { AssistantActivity.saveApiKey(this, k); apiField.setText(""); apiBox.visibility = View.GONE; toast("Key saved"); refresh() }
         })
         micRow = Ui.Row(this, "Microphone", "Allow") { requestMic() }
+        assistantRow = Ui.Row(this, "Phone's assistant", "Set") { openAssistantSettings() }
         claudeRow = Ui.Row(this, "Claude app", "Install") {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${LaunchClaudeActivity.CLAUDE_PACKAGE}")))
         }
@@ -77,7 +83,19 @@ class SettingsActivity : Activity() {
         }
         brain.addView(apiRow.view)
         brain.addView(apiBox)
-        listOf(micRow, claudeRow, voiceRow, overlayRow).forEach { brain.addView(it.view) }
+        speedText = Ui.text(this, "", 12.5f, Ui.MUTED)
+        brain.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, d(10), 0, d(10))
+            addView(LinearLayout(this@SettingsActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(Ui.text(this@SettingsActivity, "Answer speed", 15f))
+                addView(speedText)
+            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = d(22) })
+            addView(Ui.pill(this@SettingsActivity, "Change") { chooseModel() })
+        })
+        listOf(assistantRow, micRow, claudeRow, voiceRow, overlayRow).forEach { brain.addView(it.view) }
         // The basic build has no Claude app helper, so these two rows don't apply.
         if (!hasService(VoiceHelper::class.java)) { voiceRow.view.visibility = View.GONE; overlayRow.view.visibility = View.GONE }
         voiceDebug = Ui.text(this, "", 11.5f, Ui.MUTED).apply { setPadding(0, d(8), 0, 0) }
@@ -86,7 +104,7 @@ class SettingsActivity : Activity() {
         page.addView(Ui.spacer(this, 16))
 
         // Card 2: phone data.
-        val data = Ui.card(this, "Phone data", "Lets Mehitha search your SMS, WhatsApp messages, documents and files through a private Dropbox folder.")
+        val data = Ui.card(this, "Phone data", "Lets Mehitha read your calendar, SMS, WhatsApp messages and files on the phone. Dropbox is optional: it copies them so the Claude app can search them too.")
         dropboxRow = Ui.Row(this, "Dropbox", "Link") { linkBox.visibility = View.VISIBLE }
         data.addView(dropboxRow.view)
         linkBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
@@ -113,7 +131,10 @@ class SettingsActivity : Activity() {
         notifRow = Ui.Row(this, "WhatsApp & app messages", "Allow") {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
         }
-        listOf(smsRow, filesRow, notifRow).forEach { data.addView(it.view) }
+        calendarRow = Ui.Row(this, "Calendar", "Allow") {
+            requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), 3)
+        }
+        listOf(calendarRow, smsRow, filesRow, notifRow).forEach { data.addView(it.view) }
         // The basic build leaves these out so Play Protect lets it install.
         if (!declares(Manifest.permission.READ_SMS)) smsRow.view.visibility = View.GONE
         if (!hasService(NotificationCatcher::class.java)) notifRow.view.visibility = View.GONE
@@ -123,6 +144,8 @@ class SettingsActivity : Activity() {
             if (dropbox.isLinked) { SyncWorker.runNow(this); toast("Sync started") } else toast("Link Dropbox first")
         })
         page.addView(data)
+        page.addView(Ui.spacer(this, 16))
+        page.addView(passcodeCard())
         page.addView(Ui.text(this, buildLabel(this), 11.5f, Ui.MUTED).apply {
             gravity = Gravity.CENTER; setPadding(0, d(20), 0, 0)
         })
@@ -155,6 +178,54 @@ class SettingsActivity : Activity() {
         }.start()
     }
 
+    /** Opens Android's "Digital assistant app" setting, where you can pick Mehitha. */
+    /** Card: the passcode Mehitha asks for before sharing confidential details. */
+    private fun passcodeCard(): LinearLayout {
+        val d = { v: Int -> Ui.dp(this, v) }
+        val card = Ui.card(this, "Mehitha passcode",
+            "Asked before Mehitha shares card, bank, PAN, Aadhaar, salary, policy or other confidential details. It's stored scrambled on this phone and never shown.")
+        passStatus = Ui.text(this, "", 12.5f, Ui.MUTED).apply { setPadding(0, d(4), 0, d(8)) }
+        card.addView(passStatus)
+        val field = Ui.field(this, "New passcode").apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        }
+        card.addView(field)
+        card.addView(Ui.spacer(this, 8))
+        card.addView(Ui.pill(this, "Save passcode") {
+            val code = Passcode.normalize(field.text.toString())
+            if (code.length < 4) toast("Use at least 4 digits")
+            else { Passcode.set(this, code); field.setText(""); toast("Passcode saved"); refresh() }
+        })
+        return card
+    }
+
+    /** Pick the Claude model: Haiku is quickest, Opus thinks hardest. */
+    private fun chooseModel() {
+        val models = AssistantBrain.MODELS
+        val current = models.indexOfFirst { it.second == AssistantActivity.model(this) }
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Answer speed")
+            .setSingleChoiceItems(models.map { it.first }.toTypedArray(), current) { dlg, i ->
+                AssistantActivity.saveModel(this, models[i].second)
+                dlg.dismiss()
+                refresh()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun openAssistantSettings() {
+        toast("Tap \"Digital assistant app\" (or \"Device assistance app\") and choose Mehitha")
+        val tries = listOf(Settings.ACTION_VOICE_INPUT_SETTINGS, Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS, Settings.ACTION_SETTINGS)
+        for (a in tries) {
+            try { startActivity(Intent(a)); return } catch (e: Exception) { /* try the next one */ }
+        }
+    }
+
+    private fun isAssistant(): Boolean = try {
+        getSystemService(RoleManager::class.java)?.isRoleHeld(RoleManager.ROLE_ASSISTANT) == true
+    } catch (e: Exception) { false }
+
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
 
     private fun requestMic() {
@@ -175,10 +246,16 @@ class SettingsActivity : Activity() {
     private fun granted(p: String) = checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED
 
     private fun refresh() {
+        val m = AssistantActivity.model(this)
+        speedText.text = (AssistantBrain.MODELS.firstOrNull { it.second == m }?.first ?: m) +
+            if (m == AssistantBrain.DEFAULT_MODEL) ": quickest answers" else ": slower, more thorough answers"
         val hasKey = AssistantActivity.apiKey(this).isNotBlank()
         apiRow.set(hasKey, "Saved: Mehitha answers right in the chat. Tap to replace",
             "Recommended. Without a key Mehitha asks the Claude app for you", required = false)
         apiRow.view.setOnClickListener { apiBox.visibility = View.VISIBLE }
+        assistantRow.set(isAssistant(), "On: long-press power or home to talk to Mehitha",
+            "Make Mehitha open when you long-press power or home. On Samsung also set Side button → Press and hold → Digital assistant",
+            required = false)
         micRow.set(granted(Manifest.permission.RECORD_AUDIO), "Allowed", "Needed to ask by voice", required = false)
         val claude = packageManager.getLaunchIntentForPackage(LaunchClaudeActivity.CLAUDE_PACKAGE) != null
         claudeRow.set(claude, "Installed", "Install Claude: Mehitha asks it when there is no API key", required = !hasKey)
@@ -198,10 +275,13 @@ class SettingsActivity : Activity() {
         val notif = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")?.contains(packageName) == true
         dropboxRow.set(dropbox.isLinked, "Linked", "Link your Dropbox app key", required = false)
         if (dropbox.isLinked) linkBox.visibility = View.GONE
+        calendarRow.set(granted(Manifest.permission.READ_CALENDAR), "Meeting reminders on",
+            "Allow for meeting reminders and \"what's on today\". Add your work calendar in the phone's Calendar or Outlook app", required = false)
         smsRow.set(sms, "Syncing (OTPs skipped)", "Allow to search your SMS", required = false)
         filesRow.set(files, "Indexed", "Allow to find documents and photos", required = false)
         notifRow.set(notif, "Capturing new messages", "Allow to save WhatsApp messages", required = false)
         syncStatus.text = PhoneSync.lastStatus(this)
+        passStatus.text = if (Passcode.isSet(this)) "Passcode set" else "Not set: confidential details stay hidden"
     }
 
     companion object {

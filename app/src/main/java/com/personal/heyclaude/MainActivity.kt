@@ -19,7 +19,9 @@ import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.net.Uri
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -37,6 +39,9 @@ class MainActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
     private var brain: AssistantBrain? = null
     private var brainKey = ""
+    private var brainModel = ""
+    /** The question waiting for the passcode, if Mehitha just asked for it. */
+    private var waitingPasscodeFor: String? = null
     private var busy = false
     private var tts: TextToSpeech? = null
     private var ttsReady = false
@@ -78,8 +83,16 @@ class MainActivity : Activity() {
         askFrom(intent)
     }
 
-    /** Tapping an alert opens the chat with its question, read aloud when the alert asks for it. */
+    /**
+     * Tapping an alert opens the chat with its question, read aloud when the alert asks for it.
+     * Opened as the phone's assistant (long-press power or home), Mehitha starts listening.
+     */
     private fun askFrom(i: Intent?) {
+        if (i?.action == Intent.ACTION_ASSIST || i?.action == Intent.ACTION_VOICE_COMMAND) {
+            i.action = Intent.ACTION_MAIN // only once, not again when the screen is recreated
+            handler.post { if (!listening && !isFinishing) toggleDictation() }
+            return
+        }
         val asked = i?.getStringExtra(AssistantActivity.EXTRA_ASK) ?: return
         val speak = i.getBooleanExtra(EXTRA_SPEAK, false)
         i.removeExtra(AssistantActivity.EXTRA_ASK)
@@ -110,16 +123,32 @@ class MainActivity : Activity() {
     // ---- Asking -----------------------------------------------------------------------------
 
     /** Sends [raw] to Mehitha. [spoken] answers are read aloud as well. */
-    private fun ask(raw: String, spoken: Boolean = false) {
+    private fun ask(raw: String, spoken: Boolean = false, echo: Boolean = true) {
         val text = raw.trim()
         if (text.isEmpty()) return
         if (busy) { toast("One moment, I'm still on the last question"); return }
         input.setText("")
         hideKeyboard()
         stopSpeaking()
-        addMine(text)
+        waitingPasscodeFor?.let { question ->
+            // The passcode itself is never shown in the chat or sent anywhere.
+            waitingPasscodeFor = null
+            addMine("••••••")
+            if (Passcode.check(this, text)) { brain()?.unlocked = true; ask(question, spoken, echo = false) }
+            else addReply(Passcode.WRONG, null, spoken, problem = true)
+            return
+        }
+        if (echo) addMine(text)
         val command = Command.parse(text)
         Answers.local(this, command, text)?.let { addReply(it, it, spoken); return }
+        if (command is Command.Chart) { showChart(command.stock, spoken); return }
+        if (command is Command.Shop) { openShop(command.items, command.shop, spoken); return }
+        if (command is Command.ListSend) {
+            val items = Shopping.list(this)
+            if (items.isEmpty()) addReply("Your shopping list is empty. Say \"add milk to my list\" first.", null, spoken)
+            else openShop(items, command.shop, spoken)
+            return
+        }
 
         val b = brain()
         busy = true
@@ -141,9 +170,52 @@ class MainActivity : Activity() {
                 updateSend()
                 when {
                     result == null -> handOff(prompt, text)
-                    result.isSuccess -> Answers.reply(this, result.getOrThrow()).let { addReply(it.display, it.speech, spoken) }
+                    result.isSuccess && Passcode.isNeeded(result.getOrThrow()) -> when {
+                        !Passcode.isSet(this) -> addReply(Passcode.NOT_SET, null, spoken)
+                        else -> { waitingPasscodeFor = text; addReply(Passcode.ASK, null, spoken) }
+                    }
+                    result.isSuccess -> Answers.reply(this, result.getOrThrow()).let { addReply(it.display, it.speech, spoken, images = it.images) }
                     else -> addReply(Answers.problem(result.exceptionOrNull()!!), null, spoken, problem = true)
                 }
+            }
+        }.start()
+    }
+
+    /**
+     * Opens [shop]'s search for the first item and shows a button for each of the rest, so you
+     * pick the exact product and tap Add yourself. Mehitha never goes to checkout or orders.
+     */
+    private fun openShop(items: List<String>, shop: String, spoken: Boolean) {
+        val name = Shopping.shopName(shop)
+        val links = items.map { it to Shopping.searchUrl(shop, it) }
+        val text = if (items.size == 1) "Opening $name for ${items[0]}. Tap Add on the one you want. I never place orders."
+            else "Opening $name for ${items[0]} first. Come back and tap the next item. Tap Add on the ones you want; I never place orders."
+        addReply(text, text, spoken, links = links)
+        openLink(links[0].second)
+    }
+
+    private fun openLink(url: String) {
+        try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("Couldn't open the shop") }
+    }
+
+    /** The newest technical chart for [stock], straight from the charts branch (no API key needed). */
+    private fun showChart(stock: String, spoken: Boolean) {
+        busy = true
+        updateSend()
+        val thinking = addThinking()
+        Thread {
+            val found = try { (AssistantActivity.tools ?: PhoneTools(this)).stockChart(stock) } catch (e: Exception) {
+                Log.w(TAG, "Chart lookup failed", e); "I couldn't reach the charts right now. Please check the internet connection."
+            }
+            val (rest, pictures) = AssistantText.images(found)
+            val line = rest.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty().trim()
+            val say = if (pictures.isEmpty()) line else "$line Ask me to explain it if you'd like the analysis."
+            handler.post {
+                if (isDestroyed) return@post
+                messages.removeView(thinking)
+                busy = false
+                updateSend()
+                addReply(say, say, spoken, problem = pictures.isEmpty(), images = pictures)
             }
         }.start()
     }
@@ -152,9 +224,11 @@ class MainActivity : Activity() {
     private fun brain(): AssistantBrain? {
         val key = AssistantActivity.apiKey(this)
         if (key.isBlank()) { brain = null; return null }
-        if (brain == null || key != brainKey) {
-            brain = AssistantBrain(key, AssistantActivity.tools ?: PhoneTools(this), AssistantActivity.apiBaseUrl)
+        val model = AssistantActivity.model(this)
+        if (brain == null || key != brainKey || model != brainModel) {
+            brain = AssistantBrain(key, AssistantActivity.tools ?: PhoneTools(this), AssistantActivity.apiBaseUrl, model = model)
             brainKey = key
+            brainModel = model
         }
         return brain
     }
@@ -175,6 +249,7 @@ class MainActivity : Activity() {
         if (busy) return
         stopSpeaking()
         brain = null
+        waitingPasscodeFor = null
         messages.removeAllViews()
         messages.addView(welcome, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
     }
@@ -189,11 +264,24 @@ class MainActivity : Activity() {
     private fun addThinking(): View = Ui.bubble(this, "Thinking…", mine = false, color = Ui.MUTED).also { add(it, mine = false) }
 
     /** Mehitha's answer, with Read aloud and Copy underneath. */
-    private fun addReply(display: String, speech: String?, readNow: Boolean, problem: Boolean = false) {
+    private fun addReply(display: String, speech: String?, readNow: Boolean, problem: Boolean = false,
+                         images: List<String> = emptyList(), links: List<Pair<String, String>> = emptyList()) {
         if (welcome.parent != null) messages.removeView(welcome)
         val d = { v: Int -> Ui.dp(this, v) }
         val block = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         block.addView(Ui.bubble(this, display, mine = false, color = if (problem) Ui.WARN else Ui.TEXT))
+        val imageWidth = (resources.displayMetrics.widthPixels * 0.82).toInt()
+        if (links.isNotEmpty()) block.addView(HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                links.forEach { (label, url) ->
+                    addView(Ui.chip(this@MainActivity, "🛒 $label") { openLink(url) },
+                        LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { marginEnd = d(8) })
+                }
+            })
+        }, LinearLayout.LayoutParams(imageWidth, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = d(8) })
+        images.forEach { url -> block.addView(picture(url), LinearLayout.LayoutParams(imageWidth, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = d(8) }) }
         val say = speech ?: display
         val actions = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -207,6 +295,38 @@ class MainActivity : Activity() {
         block.addView(actions)
         add(block, mine = false)
         if (readNow) speak(say)
+    }
+
+    /** A picture from the web in the chat: loads in the background, tap to open it full size. */
+    private fun picture(url: String): View {
+        val d = { v: Int -> Ui.dp(this, v) }
+        val holder = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable().apply { setColor(Ui.CARD); cornerRadius = d(14).toFloat() }
+            setPadding(d(6), d(6), d(6), d(6))
+            contentDescription = "Picture: $url"
+            isClickable = true
+            setOnClickListener {
+                try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("No app can open this picture") }
+            }
+        }
+        val status = Ui.text(this, "Loading picture…", 13f, Ui.MUTED).apply { setPadding(d(8), d(8), d(8), d(8)) }
+        holder.addView(status)
+        Thread {
+            val bmp = Charts.picture(url)
+            handler.post {
+                if (isDestroyed) return@post
+                if (bmp == null) { status.text = "Couldn't load the picture. Tap to open it in the browser."; return@post }
+                holder.removeView(status)
+                holder.addView(ImageView(this).apply {
+                    setImageBitmap(bmp)
+                    adjustViewBounds = true
+                    scaleType = ImageView.ScaleType.FIT_CENTER
+                    contentDescription = "Picture"
+                }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+            }
+        }.start()
+        return holder
     }
 
     private fun small(label: String, onClick: () -> Unit) = Ui.text(this, label, 12.5f, Ui.MUTED).apply {
@@ -400,10 +520,14 @@ class MainActivity : Activity() {
         /** Chip label to question. A question ending in a space is put in the box to finish typing. */
         val SUGGESTIONS = listOf(
             "☀️ Brief me" to "brief me",
+            "🗓️ What's on today?" to "what's on today",
             "🔔 Any alerts?" to "any alerts",
             "💸 Spending report" to "spending report",
             "🧾 Odd charges?" to "any odd charges this week",
             "📈 Check a stock" to "check ",
+            "📊 Show a chart" to "show chart of ",
+            "🛒 Shopping list" to "what's on my shopping list",
+            "📦 Where's my order?" to "where is my order",
             "💬 What did I miss?" to "what did I miss",
             "📅 Weekly review" to "weekly review",
             "⏰ Remind me" to "remind me ",

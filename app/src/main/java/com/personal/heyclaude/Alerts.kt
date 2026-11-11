@@ -98,13 +98,16 @@ object Alerts {
     fun schedule(ctx: Context) {
         val work = PeriodicWorkRequestBuilder<AlertWorker>(1, TimeUnit.HOURS).build()
         WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("mehitha-alerts", ExistingPeriodicWorkPolicy.KEEP, work)
+        val today = PeriodicWorkRequestBuilder<TodayWorker>(15, TimeUnit.MINUTES).build()
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("mehitha-today", ExistingPeriodicWorkPolicy.KEEP, today)
         val breakouts = PeriodicWorkRequestBuilder<BreakoutWorker>(15, TimeUnit.MINUTES).build()
         WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("mehitha-breakouts", ExistingPeriodicWorkPolicy.KEEP, breakouts)
     }
 }
 
 /**
- * Every hour: odd charges, unusual spending and bills due from SMS; after market close,
+ * Every hour: odd charges and unusual spending from SMS; bills and renewals due (SMS and
+ * Gmail notifications); after market close,
  * the stock alerts from the daily scan; a morning briefing nudge; and the Sunday review nudge.
  */
 class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
@@ -123,14 +126,27 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
             if (data.canReadSms) {
                 val spends = data.spends()
                 Money.oddCharges(spends, now, days = 1).forEach { Alerts.post(ctx, it, ask = "any odd charges") }
-                Money.billAlerts(data.bills(), today).forEach { Alerts.post(ctx, it) }
                 if (now.hour >= 19) Money.unusualSpending(spends, today).forEach { Alerts.post(ctx, it, ask = "spending report") }
             }
         } catch (e: Exception) {
             Log.w("Mehitha", "SMS checks failed", e)
         }
+        try {
+            Money.billAlerts(Bills.upcoming(ctx, data, today), today)
+                .forEach { Alerts.post(ctx, it, ask = "which bills and renewals are due this week") }
+        } catch (e: Exception) {
+            Log.w("Mehitha", "Bill checks failed", e)
+        }
         if (now.hour in 7..10) once("brief") {
-            Alerts.post(ctx, Alert("brief:$today", "Good morning", "Tap for your briefing: meetings, messages, bills and stocks."), ask = "good morning")
+            val day = try {
+                val meetings = Today.meetings(ctx, today)
+                val deliveries = Today.deliveries(ctx, data, today)
+                listOfNotNull(
+                    meetings.size.takeIf { it > 0 }?.let { n -> "$n meeting${if (n > 1) "s" else ""}" + (meetings.firstOrNull { !it.allDay }?.let { ", first at ${Today.time(it.start)}" } ?: "") },
+                    deliveries.size.takeIf { it > 0 }?.let { n -> "$n deliver${if (n > 1) "ies" else "y"} expected" },
+                ).joinToString(". ").let { if (it.isEmpty()) "" else "$it. " }
+            } catch (e: Exception) { "" }
+            Alerts.post(ctx, Alert("brief:$today", "Good morning", "${day}Tap for your briefing: meetings, messages, bills and stocks."), ask = "good morning")
         }
         if (now.dayOfWeek == DayOfWeek.SUNDAY && now.hour in 18..21) once("weekly") {
             Alerts.post(ctx, Alert("weekly:$today", "Your weekly review is ready", "Money, bills, stocks and the week ahead. Tap to hear it."), ask = "weekly review")
@@ -148,6 +164,7 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
         if (now.hour >= 17 && now.dayOfWeek != DayOfWeek.SATURDAY) once("stocks") {
             stockAlerts(today.toString()).forEach { Alerts.post(ctx, it) }
         }
+        try { MehithaWidget.refresh(ctx) } catch (e: Exception) { Log.w("Mehitha", "Widget refresh failed", e) }
         return Result.success()
     }
 
@@ -187,8 +204,10 @@ class BreakoutWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, param
             return Result.success()
         }
         try {
-            AlertWorker.parseStockAlerts(AlertWorker.fetch(PhoneData.BREAKOUTS_URL), now.toLocalDate().toString())
-                .forEach { Alerts.post(applicationContext, it) }
+            val alerts = AlertWorker.parseStockAlerts(AlertWorker.fetch(PhoneData.BREAKOUTS_URL), now.toLocalDate().toString())
+            alerts.forEach { Alerts.post(applicationContext, it) }
+            MehithaWidget.saveBreakouts(applicationContext, now.toLocalDate(), alerts)
+            MehithaWidget.refresh(applicationContext)
         } catch (e: Exception) {
             Log.w("Mehitha", "Breakout check failed", e)
         }
