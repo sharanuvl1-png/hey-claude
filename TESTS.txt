@@ -1,4 +1,4 @@
-75 passed, 0 failed
+94 passed, 0 failed
 PASS AskJobTest.givesUpAfterTimeoutWithReason
 PASS AskJobTest.findsQuestionEvenWhenCutShortOnScreen
 PASS AskJobTest.opensNewChatWhenNoMessageBox
@@ -11,6 +11,7 @@ PASS AskJobTest.stopsIfSendNeverWorks
 PASS AskJobTest.usesLastCopyOfQuestionInOldChat
 PASS AssistantBrainTest.refusalGivesPoliteLine
 PASS AssistantBrainTest.followUpKeepsConversation
+PASS AssistantBrainTest.fastModelUsesBasicWebSearchAndCanFetchCharts
 PASS AssistantBrainTest.pauseTurnIsResumed
 PASS AssistantBrainTest.toolFailureIsReportedNotThrown
 PASS AssistantBrainTest.runsToolsThenAnswers
@@ -45,17 +46,27 @@ PASS AssistantTextTest.speechChunksKeepEverything
 PASS AssistantTextTest.gistComesFromSpokenLine
 PASS AssistantTextTest.unclearAsksAgain
 PASS AssistantTextTest.bestLinesRankByMatches
+PASS AssistantTextTest.imageLinesBecomePictures
 PASS AssistantTextTest.keywordsDropFillerWords
+PASS CommandsTest.charts
 PASS CommandsTest.everythingElse
 PASS CommandsTest.stocks
+PASS CommandsTest.shopping
 PASS CommandsTest.money
+PASS CommandsTest.today
 PASS CommandsTest.briefing
 PASS HomeChatTest.answersAlertsByItself
 PASS HomeChatTest.showsAProblemPlainly
 PASS HomeChatTest.typedQuestionIsAnsweredInTheChat
+PASS HomeChatTest.showsAChartWithoutAsking
+PASS HomeChatTest.answersWhatsOnTodayByItself
 PASS HomeChatTest.followUpKeepsTheConversation
 PASS HomeChatTest.spokenQuestionIsReadAloud
+PASS HomeChatTest.asksForThePasscodeBeforeConfidentialDetails
 PASS HomeChatTest.tappedAlertCanReadTheAnswerAloud
+PASS HomeChatTest.usesTheChosenModel
+PASS HomeChatTest.wrongPasscodeSharesNothing
+PASS HomeChatTest.openedAsPhoneAssistantStartsListening
 PASS HomeChatTest.newChatStartsFresh
 PASS HomeChatTest.tappedAlertAsksStraightAway
 PASS HomeChatTest.keepsTheBreakoutAlertsScheduled
@@ -66,6 +77,11 @@ PASS MoneyTest.flagsDoubleAndLargeCharges
 PASS MoneyTest.summaryStartsWithTodayAndTheWeek
 PASS MoneyTest.summaryHasTotalsAndMatchingSpends
 PASS MoneyTest.readsBillDueDates
+PASS MoreFeaturesTest.whatsAppBankAlertsCountButFriendsDoNot
+PASS MoreFeaturesTest.passcodeIsCheckedNotStored
+PASS MoreFeaturesTest.shoppingListAndSearchLinks
+PASS MoreFeaturesTest.orderStatusFromMessages
+PASS MoreFeaturesTest.billsFromWhatsAppAndGmailButNotOfficeMail
 PASS PromptsTest.remindLinesBecomeReminders
 PASS PromptsTest.promptsStayShortEnoughToSendAsAMessage
 PASS PromptsTest.promptsAreOneLineWithDateAndRules
@@ -74,3 +90,6 @@ PASS PromptsTest.scanForFindsByNameOrSymbol
 PASS PromptsTest.scanSummaryPutsBuysFirst
 PASS ScanDigestTest.summarisesYourPicksAndTopPickPerGroup
 PASS ScanDigestTest.staleOrMissingScanGivesNothing
+PASS TodayTest.meetingReminderShowsOnceShortlyBefore
+PASS TodayTest.deliveriesFromMessages
+PASS TodayTest.spokenSummaries
