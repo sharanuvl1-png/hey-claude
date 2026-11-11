@@ -1,0 +1,41 @@
+name: Breakout rules backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      years:
+        description: "Years of history to test"
+        default: "2"
+  push:
+    branches: ["claude/**"]
+    paths:
+      - "tools/techchart/backtest.py"
+      - "tools/techchart/breakouts.py"
+      - ".github/workflows/backtest.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install libraries
+        run: pip install -q yfinance matplotlib pandas numpy
+
+      - name: Backtest the breakout rules on past Nifty 100 prices
+        run: |
+          python tools/techchart/backtest.py --years "${{ inputs.years || '2' }}" --out backtest.md
+          cat backtest.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backtest
+          path: backtest*

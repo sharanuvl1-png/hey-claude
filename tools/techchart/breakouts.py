@@ -139,6 +139,8 @@ def check(symbol, frame, rules, session_frac, market=None):
          "close_pos": close_pos, "from_hi52_pct": 100 * (1 - price / hi52), "rs": rs, "base_depth": base_depth,
          "date": frame.index[-1].date().isoformat()}
     r["crossed"] = price > level >= prev_close
+    r["above"] = {n: price > float(last[f"EMA{n}"]) for n in (20, 50, 200)}
+    r["ema200_rising"] = float(df["EMA200"].iloc[-1]) > float(df["EMA200"].iloc[-21])
     # Each rule: (name, passed). Optional rules switch off with null / false in breakout_rules.json.
     tests = [("volume", vol_ratio >= rules["volume_multiple"]),
              ("above EMAs", all(price > float(last[f"EMA{n}"]) for n in rules["require_above_ema"])),

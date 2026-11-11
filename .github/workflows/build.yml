@@ -8,6 +8,7 @@ on:
       - ".github/workflows/chart.yml"
       - ".github/workflows/scan.yml"
       - ".github/workflows/breakouts.yml"
+      - ".github/workflows/backtest.yml"
       - ".github/workflows/wakecheck.yml"
   workflow_dispatch:
 
