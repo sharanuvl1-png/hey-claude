@@ -4,7 +4,7 @@ import java.io.File
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.ZoneOffset
+import java.time.ZoneId
 import java.util.Date
 import kotlin.math.abs
 
@@ -41,7 +41,8 @@ object Chats {
     fun spends(chats: List<Chat>): List<Spend> = chats
         .filter { MONEY_APPS.matches(it.app) && MONEY_SENDER.containsMatchIn(it.sender) }
         .mapNotNull { c ->
-            PhoneSync.expenseRow(Date.from(c.time.toInstant(ZoneOffset.ofHoursMinutes(5, 30))), c.sender.replace(" ", ""), c.text)
+            // expenseRow writes the time in the phone's own time zone, so build the Date the same way.
+            PhoneSync.expenseRow(Date.from(c.time.atZone(ZoneId.systemDefault()).toInstant()), c.sender.replace(" ", ""), c.text)
                 ?.let { Money.parseRow(it) }
         }
 
