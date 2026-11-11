@@ -70,10 +70,12 @@ object Alerts {
         return "You have ${items.size} alert${if (items.size > 1) "s" else ""}. " + items.joinToString(" ") { it.second.trimEnd('.') + "." }
     }
 
-    /** Runs the hourly checks (see AlertWorker). */
+    /** Runs the hourly checks (see AlertWorker) and the market-hours breakout checks (see BreakoutWorker). */
     fun schedule(ctx: Context) {
         val work = PeriodicWorkRequestBuilder<AlertWorker>(1, TimeUnit.HOURS).build()
         WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("mehitha-alerts", ExistingPeriodicWorkPolicy.KEEP, work)
+        val breakouts = PeriodicWorkRequestBuilder<BreakoutWorker>(15, TimeUnit.MINUTES).build()
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("mehitha-breakouts", ExistingPeriodicWorkPolicy.KEEP, breakouts)
     }
 }
 
@@ -116,15 +118,16 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
     }
 
     /** Alerts the daily scan wrote for today (targets, stop-losses, results, news). */
-    private fun stockAlerts(day: String): List<Alert> {
-        val conn = URL(PhoneData.ALERTS_URL).openConnection() as HttpURLConnection
-        conn.connectTimeout = 10_000
-        conn.readTimeout = 15_000
-        val body = try { if (conn.responseCode == 200) conn.inputStream.bufferedReader().readText() else "" } finally { conn.disconnect() }
-        return parseStockAlerts(body, day)
-    }
+    private fun stockAlerts(day: String): List<Alert> = parseStockAlerts(fetch(PhoneData.ALERTS_URL), day)
 
     companion object {
+        fun fetch(url: String): String {
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.connectTimeout = 10_000
+            conn.readTimeout = 15_000
+            return try { if (conn.responseCode == 200) conn.inputStream.bufferedReader().readText() else "" } finally { conn.disconnect() }
+        }
+
         /** Reads ALERTS.json; only today's alerts count. */
         fun parseStockAlerts(json: String, day: String): List<Alert> {
             if (json.isBlank()) return emptyList()
@@ -134,6 +137,27 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
             return (0 until list.length()).map { list.getJSONObject(it) }
                 .map { Alert(it.getString("id"), it.getString("title"), it.getString("text")) }
         }
+    }
+}
+
+/**
+ * Every 15 minutes on weekdays from 9:30 AM to 5 PM IST: Nifty 100 breakouts by your rules
+ * (BREAKOUTS.json from the breakouts branch, same shape as ALERTS.json). Each alert shows once.
+ */
+class BreakoutWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
+    override fun doWork(): Result {
+        val now = PhoneData.now()
+        val minutes = now.hour * 60 + now.minute
+        if (now.dayOfWeek == DayOfWeek.SATURDAY || now.dayOfWeek == DayOfWeek.SUNDAY || minutes < 9 * 60 + 30 || minutes > 17 * 60) {
+            return Result.success()
+        }
+        try {
+            AlertWorker.parseStockAlerts(AlertWorker.fetch(PhoneData.BREAKOUTS_URL), now.toLocalDate().toString())
+                .forEach { Alerts.post(applicationContext, it) }
+        } catch (e: Exception) {
+            Log.w("Mehitha", "Breakout check failed", e)
+        }
+        return Result.success()
     }
 }
 

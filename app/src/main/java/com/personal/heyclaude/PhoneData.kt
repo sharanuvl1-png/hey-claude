@@ -79,6 +79,7 @@ open class PhoneData(private val ctx: Context) {
         val IST: ZoneId = ZoneId.of("Asia/Kolkata")
         const val SCAN_URL = "https://raw.githubusercontent.com/sharanuvl1-png/hey-claude/charts/LATEST_SCAN.md"
         const val ALERTS_URL = "https://raw.githubusercontent.com/sharanuvl1-png/hey-claude/charts/ALERTS.json"
+        const val BREAKOUTS_URL = "https://raw.githubusercontent.com/sharanuvl1-png/hey-claude/breakouts/BREAKOUTS.json"
         const val NO_SMS = "This version of Mehitha can't read text messages, so no spending data is available."
         fun now(): LocalDateTime = LocalDateTime.now(IST)
         fun today(): LocalDate = LocalDate.now(IST)

@@ -1,0 +1,14 @@
+{
+  "_about": "Swing breakout rules for the Nifty 100 watchlist (breakouts.py). Change a number here to change when you get an alert.",
+  "index_csv": "ind_nifty100list.csv",
+  "level": "resistance",
+  "_level_choices": "resistance = top of the nearest resistance zone (the Breakout level on your charts); high20 / high60 = highest high of the last 20 / 60 sessions; high52w = 52-week high",
+  "volume_multiple": 1.5,
+  "require_above_ema": [50, 200],
+  "rsi_min": 50,
+  "rsi_max": 75,
+  "max_extension_pct": 4.0,
+  "min_turnover_cr": 5,
+  "stop_atr_below_level": 1.0,
+  "extra_symbols": []
+}

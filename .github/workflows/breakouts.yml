@@ -1,0 +1,55 @@
+name: Nifty 100 breakouts
+
+on:
+  schedule:
+    - cron: "15,45 4-9 * * 1-5"   # every 30 min, 09:45 to 15:15 IST
+    - cron: "15 10 * * 1-5"       # 15:45 IST: did each breakout hold at the close?
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "auto (market hours = intraday, otherwise close), intraday or close"
+        type: choice
+        options: [auto, intraday, close]
+        default: auto
+
+permissions:
+  contents: write
+
+concurrency:
+  group: breakouts-branch
+  cancel-in-progress: false
+
+jobs:
+  breakouts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install libraries
+        run: pip install -q yfinance matplotlib pandas numpy
+
+      - name: Check the Nifty 100 for breakouts
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          mkdir -p out
+          if git fetch -q origin breakouts 2>/dev/null; then
+            git show origin/breakouts:BREAKOUTS.json > prev.json 2>/dev/null || true
+            git show origin/breakouts:nifty100.txt > out/nifty100.txt 2>/dev/null || true
+          fi
+          python tools/techchart/breakouts.py --out out --prev prev.json --mode "${{ inputs.mode || 'auto' }}"
+
+      - name: Save to the breakouts branch
+        run: |
+          # One commit, replaced each run, so the branch never grows.
+          cd out
+          git init -q -b breakouts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Breakout check $(TZ=Asia/Kolkata date '+%F %H:%M IST')"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" breakouts
