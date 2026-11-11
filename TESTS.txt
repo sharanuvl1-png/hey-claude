@@ -1,4 +1,4 @@
-64 passed, 0 failed
+75 passed, 0 failed
 PASS AskJobTest.givesUpAfterTimeoutWithReason
 PASS AskJobTest.findsQuestionEvenWhenCutShortOnScreen
 PASS AskJobTest.opensNewChatWhenNoMessageBox
@@ -50,6 +50,15 @@ PASS CommandsTest.everythingElse
 PASS CommandsTest.stocks
 PASS CommandsTest.money
 PASS CommandsTest.briefing
+PASS HomeChatTest.answersAlertsByItself
+PASS HomeChatTest.showsAProblemPlainly
+PASS HomeChatTest.typedQuestionIsAnsweredInTheChat
+PASS HomeChatTest.followUpKeepsTheConversation
+PASS HomeChatTest.spokenQuestionIsReadAloud
+PASS HomeChatTest.tappedAlertCanReadTheAnswerAloud
+PASS HomeChatTest.newChatStartsFresh
+PASS HomeChatTest.tappedAlertAsksStraightAway
+PASS HomeChatTest.keepsTheBreakoutAlertsScheduled
 PASS MoneyTest.findsSubscriptions
 PASS MoneyTest.flagsUnusualCategorySpend
 PASS MoneyTest.readsTheRowsPhoneSyncWrites
@@ -63,3 +72,5 @@ PASS PromptsTest.promptsAreOneLineWithDateAndRules
 PASS PromptsTest.recallAnswersFromNotes
 PASS PromptsTest.scanForFindsByNameOrSymbol
 PASS PromptsTest.scanSummaryPutsBuysFirst
+PASS ScanDigestTest.summarisesYourPicksAndTopPickPerGroup
+PASS ScanDigestTest.staleOrMissingScanGivesNothing
