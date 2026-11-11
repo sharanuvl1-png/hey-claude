@@ -38,7 +38,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          gradle :app:testVoiceDebugUnitTest --no-daemon 2>&1 | tee tests.log
+          gradle :app:testVoiceDebugUnitTest :app:testFullDebugUnitTest --continue --no-daemon 2>&1 | tee tests.log
 
       - name: Save test results to the charts branch
         if: always() && github.ref == 'refs/heads/main'

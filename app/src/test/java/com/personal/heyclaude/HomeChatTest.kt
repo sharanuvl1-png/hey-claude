@@ -162,10 +162,10 @@ class HomeChatTest {
     @Test fun saysWhatIsMissingInsteadOfAskingClaudeWithNoData() {
         val a = open()
         type(a, "spending report")
-        // This test build (voice) can't read SMS or WhatsApp.
-        assertTrue(chat(a).any { it.contains("can't read your SMS or WhatsApp") && it.contains("full version") })
+        // Nothing is allowed here: the voice build says to install the full version, the full build says what to allow.
+        assertTrue(chat(a).any { (it.contains("can't read your SMS or WhatsApp") && it.contains("full version")) || it.contains("Allow \"Text messages\"") })
         type(a, "what did I miss")
-        assertTrue(chat(a).any { it.contains("can't see WhatsApp messages") })
+        assertTrue(chat(a).any { it.contains("can't see WhatsApp messages") || it.contains("can't see your WhatsApp messages yet") })
         assertEquals(null, api)
     }
 
