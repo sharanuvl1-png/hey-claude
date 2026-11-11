@@ -25,6 +25,17 @@ A small personal Android app that listens for **"Hi Mehitha"** and opens the Cla
 
 Run it from the **Actions → Technical chart → Run workflow** button with a company name (for example `PC Jeweller`). The chart and report are saved to the `charts` branch under `<SYMBOL>/<date>.png` and `.md`. Everything is rules-based and educational, not investment advice.
 
+## Nifty 100 breakout alerts
+
+`tools/techchart/breakouts.py` watches all Nifty 100 stocks and alerts when one breaks out by the rules in `tools/techchart/breakout_rules.json`. Default: price crosses above its nearest resistance (the "Breakout level" on the charts) on volume at least 1.5x the 50-day average, above the 50 and 200-day EMAs with the 200-day EMA rising, RSI 50–80, within 25% of the 52-week high, closing in the top half of the day's range and beating the Nifty 50 over 3 months. Edit that file to change or switch off any rule.
+
+Each alert carries the full Technical chart analysis (verdict, grade, confidence, trend, entry, stop-loss, targets, key levels, patterns, candles) and the chart image itself, which shows in the phone notification. Tapping opens the full analysis.
+
+- The **Nifty 100 breakouts** action runs every 30 minutes from 9:45 AM to 3:15 PM IST on weekdays, and at 3:45 PM to say whether each breakout held at the close. Prices come from Yahoo Finance and can be up to 15 minutes behind NSE; GitHub can also start scheduled runs a few minutes late.
+- Results go to `BREAKOUTS.json` on the `breakouts` branch. The Mehitha app checks it every 15 minutes on market days and shows each alert once; "any alerts?" reads them back.
+- Optional instant push: install the ntfy app, subscribe to a long random topic name, and save that name as the repository secret `NTFY_TOPIC`.
+- Analysis only. Nothing here places, changes or cancels an order.
+
 ## Phone data for Mehitha
 
 The app can copy phone data into a private Dropbox **App folder** (`/Apps/<your app name>/`) so Claude's Dropbox connector can search it:
