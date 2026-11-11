@@ -5,7 +5,7 @@ on:
     inputs:
       years:
         description: "Years of history to test"
-        default: "2"
+        default: "4"
   push:
     branches: ["claude/**"]
     paths:
@@ -32,7 +32,7 @@ jobs:
 
       - name: Backtest the breakout rules on past Nifty 100 prices
         run: |
-          python tools/techchart/backtest.py --years "${{ inputs.years || '2' }}" --out backtest.md
+          python tools/techchart/backtest.py --years "${{ inputs.years || '4' }}" --out backtest.md
           cat backtest.md >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4

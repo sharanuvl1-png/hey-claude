@@ -7,8 +7,12 @@ vs Nifty, base depth, market trend), then scores each rule set on the same trade
 
   entry  = close on the breakout day (the "broke out at the close" alert)
   stop   = 1 ATR under the breakout level, never more than 8% under the entry
-  exit   = +2R target, the stop, or the close after 20 sessions, whichever comes first
-           (if target and stop fall on the same day, the stop is assumed)
+  exits  = four ways, each scored separately:
+           2R  : +2R target, the stop, or the close after 20 sessions
+           3R  : +3R target, the stop, or the close after 30 sessions
+           EMA : the stop, then exit on the first close under the 20-day EMA (max 60 sessions)
+           10L : the stop, then exit on the first close under the prior 10-day low (max 60 sessions)
+           (if a target and the stop fall on the same day, the stop is assumed)
   costs  = 0.2% of the entry per round trip
 
 Uses today's Nifty 100 list (stocks that dropped out are missing, so results lean
@@ -29,30 +33,35 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import breakouts as bo  # noqa: E402
 
-HOLD, TARGET_R, MAX_STOP, COST = 20, 2.0, 0.08, 0.002
+MAX_STOP, COST = 0.08, 0.002
 LEVELS = ["resistance", "high20", "high52w"]
+EXITS = ["2R", "3R", "EMA", "10L"]
 
 
-def outcome(frame, t, level, atr):
-    """R multiple of a trade entered at the close of bar t."""
+def outcome(frame, ema20, t, level, atr, kind):
+    """(R multiple, sessions held) of a trade entered at the close of bar t; None if still open."""
     entry = float(frame["Close"].iloc[t])
     stop = max(level - atr, entry * (1 - MAX_STOP))
     if stop >= entry:
         stop = entry - atr
     risk = entry - stop
-    target = entry + TARGET_R * risk
     cost_r = COST * entry / risk
-    end = min(t + HOLD, len(frame) - 1)
-    if end <= t:
+    lo, hi, cl = frame["Low"].values, frame["High"].values, frame["Close"].values
+    target = entry + {"2R": 2, "3R": 3}.get(kind, 1e9) * risk
+    hold = {"2R": 20, "3R": 30}.get(kind, 60)
+    end = t + hold
+    if end >= len(frame):
         return None
     for j in range(t + 1, end + 1):
-        if frame["Low"].iloc[j] <= stop:
+        if lo[j] <= stop:
             return -1 - cost_r, j - t
-        if frame["High"].iloc[j] >= target:
-            return TARGET_R - cost_r, j - t
-    if end - t < HOLD:
-        return None  # still open at the end of the data
-    return (float(frame["Close"].iloc[end]) - entry) / risk - cost_r, HOLD
+        if hi[j] >= target:
+            return (target - entry) / risk - cost_r, j - t
+        if kind == "EMA" and cl[j] < ema20[j]:
+            return (cl[j] - entry) / risk - cost_r, j - t
+        if kind == "10L" and cl[j] < lo[j - 10:j].min():
+            return (cl[j] - entry) / risk - cost_r, j - t
+    return (cl[end] - entry) / risk - cost_r, hold
 
 
 def scan_stock(args):
@@ -60,6 +69,7 @@ def scan_stock(args):
     rows = []
     c, v = frame["Close"].values, frame["Volume"].values
     vavg = pd.Series(v).rolling(50).mean().shift(1).values
+    ema20 = frame["Close"].ewm(span=20, adjust=False).mean().values
     for t in range(max(start, 260), len(frame)):
         # Cheap pre-filter: an up day on at least average volume (every rule set needs both).
         if not (c[t] > c[t - 1] and vavg[t] > 0 and v[t] >= vavg[t]):
@@ -76,10 +86,11 @@ def scan_stock(args):
                 continue
             if not r or not r["crossed"]:
                 continue
-            res = outcome(frame, t, r["level"], r["atr"])
-            if res is None:
+            res = {k: outcome(frame, ema20, t, r["level"], r["atr"], k) for k in EXITS}
+            if any(x is None for x in res.values()):
                 continue
-            rows.append({"sym": sym, "date": day, "level_type": lv, "R": res[0], "days": res[1],
+            rows.append({"sym": sym, "date": day, "level_type": lv,
+                         **{f"R_{k}": res[k][0] for k in EXITS}, **{f"days_{k}": res[k][1] for k in EXITS},
                          "vol": r["vol_ratio"], "rsi": r["rsi"], "a20": r["above"][20], "a50": r["above"][50],
                          "a200": r["above"][200], "e200up": r["ema200_rising"], "hi52": r["from_hi52_pct"],
                          "closepos": r["close_pos"], "rs": r["rs"] if r["rs"] is not None else np.nan,
@@ -92,33 +103,37 @@ def scan_stock(args):
 def rule_sets():
     cur = lambda d: ((d.vol >= 1.5) & d.a50 & d.a200 & d.e200up & d.rsi.between(50, 80) & (d.hi52 <= 25)
                      & (d.closepos >= 0.5) & (d.rs >= 0) & (d.turnover >= 5))
+    simple = lambda d: (d.vol >= 1.5) & d.a50 & d.a200 & d.e200up & (d.hi52 <= 25) & (d.rs >= 0) & (d.turnover >= 5)
+    loose = lambda d: (d.vol >= 1.2) & d.a50 & (d.turnover >= 5)
     return {
-        "Loose: crossing + volume 1.2x + above EMA50": ("resistance", lambda d: (d.vol >= 1.2) & d.a50 & (d.turnover >= 5)),
+        "Loose: volume 1.2x + above EMA50": ("resistance", loose),
         "Original: vol 1.5x, EMA50/200, RSI 50-75": ("resistance", lambda d: (d.vol >= 1.5) & d.a50 & d.a200 & d.rsi.between(50, 75) & (d.turnover >= 5)),
         "CURRENT (all filters)": ("resistance", cur),
         "Current, volume 1.3x": ("resistance", lambda d: cur(d.assign(vol=d.vol * 1.5 / 1.3))),
         "Current, volume 2.0x": ("resistance", lambda d: cur(d) & (d.vol >= 2.0)),
         "Current, no RSI filter": ("resistance", lambda d: cur(d.assign(rsi=60))),
-        "Current, no 52-week-high filter": ("resistance", lambda d: cur(d.assign(hi52=0))),
         "Current, no strong-close filter": ("resistance", lambda d: cur(d.assign(closepos=1))),
         "Current, no beat-Nifty filter": ("resistance", lambda d: cur(d.assign(rs=1))),
         "Current, no EMA200-rising filter": ("resistance", lambda d: cur(d.assign(e200up=True))),
+        "Current + not extended (<4%)": ("resistance", lambda d: cur(d) & (d.ext <= 4)),
         "Current + tight base (<12%)": ("resistance", lambda d: cur(d) & (d.base <= 12)),
         "Current + market uptrend": ("resistance", lambda d: cur(d) & d.mkt_up),
-        "Current + not extended (<4%)": ("resistance", lambda d: cur(d) & (d.ext <= 4)),
-        "Current rules on 20-day high": ("high20", cur),
-        "Current rules on 52-week high": ("high52w", cur),
+        "Current + market + base<12%": ("resistance", lambda d: cur(d) & d.mkt_up & (d.base <= 12)),
+        "Simple (no RSI/close) + market": ("resistance", lambda d: simple(d) & d.mkt_up),
+        "Simple + market + base<12%": ("resistance", lambda d: simple(d) & d.mkt_up & (d.base <= 12)),
+        "Simple + market + base<15%": ("resistance", lambda d: simple(d) & d.mkt_up & (d.base <= 15)),
+        "Loose + market uptrend": ("resistance", lambda d: loose(d) & d.mkt_up),
+        "Current + market, 20-day high": ("high20", lambda d: cur(d) & d.mkt_up),
+        "Current + market, 52-week high": ("high52w", lambda d: cur(d) & d.mkt_up),
     }
 
 
-def stats(trades, months):
-    if trades.empty:
-        return {"n": 0}
-    R = trades["R"]
+def stats(trades, months, k):
+    R = trades[f"R_{k}"]
     wins, losses = R[R > 0].sum(), -R[R <= 0].sum()
     return {"n": len(R), "per_month": len(R) / months, "win": 100 * (R > 0).mean(), "avg_R": R.mean(),
-            "pf": wins / losses if losses > 0 else np.inf, "hit_2R": 100 * (R >= TARGET_R - 0.5).mean(),
-            "days": trades["days"].mean()}
+            "se": R.std() / np.sqrt(len(R)) if len(R) > 1 else np.nan,
+            "pf": wins / losses if losses > 0 else np.inf, "days": trades[f"days_{k}"].mean()}
 
 
 def main():
@@ -155,24 +170,34 @@ def main():
     lines = [f"# Breakout rules backtest, {dt.date.today().isoformat()}", "",
              f"{len(jobs)} of {len(symbols)} Nifty 100 stocks, {first:%d %b %Y} to {last:%d %b %Y} "
              f"(Yahoo Finance daily prices). Entry at the breakout-day close, stop 1 ATR under the level "
-             f"(max 8%), exit at +2R, the stop or after {HOLD} sessions, 0.2% costs.", "",
-             "| Rule set | Signals | Per month | Win % | Avg R | Profit factor | Reached 2R % | Avg days |",
-             "|---|---|---|---|---|---|---|---|"]
-    for name, (lv, rule) in rule_sets().items():
+             f"(max 8%), 0.2% costs. Avg R ± its standard error; a difference smaller than about two "
+             f"standard errors is likely noise.", ""]
+    sets = rule_sets()
+    for k in EXITS:
+        lines += [f"## Exit: {k}", "", "| Rule set | Signals | Per month | Win % | Avg R | Profit factor | Avg days |",
+                  "|---|---|---|---|---|---|---|"]
+        for name, (lv, rule) in sets.items():
+            d = cand[cand.level_type == lv]
+            d = d[rule(d)]
+            if d.empty:
+                lines.append(f"| {name} | 0 | 0 | – | – | – | – |")
+                continue
+            st = stats(d, months, k)
+            lines.append(f"| {name} | {st['n']} | {st['per_month']:.1f} | {st['win']:.0f} | {st['avg_R']:+.2f} ± {st['se']:.2f} | "
+                         f"{st['pf']:.2f} | {st['days']:.1f} |")
+        lines.append("")
+    # Year by year, so one lucky period can't pick the rules.
+    years = sorted(cand["date"].dt.year.unique())
+    lines += ["## Avg R by year (EMA exit)", "", "| Rule set | " + " | ".join(map(str, years)) + " |",
+              "|---|" + "---|" * len(years)]
+    for name, (lv, rule) in sets.items():
         d = cand[cand.level_type == lv]
-        st = stats(d[rule(d)], months)
-        if st["n"] == 0:
-            lines.append(f"| {name} | 0 | 0 | – | – | – | – | – |")
-            continue
-        lines.append(f"| {name} | {st['n']} | {st['per_month']:.1f} | {st['win']:.0f} | {st['avg_R']:+.2f} | "
-                     f"{st['pf']:.2f} | {st['hit_2R']:.0f} | {st['days']:.1f} |")
-    # Year-by-year check that the current rules aren't one lucky period.
-    lines += ["", "## Current rules by half-year", "", "| Period | Signals | Win % | Avg R |", "|---|---|---|---|"]
-    lv, rule = rule_sets()["CURRENT (all filters)"]
-    d = cand[cand.level_type == lv]
-    d = d[rule(d)]
-    for period, g in d.groupby(d["date"].dt.year.astype(str) + "-H" + ((d["date"].dt.month > 6) + 1).astype(str)):
-        lines.append(f"| {period} | {len(g)} | {100 * (g.R > 0).mean():.0f} | {g.R.mean():+.2f} |")
+        d = d[rule(d)]
+        cells = []
+        for y in years:
+            g = d[d["date"].dt.year == y]["R_EMA"]
+            cells.append(f"{g.mean():+.2f} ({len(g)})" if len(g) else "–")
+        lines.append(f"| {name} | " + " | ".join(cells) + " |")
     text = "\n".join(lines) + "\n"
     open(args.out, "w", encoding="utf-8").write(text)
     cand.to_csv(os.path.splitext(args.out)[0] + "_candidates.csv", index=False)
