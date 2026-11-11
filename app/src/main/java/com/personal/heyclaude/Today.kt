@@ -54,7 +54,7 @@ object Today {
 
     private val DELIVERY = Regex("(?i)\\b(out for delivery|arriving today|arrives today|will (be delivered|arrive|reach you) today|" +
         "delivery (is )?(scheduled |expected )?(for )?today|delivered today by|today by \\d{1,2}(:\\d{2})? ?(am|pm))\\b")
-    private val TOMORROW = Regex("(?i)\\b(arriving|arrives|will (be delivered|arrive)|delivery (is )?(scheduled |expected )?(for )?)tomorrow\\b")
+    private val TOMORROW = Regex("(?i)\\b((arriving|arrives|will (be delivered|arrive)) |delivery (is )?(scheduled |expected )?(for )?)tomorrow\\b")
     private val DONE = Regex("(?i)\\b(has been delivered|was delivered|delivered successfully|successfully delivered|cancelled|canceled|returned|refund)\\b")
     private val SHOPS = listOf("Amazon", "Flipkart", "Myntra", "Meesho", "Ajio", "Nykaa", "Tata CLiQ", "JioMart", "BigBasket", "Blinkit",
         "Zepto", "Swiggy", "Instamart", "FirstCry", "Lenskart", "Croma", "Reliance Digital", "Pepperfry", "IKEA", "Decathlon",
