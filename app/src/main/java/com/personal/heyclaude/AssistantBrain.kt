@@ -65,7 +65,7 @@ class AssistantBrain(
         while (merged.isNotEmpty() && merged.last().first) merged.removeAt(merged.lastIndex)
         merged.forEach { (mine, text) ->
             history += if (mine) MessageParam.ofUser(text)
-                       else MessageParam.builder().role(MessageParam.Role.ASSISTANT).content(text).build()
+                       else MessageParam.ofAssistant(text)
         }
     }
 
