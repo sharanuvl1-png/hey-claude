@@ -1,0 +1,4 @@
+<!-- Mehitha app icon background: the app's purple-to-blue gradient. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient android:type="linear" android:angle="315" android:startColor="#FF8A63FF" android:endColor="#FF2FC4F0"/>
+</shape>
