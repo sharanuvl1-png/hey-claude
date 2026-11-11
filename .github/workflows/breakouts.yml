@@ -22,6 +22,8 @@ concurrency:
 jobs:
   breakouts:
     runs-on: ubuntu-latest
+    env:
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,19 +35,18 @@ jobs:
         run: pip install -q yfinance matplotlib pandas numpy
 
       - name: Check the Nifty 100 for breakouts
-        env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: |
           mkdir -p out
+          # Start from the last run's files, so today's charts and alerts carry over.
           if git fetch -q origin breakouts 2>/dev/null; then
-            git show origin/breakouts:BREAKOUTS.json > prev.json 2>/dev/null || true
-            git show origin/breakouts:nifty100.txt > out/nifty100.txt 2>/dev/null || true
+            git archive origin/breakouts | tar -x -C out
+            cp out/BREAKOUTS.json prev.json 2>/dev/null || true
           fi
-          python tools/techchart/breakouts.py --out out --prev prev.json --mode "${{ inputs.mode || 'auto' }}"
+          python tools/techchart/breakouts.py --out out --prev prev.json --new new.json --mode "${{ inputs.mode || 'auto' }}"
 
       - name: Save to the breakouts branch
         run: |
-          # One commit, replaced each run, so the branch never grows.
+          # One commit, replaced each run, so the branch never grows (charts older than 7 days are dropped).
           cd out
           git init -q -b breakouts
           git config user.name "github-actions[bot]"
@@ -53,3 +54,7 @@ jobs:
           git add -A
           git commit -q -m "Breakout check $(TZ=Asia/Kolkata date '+%F %H:%M IST')"
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" breakouts
+
+      - name: Instant push to the ntfy app (optional)
+        if: env.NTFY_TOPIC != ''
+        run: python tools/techchart/breakouts.py --ntfy new.json

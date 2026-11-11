@@ -15,7 +15,8 @@ data class Spend(val time: LocalDateTime, val amount: Double, val category: Stri
 data class Bill(val sender: String, val amount: Double?, val due: LocalDate, val text: String)
 
 /** Something Mehitha should tell you about, with an id so it is only said once. */
-data class Alert(val id: String, val title: String, val text: String)
+/** [image]: chart picture URL shown in the notification; [link]: full analysis opened on tap. */
+data class Alert(val id: String, val title: String, val text: String, val image: String? = null, val link: String? = null)
 
 /** Spending maths for voice answers and alerts. Plain Kotlin so it can be tested. */
 object Money {

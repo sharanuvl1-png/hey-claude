@@ -397,4 +397,10 @@ class AssistantFlowTest {
             AlertWorker.parseStockAlerts(json, "2026-10-26"))
         assertTrue(AlertWorker.parseStockAlerts(json, "2026-10-27").isEmpty()) // yesterday's alerts are not repeated
     }
+
+    @Test fun breakoutAlertsCarryTheChart() {
+        val json = """{"date":"2026-11-11","alerts":[{"id":"breakout:TEST:2026-11-11","title":"TEST is breaking out","text":"t","image":"https://example.com/c.png","link":"https://example.com/c.md"}]}"""
+        assertEquals(listOf(Alert("breakout:TEST:2026-11-11", "TEST is breaking out", "t", "https://example.com/c.png", "https://example.com/c.md")),
+            AlertWorker.parseStockAlerts(json, "2026-11-11"))
+    }
 }

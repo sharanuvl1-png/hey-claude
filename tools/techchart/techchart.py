@@ -691,7 +691,11 @@ def run(symbol, name, out):
         f.write(report(name, symbol, d, h4, lv, setup, pats, divs, cands, rec, conf, grade, reasons, nxt, f"{stamp}.png"))
     return {"symbol": symbol, "name": name, "date": stamp, "close": float(d["df"]["Close"].iloc[-1]),
             "rec": rec, "conf": conf, "grade": grade, "score": score, "reasons": reasons, "next": nxt,
-            "setup": setup, "png": png, "md": md}
+            "setup": setup, "png": png, "md": md,
+            "trend": d["trend"][0], "h4_trend": h4t, "levels": lv, "rsi": float(d["df"]["RSI"].iloc[-1]),
+            "macd_up": bool(d["df"]["MACD"].iloc[-1] > d["df"]["Signal"].iloc[-1]),
+            "patterns": [p["name"] for p in pats], "candles": [c[1] for c in cands],
+            "divergences": [x[0] for x in divs]}
 
 
 def main():

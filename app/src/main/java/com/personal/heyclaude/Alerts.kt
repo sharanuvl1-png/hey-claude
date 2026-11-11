@@ -5,6 +5,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.app.Notification
 import android.util.Log
 import androidx.work.Data
@@ -40,24 +43,43 @@ object Alerts {
         if (alert.id in seen) return false
         val nm = ctx.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CHANNEL, "Mehitha alerts", NotificationManager.IMPORTANCE_HIGH))
+        val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        fun web(url: String, code: Int) = PendingIntent.getActivity(ctx, code,
+            Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), flags)
         val open = Intent(ctx, if (ask != null) AssistantActivity::class.java else MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             .apply { if (ask != null) putExtra(AssistantActivity.EXTRA_ASK, ask) }
-        val tap = PendingIntent.getActivity(ctx, alert.id.hashCode(), open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val n = Notification.Builder(ctx, CHANNEL)
+        val tap = alert.link?.let { web(it, alert.id.hashCode()) }
+            ?: PendingIntent.getActivity(ctx, alert.id.hashCode(), open, flags)
+        val chart = alert.image?.let { picture(it) }
+        val builder = Notification.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_mehitha)
             .setContentTitle(alert.title)
             .setContentText(alert.text)
-            .setStyle(Notification.BigTextStyle().bigText(alert.text))
+            .setStyle(if (chart != null) Notification.BigPictureStyle().bigPicture(chart).setSummaryText(alert.text)
+                      else Notification.BigTextStyle().bigText(alert.text))
             .setContentIntent(tap)
             .setAutoCancel(true)
-            .build()
+        if (chart != null) builder.setLargeIcon(chart)
+        alert.image?.let { builder.addAction(Notification.Action.Builder(null, "Chart", web(it, alert.id.hashCode() + 1)).build()) }
+        alert.link?.let { builder.addAction(Notification.Action.Builder(null, "Full analysis", web(it, alert.id.hashCode() + 2)).build()) }
+        val n = builder.build()
         try { nm.notify(alert.id.hashCode(), n) } catch (e: SecurityException) { Log.w("Mehitha", "No notification permission") }
         val recent = (prefs.getString("recent", "") ?: "").lines().filter { it.isNotBlank() }.takeLast(29) +
             "${System.currentTimeMillis()}\t${alert.title}: ${alert.text}"
         prefs.edit().putStringSet("seen", (seen + alert.id).toList().takeLast(500).toSet())
             .putString("recent", recent.joinToString("\n")).apply()
         return true
+    }
+
+    /** Downloads a chart picture for a notification; null when it can't be fetched (the text still shows). */
+    private fun picture(url: String): Bitmap? = try {
+        val conn = URL(url).openConnection() as HttpURLConnection
+        conn.connectTimeout = 10_000
+        conn.readTimeout = 20_000
+        try { if (conn.responseCode == 200) conn.inputStream.use { BitmapFactory.decodeStream(it) } else null } finally { conn.disconnect() }
+    } catch (e: Exception) {
+        Log.w("Mehitha", "Chart picture failed", e); null
     }
 
     /** What to say for "any alerts?": the last 2 days' alerts, newest first. */
@@ -135,7 +157,8 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
             if (o.optString("date") != day) return emptyList()
             val list = o.optJSONArray("alerts") ?: return emptyList()
             return (0 until list.length()).map { list.getJSONObject(it) }
-                .map { Alert(it.getString("id"), it.getString("title"), it.getString("text")) }
+                .map { Alert(it.getString("id"), it.getString("title"), it.getString("text"),
+                    it.optString("image").ifBlank { null }, it.optString("link").ifBlank { null }) }
         }
     }
 }
