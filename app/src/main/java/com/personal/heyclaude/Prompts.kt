@@ -30,7 +30,7 @@ object Prompts {
 
     private fun now(t: LocalDateTime) = "It is ${t.format(STAMP)} in India."
 
-    fun briefing(t: LocalDateTime, bills: String, scan: String, today: String = "", apps: Boolean = true) = oneLine(
+    fun briefing(t: LocalDateTime, bills: String, scan: String, today: String = "", apps: Boolean = true, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
         "Give me my morning briefing. ${now(t)} " + (if (today.isBlank()) "" else "From my phone: $today ") +
             (if (apps) "Check my Outlook calendar for today's meetings, my Outlook email and Slack for anything important or waiting on me, " +
                 "and my Gmail for bills or payments due this week. " else "$PHONE_ONLY ") +
@@ -38,39 +38,40 @@ object Prompts {
             "My stock watchlist from today's scan: $scan. Keep it to the 5 things that matter most today. $RULES"
     )
 
-    fun money(t: LocalDateTime, question: String, facts: String) = oneLine(
+    fun money(t: LocalDateTime, question: String, facts: String, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
         "$question. ${now(t)} Answer only from these facts from my phone: $facts. Give the number first. $RULES"
     )
 
-    fun spendingReport(t: LocalDateTime, facts: String) = oneLine(
+    fun spendingReport(t: LocalDateTime, facts: String, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
         "Give me my monthly spending report. ${now(t)} Use only these facts from my phone: $facts. " +
             "Say the total, the top 3 categories, what changed most against last month, and 2 practical ways to save. $RULES"
     )
 
-    fun oddCharges(t: LocalDateTime, found: String, recent: String) = oneLine(
+    fun oddCharges(t: LocalDateTime, found: String, recent: String, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
         "Check my recent bank charges for anything odd. ${now(t)} Flags from my phone: $found. My spends from the last 7 days: $recent. " +
             "Point out double charges, unknown merchants, unusually large amounts or new subscriptions, and say what to do. $RULES"
     )
 
-    fun stockCheck(t: LocalDateTime, stock: String, scanLines: String) = oneLine(
+    fun stockCheck(t: LocalDateTime, stock: String, scanLines: String, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
         "Quick stock check on $stock (Indian market, NSE). ${now(t)} Search the web for its current price and trend, latest quarterly results, " +
             "upcoming results date, and news from the last 2 weeks. My own daily scan says: $scanLines. " +
-            "Give price levels to watch (support, resistance) and the main risk. This is for my information only, not a trade. $RULES"
+            "I swing trade (holding days to a few weeks), so answer as a swing setup: trend, entry zone, stop-loss, T1 and T2, the usual time to T1 from my scan if given, " +
+            "and what would cancel the setup. Use only real prices with their date. This is for my information only, not a trade. $RULES"
     )
 
-    fun catchUp(t: LocalDateTime, messages: String, apps: Boolean = true) = oneLine(
+    fun catchUp(t: LocalDateTime, messages: String, apps: Boolean = true, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
         "Catch me up on what I missed today. ${now(t)} " +
             (if (apps) "Check Slack for messages to me, mentions and threads I'm in today. " else "$PHONE_ONLY ") +
             "My WhatsApp and app messages today from my phone: $messages. Group by person, say what needs a reply, and skip promotions. $RULES"
     )
 
-    fun findDocument(t: LocalDateTime, question: String, files: String, apps: Boolean = true) = oneLine(
+    fun findDocument(t: LocalDateTime, question: String, files: String, apps: Boolean = true, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
         "$question ${now(t)} " + (if (apps) "Search my Gmail and Google Drive for it. " else "$PHONE_ONLY ") +
             "Matching file names on my phone: $files. " +
             "Tell me the key date and where the document is. $REMIND_HOW Set it one month before an expiry. $RULES"
     )
 
-    fun weeklyReview(t: LocalDateTime, money: String, bills: String, scan: String, apps: Boolean = true) = oneLine(
+    fun weeklyReview(t: LocalDateTime, money: String, bills: String, scan: String, apps: Boolean = true, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
         "Give me my weekly review. ${now(t)} My spending: $money. Bills due soon: $bills. My stock watchlist from the latest scan: $scan. " +
             (if (apps) "Also check my Outlook calendar for next week. " else "$PHONE_ONLY ") + "Cover money, bills, stocks and the week ahead in a few short points. $RULES"
     )
@@ -117,7 +118,7 @@ object Prompts {
         val order = listOf("BUY NOW", "BUY ON DIP", "WAIT", "AVOID")
         val date = Regex("scan, (\\d{4}-\\d{2}-\\d{2})").find(md)?.groupValues?.get(1)
         return ((date?.let { "scan of $it: " } ?: "") + rows.sortedBy { r -> order.indexOfFirst { it in r.verdict }.let { if (it < 0) 9 else it } }
-            .joinToString("; ") { "${it.name} ${it.close} ${it.verdict}, entry ${it.entry}, stop ${it.stop}, target ${it.target}" }).take(max)
+            .joinToString("; ") { "${it.name} ${it.close} ${it.verdict}, entry ${it.entry}, stop ${it.stop}, ${it.targets}" }).take(max)
     }
 
     /** What the scan says about one stock, matched by name or symbol. */
@@ -126,14 +127,19 @@ object Prompts {
         if (words.isEmpty()) return "not in my watchlist"
         val row = watchlistRows(md).firstOrNull { r -> words.all { w -> r.name.lowercase().contains(w) || r.symbol.lowercase().contains(w) } }
             ?: return "not in my watchlist"
-        return "${row.name} (${row.symbol}) closed ${row.close}, verdict ${row.verdict}, grade ${row.grade}, entry ${row.entry}, stop-loss ${row.stop}, target ${row.target}"
+        return "${row.name} (${row.symbol}) closed ${row.close}, verdict ${row.verdict}, grade ${row.grade}, entry ${row.entry}, stop-loss ${row.stop}, ${row.targets}"
     }
 
     /** Company name and NSE symbol for each stock in the scan's watchlist. */
     fun scanNames(md: String): List<Pair<String, String>> =
         if (md.isBlank()) emptyList() else watchlistRows(md).map { it.name to it.symbol }
 
-    data class ScanRow(val name: String, val symbol: String, val close: String, val verdict: String, val grade: String, val entry: String, val stop: String, val target: String)
+    data class ScanRow(val name: String, val symbol: String, val close: String, val verdict: String, val grade: String, val entry: String, val stop: String, val target: String,
+                       val target2: String = "", val target3: String = "", val timeToT1: String = "") {
+        /** "target 8095, T2 8600, T3 9100, time to T1 ~12 trading days (58% of the time)" when the scan has them. */
+        val targets get() = "target ${target}" + (if (target2.isNotEmpty()) ", T2 $target2" else "") + (if (target3.isNotEmpty()) ", T3 $target3" else "") +
+            (if (timeToT1.isNotEmpty() && timeToT1 != "n/a") ", time to T1 $timeToT1" else "")
+    }
 
     private fun watchlistRows(md: String): List<ScanRow> {
         val section = md.substringAfter("## Watchlist", "").substringBefore("\n## ")
@@ -142,7 +148,9 @@ object Prompts {
             if (c.size < 9) return@mapNotNull null
             val symbol = c[8].substringBefore('/').ifBlank { c[1] }
             val verdict = c[3].replace(Regex("[^A-Za-z ]"), "").trim()
-            ScanRow(c[1], symbol, c[2].replace("₹", "") + " rupees", verdict, c[4], c[5].replace("₹", ""), c[6].replace("₹", ""), c[7].replace("₹", ""))
+            fun extra(i: Int) = c.getOrNull(i)?.takeIf { it != "–" && it != "-" }?.replace("₹", "").orEmpty()
+            ScanRow(c[1], symbol, c[2].replace("₹", "") + " rupees", verdict, c[4], c[5].replace("₹", ""), c[6].replace("₹", ""), c[7].replace("₹", ""),
+                extra(9), extra(10), extra(11))
         }
     }
 

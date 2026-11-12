@@ -40,13 +40,17 @@ object AssistantText {
             val display = reply.removeRange(m.range).trim().ifBlank { speech }
             return Reply(display, speech, pictures)
         }
-        val sentences = reply.replace(Regex("\\s+"), " ").trim().split(Regex("(?<=[.!?])\\s+"))
+        val sentences = reply.replace("•", " ").replace(Regex("\\s+"), " ").trim().split(Regex("(?<=[.!?])\\s+"))
         return Reply(reply.trim(), sentences.take(2).joinToString(" "), pictures)
     }
 
+    /** [text] as it should be said: bullets aren't read, and each line of a list is its own sentence. */
+    fun speakable(text: String): String =
+        text.replace("•", " ").replace(Regex("(?<![.!?:])[ \\t]*\\n+\\s*(?=\\S)"), ". ").replace(Regex("\\s+"), " ").trim()
+
     /** Splits text into chunks the speech engine accepts, breaking at sentence ends. */
     fun chunksForSpeech(text: String, max: Int = 3500): List<String> {
-        val sentences = text.replace(Regex("\\s+"), " ").trim().split(Regex("(?<=[.!?])\\s+"))
+        val sentences = speakable(text).split(Regex("(?<=[.!?])\\s+"))
         val out = mutableListOf<String>()
         val sb = StringBuilder()
         for (s in sentences) {

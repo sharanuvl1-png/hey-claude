@@ -97,4 +97,36 @@ class MoreFeaturesTest {
         val stored = app.getSharedPreferences("passcode", 0).all.values.joinToString()
         assertFalse(stored.contains("13579"))
     }
+
+    @Test fun alertsAreAShortReadableList() {
+        val items = listOf(
+            "Good morning: 1 meeting. Tap for your briefing: meetings, messages, bills and stocks.",
+            "Renewal due on 17 Nov: Paytm Insurance Broking renewal is due on 17 Nov.",
+            "Today's stock scan: PCJEWELLER buy on dip, entry ₹13.7–15.5, stop ₹12.3, target ₹18.0. Nifty 50: Adani Ports buy on dip.",
+            "Bill due tomorrow: Airtel bill of Rs. 799 is due tomorrow. Pay in the app.",
+        ) + (1..6).map { "Breakout $it: Stock $it crossed its 20-day high." }
+        val text = Alerts.listText(items)
+        val lines = text.lines()
+        assertEquals("9 alerts in the last two days:", lines[0])
+        assertEquals("• Renewal due on 17 Nov: Paytm Insurance Broking renewal is due on 17 Nov", lines[1])
+        assertEquals("• Today's stock scan: PCJEWELLER buy on dip, entry ₹13.7–15.5, stop ₹12.3, target ₹18.0", lines[2])
+        assertEquals("• Bill due tomorrow: Airtel bill of Rs. 799 is due tomorrow", lines[3])
+        assertEquals("…and 3 more.", lines.last())
+        assertEquals(8, lines.size)
+        assertTrue(text, !text.contains("Good morning"))
+        assertEquals("No new alerts in the last two days.", Alerts.listText(listOf("Good morning: 2 meetings.")))
+    }
+
+    @Test fun alertsUseAPopUpChannel() {
+        val app = RuntimeEnvironment.getApplication()
+        val nm = app.getSystemService(android.app.NotificationManager::class.java)
+        nm.createNotificationChannel(android.app.NotificationChannel("mehitha_alerts", "old", android.app.NotificationManager.IMPORTANCE_LOW))
+        Alerts.post(app, Alert("popup:test", "Good morning", "Tap for your briefing."))
+        val channel = nm.getNotificationChannel(Alerts.CHANNEL)!!
+        assertEquals(android.app.NotificationManager.IMPORTANCE_HIGH, channel.importance)
+        assertNull(nm.getNotificationChannel("mehitha_alerts"))
+        val posted = org.robolectric.Shadows.shadowOf(nm).allNotifications.single()
+        assertEquals(Alerts.CHANNEL, posted.channelId)
+        assertTrue(Alerts.canPopUp(app))
+    }
 }

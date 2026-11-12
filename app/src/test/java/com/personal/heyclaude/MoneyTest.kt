@@ -36,6 +36,30 @@ class MoneyTest {
         assertEquals(LocalDateTime.parse("2026-10-25T13:05"), spend.time)
     }
 
+    private fun row(sender: String, body: String) =
+        PhoneSync.expenseRow(Date.from(LocalDateTime.parse("2026-11-10T10:00").atZone(ZoneId.systemDefault()).toInstant()), sender, body)
+            ?.let { Money.parseRow(it) }
+
+    @Test fun skipsBalancesLimitsForeignSpendsAndCardBills() {
+        // A dollar card spend: the only rupee figure is the available limit, which is not a spend.
+        assertEquals(null, row("AX-HDFCBK", "Txn of USD 20.00 done on HDFC Bank Credit Card XX1234 at ANTHROPIC on 10-11-26. Avl Lmt INR 6,87,246.00"))
+        assertEquals(null, row("AX-ICICIB", "USD 5.00 spent on ICICI Bank Card XX9876 at OPENAI on 10-Nov-26. Avl Limit: INR 2,50,000.00"))
+        // Paying the card bill moves money to the card; the card spends are already counted.
+        assertEquals(null, row("AX-HDFCBK", "Rs.25,000.00 debited from A/c XX1234 to CRED on 10-11-26 Ref 1234. Avl Bal Rs.1,00,000"))
+        assertEquals(null, row("VM-SBIINB", "Rs 12,000 debited from your A/c for payment of your SBI Credit Card bill. Avl Bal Rs 45,000"))
+        // A balance written before the amount isn't taken as the amount.
+        val s = row("AX-KOTAKB", "Avl Bal Rs 50,000.00. Rs.450.00 spent on Kotak Debit Card XX11 at ZOMATO on 10-11-26")!!
+        assertEquals(450.0, s.amount, 0.001)
+        // A normal rupee spend still counts, and a CRED UPI payment to a shop is a real spend.
+        assertEquals(199.0, row("JD-HDFCBK", "Rs.199.00 debited from A/c XX1234 to NETFLIX on 10-11-26. Avl Bal Rs 9,000")!!.amount, 0.001)
+        assertEquals(300.0, row("AX-AXISBK", "INR 300.00 debited from A/c XX55 to Swiggy via CRED UPI on 10-11-26")!!.amount, 0.001)
+    }
+
+    @Test fun reminderWithATypoIsStillAReminder() {
+        assertTrue(Command.parse("Renind mè to call ravi  at 6pm") is Command.Reminder)
+        assertTrue(Command.parse("remind me to pay rent tomorrow") is Command.Reminder)
+    }
+
     @Test fun summaryHasTotalsAndMatchingSpends() {
         val sum = Money.summary(spends, today, "How much did I spend on Swiggy this month?")
         assertTrue(sum, sum.contains("October 2026 so far: 5,199 rupees in 5 spends"))

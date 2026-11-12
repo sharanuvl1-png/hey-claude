@@ -363,7 +363,7 @@ class AssistantFlowTest {
         controller = Robolectric.buildActivity(AssistantActivity::class.java, i).setup()
         ShadowTextToSpeech.getLastTextToSpeechInstance()?.let { shadowOf(it).onInitListener.onInit(TextToSpeech.SUCCESS) }
         idle()
-        assertEquals("You have 1 alert. Bill due tomorrow: Airtel bill of 799 rupees is due tomorrow.", spoken().last())
+        assertEquals("1 alert in the last two days: Bill due tomorrow: Airtel bill of 799 rupees is due tomorrow", spoken().last())
     }
 
     @Test fun noKeySendsTheFullPromptButShowsWhatYouSaid() {

@@ -83,4 +83,22 @@ class PromptsTest {
         ).forEach { assertTrue(it.length.toString(), it.length <= Prompts.MAX_PROMPT) }
         assertTrue(Prompts.scanSummary(scan).length <= 450)
     }
+
+    @Test fun scanWithSecondAndThirdTargetsAndTimeToTarget() {
+        val md = """
+            # Mehitha daily stock scan, 2026-11-12
+
+            ## Watchlist
+
+            | Group | Stock | Close | Verdict | Grade | Entry | Stop-loss (risk) | Target 1 | Chart | Target 2 | Target 3 | Time to T1 |
+            |---|---|---|---|---|---|---|---|---|---|---|---|
+            | Nifty 50 | Eicher Motors Limited | ₹7592.0 | 🟢 BUY NOW | A | ₹7361.0–7552.5 | ₹6866.0 (8%) | ₹8095.0 | EICHERMOT/2026-11-12.png | ₹8600.0 | ₹9100.0 | ~12 trading days (58% of the time) |
+            | Nifty 50 | Old Row Limited | ₹100.0 | 🟡 BUY ON DIP | A | ₹95.0–98.0 | ₹90.0 (7%) | ₹110.0 | OLDROW/2026-11-12.png |
+        """.trimIndent()
+        val eicher = Prompts.scanFor(md, "Eicher Motors")
+        assertTrue(eicher, eicher.contains("target 8095.0, T2 8600.0, T3 9100.0, time to T1 ~12 trading days (58% of the time)"))
+        // A scan from before these columns existed still reads.
+        assertTrue(Prompts.scanFor(md, "Old Row").endsWith("target 110.0"))
+        assertTrue(Prompts.scanSummary(md, 3000).contains("T2 8600.0"))
+    }
 }

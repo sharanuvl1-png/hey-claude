@@ -83,7 +83,7 @@ object Money {
             }
             append("${today.format(month)} so far: ${rupees(total(now))} in ${now.size} spends; by category: ${byCategory(now).ifEmpty { "none" }}; top shops: ${byMerchant(now, 6).ifEmpty { "none" }}. ")
             append("${today.minusMonths(1).format(month)}: ${rupees(total(last))} in ${last.size} spends; by category: ${byCategory(last).ifEmpty { "none" }}; top shops: ${byMerchant(last, 6).ifEmpty { "none" }}. ")
-            append("Only cash withdrawals and card, UPI and bank debits that sent an SMS are included.")
+            append("Only cash withdrawals and card, UPI and bank debits that sent an SMS are included. Card bill payments (including through CRED) are left out because the card spends already count, and card spends in dollars or other currencies are left out because the SMS has no rupee amount.")
         }
     }
 

@@ -34,6 +34,8 @@ class SettingsActivity : Activity() {
     private lateinit var claudeRow: Ui.Row
     private lateinit var voiceRow: Ui.Row
     private lateinit var overlayRow: Ui.Row
+    private lateinit var popupRow: Ui.Row
+    private lateinit var batteryRow: Ui.Row
     private lateinit var voiceDebug: TextView
     private lateinit var dropboxRow: Ui.Row
     private lateinit var smsRow: Ui.Row
@@ -134,7 +136,11 @@ class SettingsActivity : Activity() {
         calendarRow = Ui.Row(this, "Calendar", "Allow") {
             requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), 3)
         }
-        listOf(calendarRow, smsRow, filesRow, notifRow).forEach { data.addView(it.view) }
+        popupRow = Ui.Row(this, "Alert pop-ups", "Turn on") { turnOnPopUps() }
+        batteryRow = Ui.Row(this, "Alerts on time", "Allow") {
+            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
+        }
+        listOf(calendarRow, smsRow, filesRow, notifRow, popupRow, batteryRow).forEach { data.addView(it.view) }
         // The basic build leaves these out so Play Protect lets it install.
         if (!declares(Manifest.permission.READ_SMS)) smsRow.view.visibility = View.GONE
         if (!hasService(NotificationCatcher::class.java)) notifRow.view.visibility = View.GONE
@@ -226,6 +232,17 @@ class SettingsActivity : Activity() {
         getSystemService(RoleManager::class.java)?.isRoleHeld(RoleManager.ROLE_ASSISTANT) == true
     } catch (e: Exception) { false }
 
+    /** Asks for notification permission if needed, otherwise opens the alert channel's settings to turn on pop-ups. */
+    private fun turnOnPopUps() {
+        if (Build.VERSION.SDK_INT >= 33 && !granted(Manifest.permission.POST_NOTIFICATIONS)) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 4)
+            return
+        }
+        Alerts.ensureChannel(this)
+        startActivity(Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName).putExtra(Settings.EXTRA_CHANNEL_ID, Alerts.CHANNEL))
+    }
+
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
 
     private fun requestMic() {
@@ -280,6 +297,11 @@ class SettingsActivity : Activity() {
         smsRow.set(sms, "Syncing (OTPs skipped)", "Allow to search your SMS", required = false)
         filesRow.set(files, "Indexed", "Allow to find documents and photos", required = false)
         notifRow.set(notif, "Capturing new messages", "Allow to save WhatsApp messages", required = false)
+        popupRow.set(Alerts.canPopUp(this), "On: alerts pop up on screen",
+            "Allow notifications and pop-ups so the morning briefing and other alerts show on screen", required = false)
+        val unrestricted = getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(packageName) == true
+        batteryRow.set(unrestricted, "On: battery saver won't delay alerts",
+            "Lets the morning briefing and reminders arrive on time instead of being delayed by battery saver", required = false)
         syncStatus.text = PhoneSync.lastStatus(this)
         passStatus.text = if (Passcode.isSet(this)) "Passcode set" else "Not set: confidential details stay hidden"
     }
