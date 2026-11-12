@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Soft white background behind the photo icon. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient android:angle="270" android:startColor="#FFFFFFFF" android:endColor="#FFECEEF5" />
+</shape>
