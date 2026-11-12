@@ -33,7 +33,9 @@ object Prompts {
     fun briefing(t: LocalDateTime, bills: String, scan: String, today: String = "", apps: Boolean = true, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
         "Give me my morning briefing. ${now(t)} " + (if (today.isBlank()) "" else "From my phone: $today ") +
             (if (apps) "Check my Outlook calendar for today's meetings, my Outlook email and Slack for anything important or waiting on me, " +
-                "and my Gmail for bills or payments due this week. " else "$PHONE_ONLY ") +
+                "and my Gmail for bills or payments due this week. " else "$PHONE_ONLY " +
+                "If you have get_work_calendar and search_work_email, add today's work meetings and unread work email that needs me (leave out newsletters and automated mail). " +
+                "If you have search_gmail, check for card bills or payments due this week. ") +
             "Bills due from my messages: $bills. " +
             "My stock watchlist from today's scan: $scan. Keep it to the 5 things that matter most today. $RULES"
     )

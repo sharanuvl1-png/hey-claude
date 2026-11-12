@@ -43,7 +43,7 @@ class OneDriveClient(context: Context) {
             val (code, body) = post("$LOGIN/token", mapOf("client_id" to clientId,
                 "grant_type" to "urn:ietf:params:oauth:grant-type:device_code", "device_code" to s.deviceCode))
             val json = JSONObject(body)
-            if (code in 200..299) { save(json); return }
+            if (code in 200..299) { save(json, SCOPES); return }
             when (json.optString("error")) {
                 "authorization_pending" -> {}
                 "slow_down" -> wait += 5000
@@ -53,10 +53,14 @@ class OneDriveClient(context: Context) {
         error("The sign-in code expired. Please try again.")
     }
 
-    fun unlink() = prefs.edit().remove("refresh_token").remove("access_token").remove("expires_at").apply()
+    fun unlink() = prefs.edit().remove("refresh_token").remove("access_token").remove("expires_at").remove("scopes").apply()
 
-    private fun save(json: JSONObject) {
+    /** True when the sign-in includes reading work mail and calendar (signed in with build 83 or later). */
+    val hasMail: Boolean get() = isLinked && prefs.getString("scopes", "").orEmpty().contains("Mail.Read")
+
+    private fun save(json: JSONObject, scopes: String? = null) {
         val edit = prefs.edit().putString("access_token", json.getString("access_token"))
+        if (scopes != null) edit.putString("scopes", scopes)
             .putLong("expires_at", System.currentTimeMillis() + json.optLong("expires_in", 3600) * 1000 - 60_000)
         json.optString("refresh_token").takeIf { it.isNotBlank() }?.let { edit.putString("refresh_token", it) }
         edit.apply()
@@ -67,7 +71,7 @@ class OneDriveClient(context: Context) {
         if (cached != null && System.currentTimeMillis() < prefs.getLong("expires_at", 0)) return cached
         val refresh = prefs.getString("refresh_token", null) ?: error("Work OneDrive is not linked")
         val (code, body) = post("$LOGIN/token", mapOf("client_id" to clientId, "grant_type" to "refresh_token",
-            "refresh_token" to refresh, "scope" to SCOPES))
+            "refresh_token" to refresh, "scope" to (prefs.getString("scopes", null) ?: OLD_SCOPES)))
         if (code !in 200..299) error("Work OneDrive sign-in expired. Link it again in Settings.")
         save(JSONObject(body))
         return prefs.getString("access_token", "")!!
@@ -112,11 +116,38 @@ class OneDriveClient(context: Context) {
         }
     }
 
-    private fun get(url: String): String {
+    /** Work mail: [query] searched across the mailbox, or with an empty query the unread inbox mail of the last [days] days. */
+    fun mail(query: String, days: Int = 2, max: Int = 15): List<WorkMail> {
+        val select = "\$select=id,subject,from,receivedDateTime,bodyPreview,webLink,isRead,importance"
+        val url = if (query.isNotBlank())
+            "$GRAPH/me/messages?\$search=${Uri.encode("\"" + query.take(200).replace("\"", "") + "\"")}&\$top=$max&$select"
+        else {
+            val since = java.time.Instant.now().minus(java.time.Duration.ofDays(days.toLong().coerceIn(1, 14))).toString()
+            "$GRAPH/me/mailFolders/inbox/messages?\$filter=${Uri.encode("receivedDateTime ge $since and isRead eq false")}" +
+                "&\$orderby=${Uri.encode("receivedDateTime desc")}&\$top=$max&$select"
+        }
+        return parseMail(get(url))
+    }
+
+    /** One work email's text. */
+    fun readMail(id: String): WorkMail = parseMail("{\"value\":[" + get("$GRAPH/me/messages/${Uri.encode(id)}" +
+        "?\$select=id,subject,from,receivedDateTime,body,webLink,isRead,importance", "outlook.body-content-type=\"text\"") + "]}").single()
+
+    /** Work calendar events from [from] for [days] days, in India time. */
+    fun calendar(from: java.time.LocalDate, days: Int): List<WorkEvent> {
+        val start = Uri.encode(from.atStartOfDay(PhoneData.IST).toOffsetDateTime().toString())
+        val end = Uri.encode(from.plusDays(days.toLong()).atStartOfDay(PhoneData.IST).toOffsetDateTime().toString())
+        return parseEvents(get("$GRAPH/me/calendarView?startDateTime=$start&endDateTime=$end&\$top=60" +
+            "&\$orderby=${Uri.encode("start/dateTime")}&\$select=subject,start,end,location,isAllDay,isCancelled,organizer,showAs",
+            "outlook.timezone=\"India Standard Time\""))
+    }
+
+    private fun get(url: String, prefer: String? = null): String {
         val conn = (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = 20_000; readTimeout = 60_000
             setRequestProperty("Authorization", "Bearer ${token()}")
             setRequestProperty("Accept", "application/json")
+            if (prefer != null) setRequestProperty("Prefer", prefer)
         }
         val code = conn.responseCode
         val body = (if (code in 200..299) conn.inputStream else conn.errorStream)?.bufferedReader()?.use { it.readText() } ?: ""
@@ -140,10 +171,17 @@ class OneDriveClient(context: Context) {
         val isOffice get() = OFFICE.containsMatchIn(name)
     }
 
+    data class WorkMail(val id: String, val subject: String, val from: String, val received: String, val preview: String,
+                        val body: String, val webUrl: String, val unread: Boolean, val important: Boolean)
+
+    data class WorkEvent(val subject: String, val start: String, val end: String, val allDay: Boolean, val location: String, val organizer: String)
+
     companion object {
         private const val LOGIN = "https://login.microsoftonline.com/organizations/oauth2/v2.0"
         private const val GRAPH = "https://graph.microsoft.com/v1.0"
-        const val SCOPES = "offline_access User.Read Files.Read"
+        const val SCOPES = "offline_access User.Read Files.Read Mail.Read Calendars.Read"
+        /** What sign-ins before work mail asked for. */
+        private const val OLD_SCOPES = "offline_access User.Read Files.Read"
         private val OFFICE = Regex("(?i)\\.(docx?|xlsx?|pptx?|rtf|odt|ods|odp)$")
 
         /** Files (not folders) from a Graph drive search answer. */
@@ -156,6 +194,48 @@ class OneDriveClient(context: Context) {
                     o.optString("lastModifiedDateTime").take(10), o.optLong("size"), o.optString("webUrl"))
             }
         }
+
+        fun parseMail(json: String): List<WorkMail> {
+            val items = JSONObject(json).optJSONArray("value") ?: return emptyList()
+            return (0 until items.length()).map { items.getJSONObject(it) }.map { o ->
+                val from = o.optJSONObject("from")?.optJSONObject("emailAddress")
+                WorkMail(o.optString("id"), o.optString("subject"),
+                    listOf(from?.optString("name").orEmpty(), from?.optString("address")?.let { "<$it>" }.orEmpty()).filter { it.isNotBlank() }.joinToString(" "),
+                    o.optString("receivedDateTime"), o.optString("bodyPreview"),
+                    o.optJSONObject("body")?.optString("content").orEmpty(), o.optString("webLink"),
+                    !o.optBoolean("isRead", true), o.optString("importance") == "high")
+            }
+        }
+
+        fun parseEvents(json: String): List<WorkEvent> {
+            val items = JSONObject(json).optJSONArray("value") ?: return emptyList()
+            return (0 until items.length()).map { items.getJSONObject(it) }.filter { !it.optBoolean("isCancelled") }.map { o ->
+                WorkEvent(o.optString("subject").ifBlank { "Busy" }, o.optJSONObject("start")?.optString("dateTime").orEmpty().take(16),
+                    o.optJSONObject("end")?.optString("dateTime").orEmpty().take(16), o.optBoolean("isAllDay"),
+                    o.optJSONObject("location")?.optString("displayName").orEmpty(),
+                    o.optJSONObject("organizer")?.optJSONObject("emailAddress")?.optString("name").orEmpty())
+            }
+        }
+
+        /** Work mail for Claude: one line each, newest first, OTP-looking previews hidden. */
+        fun mailText(query: String, mails: List<WorkMail>): String =
+            if (mails.isEmpty()) (if (query.isBlank()) "No unread work email in the inbox for that time." else "No work email matches \"$query\".")
+            else "Work Outlook email${if (query.isBlank()) " (unread, inbox)" else " for \"$query\""} (${mails.size}):\n" + mails.joinToString("\n") { m ->
+                "id ${m.id} | ${m.received.take(16).replace('T', ' ')} UTC | from ${m.from} | ${m.subject}" +
+                    (if (m.important) " | high importance" else "") + (if (m.unread) " | unread" else "") +
+                    " | " + (if (PhoneSync.looksLikeOtp(m.subject + " " + m.preview)) "(code not shown)" else m.preview.replace(Regex("\\s+"), " ").take(200))
+            }
+
+        fun readText(m: WorkMail): String = "From ${m.from}\nReceived ${m.received.take(16).replace('T', ' ')} UTC\nSubject ${m.subject}\n" +
+            "Open link ${m.webUrl}\n\n" + m.body.lines().filterNot { PhoneSync.looksLikeOtp(it) && Regex("\\b\\d{4,8}\\b").containsMatchIn(it) }
+                .joinToString("\n").replace(Regex("\n{3,}"), "\n\n").take(12_000)
+
+        fun eventsText(from: java.time.LocalDate, days: Int, events: List<WorkEvent>): String =
+            "Work Outlook calendar, ${from} for $days day${if (days > 1) "s" else ""} (India time):\n" +
+                (if (events.isEmpty()) "No events." else events.joinToString("\n") { e ->
+                    (if (e.allDay) e.start.take(10) + " all day" else e.start.replace('T', ' ') + " to " + e.end.substringAfter('T')) +
+                        " | ${e.subject}" + (if (e.location.isNotBlank()) " | ${e.location}" else "") + (if (e.organizer.isNotBlank()) " | by ${e.organizer}" else "")
+                })
 
         /** One line per file for Claude: name, id, folder, date, size and open link. */
         fun text(files: List<WorkFile>): String = "Work OneDrive files found (${files.size}):\n" + files.joinToString("\n") { f ->

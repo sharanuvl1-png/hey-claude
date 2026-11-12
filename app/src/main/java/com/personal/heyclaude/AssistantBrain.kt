@@ -55,6 +55,18 @@ interface MehithaTools {
     /** One Gmail message's text, by the id search_gmail gave. */
     fun readGmail(id: String): String = "Gmail isn't linked in Mehitha."
 
+    /** True when the work Outlook (mail and calendar) is linked, so its tools are offered. */
+    val hasWorkMail: Boolean get() = false
+
+    /** Work email: [query] searched, or with an empty query the unread inbox mail of the last [days] days. */
+    fun searchWorkEmail(query: String, days: Int): String = "Work Outlook isn't linked in Mehitha."
+
+    /** One work email's text, by the id search_work_email gave. */
+    fun readWorkEmail(id: String): String = "Work Outlook isn't linked in Mehitha."
+
+    /** The work Outlook calendar for [days] days from [date] (YYYY-MM-DD). */
+    fun workCalendar(date: String, days: Int): String = "Work Outlook isn't linked in Mehitha."
+
     /** True when the work OneDrive is linked, so its tools are offered. */
     val hasWorkFiles: Boolean get() = false
 
@@ -225,6 +237,33 @@ class AssistantBrain(
                     "Attachments are listed by name but not read.",
                 "id", "The message id from search_gmail"))
         } }
+        .apply { if (tools.hasWorkMail) {
+            addTool(Tool.builder().name("search_work_email")
+                .description("Sharan's work Outlook email (read-only), only for work questions and the briefing; never mix it into " +
+                    "personal expenses or notes. Leave query empty for the unread inbox mail of the last few days (what may need Sharan), " +
+                    "or give words to search the whole mailbox (sender, subject, topic). Returns id, time, sender, subject and preview.")
+                .inputSchema(Tool.InputSchema.builder()
+                    .properties(Tool.InputSchema.Properties.builder()
+                        .putAdditionalProperty("query", JsonValue.from(mapOf("type" to "string", "description" to "Words to search, e.g. Priya review deck; empty for recent unread")))
+                        .putAdditionalProperty("days", JsonValue.from(mapOf("type" to "integer", "description" to "For unread mail: how many days back, 1 to 14 (default 2)")))
+                        .build())
+                    .build())
+                .build())
+            addTool(tool("read_work_email",
+                "Read one work email by the id search_work_email gave: sender, time, subject, open link and text. Only for work questions.",
+                "id", "The email id from search_work_email"))
+            addTool(Tool.builder().name("get_work_calendar")
+                .description("Sharan's work Outlook calendar (read-only) for a day or a few days: meetings with time, place and organizer. " +
+                    "Use it with get_calendar for questions about meetings or the schedule.")
+                .inputSchema(Tool.InputSchema.builder()
+                    .properties(Tool.InputSchema.Properties.builder()
+                        .putAdditionalProperty("date", JsonValue.from(mapOf("type" to "string", "description" to "First day, as YYYY-MM-DD")))
+                        .putAdditionalProperty("days", JsonValue.from(mapOf("type" to "integer", "description" to "How many days from that date, 1 to 14")))
+                        .build())
+                    .required(listOf("date"))
+                    .build())
+                .build())
+        } }
         .apply { if (tools.hasWorkFiles) {
             addTool(tool("search_work_onedrive",
                 "Search Sharan's work OneDrive (office documents) by file name and content. Only for work questions; " +
@@ -284,6 +323,9 @@ class AssistantBrain(
                     "search_dropbox" -> tools.searchDropbox(stringArg(use._input(), "query")) to false
                     "get_reminders" -> tools.reminders() to false
                     "search_gmail" -> tools.searchGmail(stringArg(use._input(), "query")) to false
+                    "search_work_email" -> tools.searchWorkEmail(stringArg(use._input(), "query"), intArg(use._input(), "days", 2, 1, 14)) to false
+                    "read_work_email" -> tools.readWorkEmail(stringArg(use._input(), "id")) to false
+                    "get_work_calendar" -> tools.workCalendar(stringArg(use._input(), "date"), intArg(use._input(), "days", 1, 1, 14)) to false
                     "read_gmail" -> tools.readGmail(stringArg(use._input(), "id")) to false
                     "get_calendar" -> tools.calendar(stringArg(use._input(), "date"),
                         ((use._input().convert(Map::class.java)?.get("days"))?.toString()?.toDoubleOrNull()?.toInt() ?: 1).coerceIn(1, 14)) to false
@@ -331,6 +373,9 @@ class AssistantBrain(
 
     private fun image(bytes: ByteArray, type: String) = ToolResultBlockParam.Content.Block.ofImage(Base64ImageSource.builder()
         .data(java.util.Base64.getEncoder().encodeToString(bytes)).mediaType(Base64ImageSource.MediaType.of(type)).build())
+
+    private fun intArg(input: JsonValue, key: String, default: Int, min: Int, max: Int): Int =
+        ((input.convert(Map::class.java)?.get(key))?.toString()?.toDoubleOrNull()?.toInt() ?: default).coerceIn(min, max)
 
     private fun stringArg(input: JsonValue, key: String): String =
         (input.convert(Map::class.java)?.get(key) as? String).orEmpty()
@@ -386,8 +431,8 @@ class AssistantBrain(
             Never read out OTPs or passwords.
             When a picture would help, such as a stock chart from get_stock_chart or an image link you
             found, put its direct https link alone on its own line as "IMAGE: <link>" and the app shows it.
-            Work files (search_work_onedrive) are only for work questions; never mix office data into
-            Sharan's personal expenses or notes.
+            Work files and work email and calendar (search_work_onedrive, search_work_email, get_work_calendar) are only for
+            work questions and the briefing; never mix office data into Sharan's personal expenses or notes.
             When you read a document with read_dropbox_file or read_work_onedrive_file, give the answer in words and add the SNIP line it
             describes so Sharan sees the matching part of the page without opening the file.
             To give Sharan a file or page to open, put "OPEN: <short name> | <https link>" on its own line and the app shows a button.

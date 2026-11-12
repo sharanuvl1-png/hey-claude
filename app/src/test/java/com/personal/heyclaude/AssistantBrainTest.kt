@@ -107,6 +107,26 @@ class AssistantBrainTest {
         assertFalse(off.requests[0].contains("\"search_gmail\""))
     }
 
+    @Test fun readsWorkEmailOnlyWhenLinked() {
+        var asked = ""
+        val linked = object : MehithaTools by FakeTools() {
+            override val hasWorkMail = true
+            override fun searchWorkEmail(query: String, days: Int): String { asked = "$query/$days"; return "Work Outlook email (1): id A | Priya | Review deck" }
+        }
+        val api = FakeApi.ok(
+            msg("tool_use", """{"type":"tool_use","id":"tu_1","name":"search_work_email","input":{"query":""}}"""),
+            text("Priya wants the review deck."),
+        )
+        assertEquals("Priya wants the review deck.", AssistantBrain("k", linked, api.url, clock).ask("any important work emails?"))
+        api.stop()
+        assertEquals("/2", asked)
+        assertTrue(api.requests[0].contains("\"get_work_calendar\"") && api.requests[1].contains("Review deck"))
+        val off = FakeApi.ok(text("ok"))
+        AssistantBrain("k", FakeTools(), off.url, clock).ask("hi")
+        off.stop()
+        assertFalse(off.requests[0].contains("\"search_work_email\""))
+    }
+
     @Test fun readsTheCalendarForAnotherDay() {
         var asked = ""
         val tools = object : MehithaTools by FakeTools() {
