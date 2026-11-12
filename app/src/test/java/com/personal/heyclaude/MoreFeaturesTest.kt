@@ -185,6 +185,26 @@ class MoreFeaturesTest {
         assertTrue(Chats.listText(emptyList(), 5).startsWith("No app messages saved in the last 5 days."))
     }
 
+    @Test fun gmailResultsReadForClaude() {
+        val found = GmailClient.parseSearch(org.json.JSONObject("""
+            {"messages":[{"id":"1a1380ae1d0c5808","from":"credit_cards@icici.bank.in","subject":"Amazon Pay ICICI Bank Credit Card Statement for the period September 13, 2026 to October 12, 2026",
+              "date":"Wed, 14 Oct 2026 07:03:04 +0530","snippet":"Payment due by October 30, 2026 Total Amount Due: &#8377;2897.10 &amp; more"},
+             {"id":"2b","from":"alerts@bank.in","subject":"Your login","date":"Thu","snippet":"Your OTP is 482913 for login"}]}
+        """.trimIndent()))
+        val text = GmailClient.text("statement newer_than:2m", found)
+        assertTrue(text, text.contains("id 1a1380ae1d0c5808 | Wed, 14 Oct 2026") && text.contains("September 13, 2026 to October 12, 2026"))
+        assertTrue(text, text.contains("& more"))
+        assertFalse(text, text.contains("482913"))
+        val mail = GmailClient.parseMail(org.json.JSONObject("""
+            {"id":"1a","from":"Statements@sbicard.com","subject":"Monthly Statement","date":"9 Nov","body":"Statement date 07 Nov 2026\nNever share your OTP 123456 with anyone\nDue 28 Nov","attachments":["statement.pdf"]}
+        """.trimIndent()))
+        val read = GmailClient.mailText(mail)
+        assertTrue(read, read.contains("Statement date 07 Nov 2026") && read.contains("Due 28 Nov") && read.contains("statement.pdf"))
+        assertTrue(read, read.contains("Open link https://mail.google.com/mail/u/0/#all/1a"))
+        assertFalse(read, read.contains("123456"))
+        assertTrue(GmailClient.text("x", emptyList()).startsWith("No Gmail messages match"))
+    }
+
     @Test fun remindersRingLikeAnAlarmAndGoInTheClockApp() {
         val app = RuntimeEnvironment.getApplication()
         val nm = app.getSystemService(android.app.NotificationManager::class.java)

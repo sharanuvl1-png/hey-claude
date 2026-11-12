@@ -35,7 +35,10 @@ object Passcode {
     }
 
     /** True when Claude's reply is asking for the passcode. */
-    fun isNeeded(reply: String) = reply.contains(NEEDED)
+    /** True when Claude says the passcode is needed, even in its own words ("please say your passcode"). */
+    fun isNeeded(reply: String) = reply.contains(NEEDED) || ASKS.containsMatchIn(reply)
+
+    private val ASKS = Regex("(?i)\\b(say|tell|give|enter|type|share)\\b[^.\\n]{0,25}\\bpasscode\\b")
 
     fun hash(salt: String, code: String): String =
         MessageDigest.getInstance("SHA-256").digest("$salt:$code".toByteArray()).joinToString("") { "%02x".format(it) }

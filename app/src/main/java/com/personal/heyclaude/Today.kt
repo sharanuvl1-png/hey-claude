@@ -24,6 +24,7 @@ data class Delivery(val from: String, val text: String)
 /** Today's meetings and deliveries: for "what's on today", the morning nudge and reminders. */
 object Today {
     private val TIME = DateTimeFormatter.ofPattern("h:mm a", Locale.US)
+    private val DAY = DateTimeFormatter.ofPattern("EEE d MMM yyyy", Locale.US)
 
     fun canReadCalendar(ctx: Context) =
         ctx.checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
@@ -103,6 +104,18 @@ object Today {
             (if (it.allDay) "all day, " else time(it.start) + ", ") + it.title
         } + "."
     }
+
+    /** One day of the calendar for Claude: "Fri 13 Nov 2026: 10 AM to 11 AM Standup (Room 4); ...". */
+    fun dayText(day: LocalDate, meetings: List<Meeting>): String = day.format(DAY) + ": " + if (meetings.isEmpty()) "no meetings." else
+        meetings.joinToString("; ") { m ->
+            (if (m.allDay) "all day " else time(m.start) + " to " + time(m.end) + " ") + m.title + (if (m.place.isNotBlank()) " (${m.place})" else "")
+        } + "."
+
+    /** The calendar from [from] for [days] days, for Claude. */
+    fun calendarText(ctx: Context, from: LocalDate, days: Int): String =
+        if (!canReadCalendar(ctx)) "Mehitha can't see the calendar: Sharan needs to allow Calendar in Mehitha settings (Phone data)."
+        else "Calendar (all calendars on the phone, declined meetings left out):\n" +
+            (0 until days).joinToString("\n") { dayText(from.plusDays(it.toLong()), meetings(ctx, from.plusDays(it.toLong()))) }
 
     fun deliveriesText(deliveries: List<Delivery>): String = when {
         deliveries.isEmpty() -> "No deliveries expected today."

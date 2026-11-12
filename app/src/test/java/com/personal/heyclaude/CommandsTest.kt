@@ -1,6 +1,7 @@
 package com.personal.heyclaude
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CommandsTest {
@@ -62,6 +63,8 @@ class CommandsTest {
         assertEquals(Command.Today("all"), c("my schedule today"))
         assertEquals(Command.Today("meetings"), c("any meetings today"))
         assertEquals(Command.Today("meetings"), c("when is my next meeting"))
+        assertTrue(c("any meetings tomorrow") !is Command.Today)
+        assertTrue(c("my meetings on Monday") !is Command.Today)
         assertEquals(Command.Today("deliveries"), c("any deliveries today"))
         assertEquals(Command.Today("deliveries"), c("what's arriving today"))
         assertEquals(Command.Ask("what's the weather today"), c("what's the weather today"))

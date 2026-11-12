@@ -15,6 +15,9 @@ import java.util.Locale
 object Shopping {
     private const val PREFS = "shopping"
 
+    /** Blinkit's Android app. */
+    const val BLINKIT_APP = "com.grofers.customerapp"
+
     /** The shops Mehitha can open, and their search pages (the shop's app opens them when installed). */
     private val SEARCH = mapOf(
         "blinkit" to "https://blinkit.com/s/?q=",

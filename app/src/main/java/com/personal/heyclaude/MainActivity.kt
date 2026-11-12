@@ -40,6 +40,9 @@ class MainActivity : Activity() {
     private var brain: AssistantBrain? = null
     private var brainKey = ""
     private var brainModel = ""
+    /** The last question sent to Claude, asked again when the passcode is typed on its own. */
+    private var lastQuestion: String? = null
+
     /** The question waiting for the passcode, if Mehitha just asked for it. */
     private var waitingPasscodeFor: String? = null
     /** The chat on screen, saved on the phone as it grows. */
@@ -154,6 +157,13 @@ class MainActivity : Activity() {
             else addReply(Passcode.WRONG, null, spoken, problem = true)
             return
         }
+        if (Passcode.check(this, text)) {
+            // The passcode typed on its own, even when Mehitha didn't just ask: never show it or send it to Claude.
+            addMine("••••••")
+            brain()?.unlocked = true
+            lastQuestion?.let { ask(it, spoken, echo = false) } ?: addReply("Passcode accepted. What would you like to know?", null, spoken)
+            return
+        }
         if (echo) addMine(text)
         val command = Command.parse(text)
         if (command is Command.Usuals) { showUsuals(spoken); return }
@@ -168,6 +178,7 @@ class MainActivity : Activity() {
         }
 
         val b = brain()
+        lastQuestion = text
         busy = true
         updateSend()
         val thinking = addThinking()
@@ -210,8 +221,9 @@ class MainActivity : Activity() {
     private fun openShop(items: List<String>, shop: String, spoken: Boolean) {
         val name = Shopping.shopName(shop)
         val links = items.map { "🛒 $it" to Shopping.searchUrl(shop, it) }
-        val text = if (items.size == 1) "Opening $name for ${items[0]}. Tap Add on the one you want. I never place orders."
-            else "Opening $name for ${items[0]} first. Come back and tap the next item. Tap Add on the ones you want; I never place orders."
+        val home = if (shop.lowercase() == "blinkit") " It opens on Blinkit's home page with the item copied: check the address says Home, then paste it in search." else ""
+        val text = (if (items.size == 1) "Opening $name for ${items[0]}. Tap Add on the one you want. I never place orders."
+            else "Opening $name for ${items[0]} first. Come back and tap the next item. Tap Add on the ones you want; I never place orders.") + home
         addReply(text, text, spoken, links = links)
         openLink(links[0].second)
     }
@@ -235,8 +247,23 @@ class MainActivity : Activity() {
             toast("Type the item, e.g. bread or 2 kg onions")
             return
         }
-        Groceries.blinkitItem(url)?.let { item -> try { Groceries.record(this, listOf(item)) } catch (e: Exception) { Log.w(TAG, "Grocery note failed", e) } }
+        Groceries.blinkitItem(url)?.let { item ->
+            try { Groceries.record(this, listOf(item)) } catch (e: Exception) { Log.w(TAG, "Grocery note failed", e) }
+            openBlinkitHome(item)
+            return
+        }
         try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("Couldn't open that link") }
+    }
+
+    /**
+     * Opens Blinkit's home page (not its search) with [item] copied, so you can check the delivery
+     * address says Home before you paste the item into search.
+     */
+    private fun openBlinkitHome(item: String) {
+        try { getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Blinkit item", item)) } catch (e: Exception) { }
+        val app = packageManager.getLaunchIntentForPackage(Shopping.BLINKIT_APP)
+        try { startActivity(app ?: Intent(Intent.ACTION_VIEW, Uri.parse("https://blinkit.com/"))) } catch (e: Exception) { toast("Couldn't open Blinkit"); return }
+        Toast.makeText(this, "Copied \"$item\". Check the address says Home, then paste it in search.", Toast.LENGTH_LONG).show()
     }
 
     /** The newest technical chart for [stock], straight from the charts branch (no API key needed). */

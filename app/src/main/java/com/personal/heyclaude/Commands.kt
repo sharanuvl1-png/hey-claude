@@ -47,6 +47,8 @@ sealed class Command {
         private val REPORT = re("\\b(spending|expense|expenses|money|monthly) report\\b|where did (all )?my money go")
         private val WEEKLY = re("\\b(weekly|week'?s) review\\b|review (of )?my week|\\bmy week\\b.*\\b(review|summary)\\b")
         private val CATCH_UP = re("\\bwhat did i miss\\b|\\bcatch me up\\b|^catch up\\b|\\bwhat'?s new on (whatsapp|slack)\\b")
+        private val OTHER_DAY = re("\\b(tomorrow|tmrw|tomorow|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday|" +
+            "next week|this week|weekend|\\d{1,2}(st|nd|rd|th)?\\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))")
         private val MEETINGS = re("\\b(any |my |next |today'?s )meetings?\\b|\\bmeetings? today\\b|\\b(what'?s|anything) on my calendar\\b|\\bwhen is my next meeting\\b")
         private val DELIVERIES = re("\\b(any|my|today'?s) (deliveries|delivery|parcels?|packages?|orders? (arriving|coming))\\b|\\b(deliveries|parcels?|packages?) today\\b|\\bwhat'?s (being )?delivered today\\b|\\bwhat'?s arriving today\\b")
         private val TODAY = re("^(so )?what'?s (on |happening )?(for )?today\\W*$|^what('?s| is) on today\\b|\\bmy (day|schedule) today\\b|^what('?s| is) my (day|schedule)( like)?( today)?\\W*$")
@@ -109,7 +111,8 @@ sealed class Command {
             if (CATCH_UP.containsMatchIn(t)) return CatchUp
             if (MONEY.containsMatchIn(t)) return Money(t)
             if (TODAY.containsMatchIn(t)) return Today("all")
-            if (MEETINGS.containsMatchIn(t)) return Today("meetings")
+            // Meetings on another day ("my meetings tomorrow") go to Claude, which reads the calendar for that day.
+            if (MEETINGS.containsMatchIn(t) && !OTHER_DAY.containsMatchIn(t)) return Today("meetings")
             if (DELIVERIES.containsMatchIn(t)) return Today("deliveries")
             if (DOC.containsMatchIn(t)) return FindDocument(t)
             for (p in CHART) p.find(t)?.groups?.get("s")?.let { return Chart(it.value.trim()) }
