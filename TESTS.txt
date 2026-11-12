@@ -1,4 +1,4 @@
-106 passed, 0 failed
+107 passed, 0 failed
 PASS AskJobTest.givesUpAfterTimeoutWithReason
 PASS AskJobTest.findsQuestionEvenWhenCutShortOnScreen
 PASS AskJobTest.opensNewChatWhenNoMessageBox
@@ -83,6 +83,7 @@ PASS MoneyTest.summaryHasTotalsAndMatchingSpends
 PASS MoneyTest.skipsBalancesLimitsForeignSpendsAndCardBills
 PASS MoneyTest.readsBillDueDates
 PASS MoreFeaturesTest.alertsUseAPopUpChannel
+PASS MoreFeaturesTest.dropboxSearchResultsAndOpenButtons
 PASS MoreFeaturesTest.whatsAppBankAlertsCountButFriendsDoNot
 PASS MoreFeaturesTest.alertsAreAShortReadableList
 PASS MoreFeaturesTest.passcodeIsCheckedNotStored
