@@ -55,7 +55,8 @@ object Prompts {
     fun stockCheck(t: LocalDateTime, stock: String, scanLines: String, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
         "Quick stock check on $stock (Indian market, NSE). ${now(t)} Search the web for its current price and trend, latest quarterly results, " +
             "upcoming results date, and news from the last 2 weeks. My own daily scan says: $scanLines. " +
-            "Give price levels to watch (support, resistance) and the main risk. This is for my information only, not a trade. $RULES"
+            "I swing trade (holding days to a few weeks), so answer as a swing setup: trend, entry zone, stop-loss, T1 and T2, the usual time to T1 from my scan if given, " +
+            "and what would cancel the setup. Use only real prices with their date. This is for my information only, not a trade. $RULES"
     )
 
     fun catchUp(t: LocalDateTime, messages: String, apps: Boolean = true, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
