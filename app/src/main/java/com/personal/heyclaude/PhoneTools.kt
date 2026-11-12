@@ -50,6 +50,17 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
             (if (notes.isEmpty()) "" else "\n\n" + notes.joinToString("\n"))
     }
 
+    override fun searchDropbox(query: String): String {
+        val box = DropboxClient(ctx, DOCS)
+        if (!box.isLinked) return "Sharan's Dropbox documents aren't linked yet. Say they can link them in Mehitha Settings, Phone data, Dropbox documents."
+        val files = box.search(query)
+        if (files.isEmpty()) return "No Dropbox files match \"$query\". Try other words from the file name."
+        return dropboxText(files) { f ->
+            // Small text files are read so the answer can quote them; other files are found by name and content.
+            if (f.size in 1..200_000 && TEXT_FILE.containsMatchIn(f.name)) try { box.download(f.path).take(1500) } catch (e: Exception) { null } else null
+        }
+    }
+
     override fun stockChart(stock: String): String {
         val scan = try { stockScan() } catch (e: Exception) { "" }
         val chart = Charts.find(stock, scan) ?: return "No chart found for $stock. It can be made with the Technical chart action on GitHub."
@@ -108,5 +119,17 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
 
     companion object {
         private const val SCAN_URL = "https://raw.githubusercontent.com/sharanuvl1-png/hey-claude/charts/LATEST_SCAN.md"
+
+        /** The read-only link to Sharan's own Dropbox (Full Dropbox app), kept apart from the phone sync. */
+        const val DOCS = "dropbox_docs"
+        private val TEXT_FILE = Regex("(?i)\\.(txt|md|csv|json)$")
+
+        /** One block per file: name, folder, date, size, open link, and the text when [content] gives it. */
+        fun dropboxText(files: List<DropboxClient.DropboxFile>, content: (DropboxClient.DropboxFile) -> String? = { null }): String =
+            "Dropbox files found (${files.size}):\n" + files.joinToString("\n\n") { f ->
+                val kb = if (f.size >= 1_048_576) "%.1f MB".format(Locale.US, f.size / 1_048_576.0) else "${(f.size + 1023) / 1024} KB"
+                "${f.name} | folder ${f.folder} | modified ${f.modified} | $kb | open link ${f.openUrl}" +
+                    (content(f)?.let { "\nText: $it" } ?: "")
+            }
     }
 }

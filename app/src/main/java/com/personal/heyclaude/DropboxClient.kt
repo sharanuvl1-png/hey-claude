@@ -13,11 +13,12 @@ import java.security.SecureRandom
 /**
  * Minimal Dropbox API client using the PKCE "no redirect" flow: the user
  * opens a Dropbox page, approves, and pastes the code shown back into the app.
- * The Dropbox app uses an App folder, so this app can only see /Apps/<name>/.
+ * [store] keeps each link apart: "dropbox" is the phone sync (an App folder app, which only sees
+ * /Apps/<name>/), "dropbox_docs" is the read-only link to search your own documents (a Full Dropbox app).
  */
-class DropboxClient(context: Context) {
+class DropboxClient(context: Context, store: String = "dropbox") {
 
-    private val prefs = context.getSharedPreferences("dropbox", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences(store, Context.MODE_PRIVATE)
 
     var appKey: String
         get() = prefs.getString("app_key", "") ?: ""
@@ -91,6 +92,16 @@ class DropboxClient(context: Context) {
             .map { it.getString("path_display") }
     }
 
+    /** Files in the whole Dropbox matching [query] by name or content, best matches first. */
+    fun search(query: String, max: Int = 12): List<DropboxFile> {
+        val conn = open("https://api.dropboxapi.com/2/files/search_v2")
+        conn.setRequestProperty("Content-Type", "application/json")
+        val body = JSONObject().put("query", query.take(200))
+            .put("options", JSONObject().put("max_results", max).put("file_status", "active"))
+        conn.outputStream.use { it.write(body.toString().toByteArray()) }
+        return parseSearch(read(conn))
+    }
+
     fun download(path: String): String {
         val conn = open("https://content.dropboxapi.com/2/files/download")
         conn.setRequestProperty("Dropbox-API-Arg", asciiJson(JSONObject().put("path", path)))
@@ -135,6 +146,24 @@ class DropboxClient(context: Context) {
     /** Dropbox-API-Arg must be ASCII; escape everything else. */
     private fun asciiJson(json: JSONObject): String = buildString {
         json.toString().forEach { c -> if (c.code < 128) append(c) else append("\\u%04x".format(c.code)) }
+    }
+
+    data class DropboxFile(val name: String, val path: String, val modified: String, val size: Long) {
+        val folder get() = path.substringBeforeLast('/').ifEmpty { "/" }
+        /** Opens the file in the Dropbox app or website (needs Sharan signed in); it doesn't expire. */
+        val openUrl get() = "https://www.dropbox.com/home" + Uri.encode(folder, "/") + "?preview=" + Uri.encode(name)
+    }
+
+    companion object {
+        /** Files from a files/search_v2 answer. */
+        fun parseSearch(json: String): List<DropboxFile> {
+            val matches = JSONObject(json).optJSONArray("matches") ?: return emptyList()
+            return (0 until matches.length()).mapNotNull { i ->
+                val m = matches.getJSONObject(i).optJSONObject("metadata")?.optJSONObject("metadata") ?: return@mapNotNull null
+                if (m.optString(".tag") != "file") return@mapNotNull null
+                DropboxFile(m.optString("name"), m.optString("path_display"), m.optString("server_modified").take(10), m.optLong("size"))
+            }
+        }
     }
 
     class DropboxError(val code: Int, val body: String) : Exception("Dropbox HTTP $code: ${body.take(200)}")

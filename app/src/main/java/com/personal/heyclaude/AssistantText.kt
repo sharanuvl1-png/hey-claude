@@ -14,7 +14,16 @@ object AssistantText {
     }
 
     /** What to show on screen, the shorter, casual version to say out loud, and pictures to show. */
-    data class Reply(val display: String, val speech: String, val images: List<String> = emptyList())
+    data class Reply(val display: String, val speech: String, val images: List<String> = emptyList(),
+                     val links: List<Pair<String, String>> = emptyList())
+
+    private val OPEN = Regex("(?im)^[ \\t*_>-]*open[ \\t*_]*:[ \\t]*(.+?)[ \\t]*\\|[ \\t]*<?(https://\\S+?)>?[ \\t]*(\\r?\\n|\\z)")
+
+    /** Buttons from "OPEN: name | link" lines (a file or page to open), and the text without those lines. */
+    fun links(reply: String): Pair<String, List<Pair<String, String>>> {
+        val found = OPEN.findAll(reply).map { it.groupValues[1].trim().trim('*', '_') to it.groupValues[2] }.distinctBy { it.second }.take(6).toList()
+        return reply.replace(OPEN, "").replace(Regex("\\n{3,}"), "\n\n").trim() to found
+    }
 
     private val IMAGE = Regex("(?im)^[ \\t*_>-]*image[ \\t*_]*:[ \\t]*<?(https://\\S+?)>?[ \\t]*(\\r?\\n|\\z)")
 
@@ -33,15 +42,16 @@ object AssistantText {
      * Without one, the first two sentences are read.
      */
     fun forSpeech(full: String): Reply {
-        val (reply, pictures) = images(full)
+        val (withLinks, pictures) = images(full)
+        val (reply, buttons) = links(withLinks)
         val m = SPOKEN.find(reply)
         if (m != null) {
             val speech = m.groupValues[1].trim().trim('*', '_').trim()
             val display = reply.removeRange(m.range).trim().ifBlank { speech }
-            return Reply(display, speech, pictures)
+            return Reply(display, speech, pictures, buttons)
         }
         val sentences = reply.replace("•", " ").replace(Regex("\\s+"), " ").trim().split(Regex("(?<=[.!?])\\s+"))
-        return Reply(reply.trim(), sentences.take(2).joinToString(" "), pictures)
+        return Reply(reply.trim(), sentences.take(2).joinToString(" "), pictures, buttons)
     }
 
     /** [text] as it should be said: bullets aren't read, and each line of a list is its own sentence. */

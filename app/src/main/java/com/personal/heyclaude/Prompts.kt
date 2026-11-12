@@ -66,9 +66,15 @@ object Prompts {
     )
 
     fun findDocument(t: LocalDateTime, question: String, files: String, apps: Boolean = true, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
-        "$question ${now(t)} " + (if (apps) "Search my Gmail and Google Drive for it. " else "$PHONE_ONLY ") +
+        "$question ${now(t)} " + (if (apps) "Search my Dropbox, Gmail and Google Drive for it. " else "$PHONE_ONLY Search my Dropbox documents with search_dropbox. ") +
             "Matching file names on my phone: $files. " +
             "Tell me the key date and where the document is. $REMIND_HOW Set it one month before an expiry. $RULES"
+    )
+
+    /** For the Claude app, whose Microsoft 365 connector reaches the work OneDrive and SharePoint. Work files only. */
+    fun findWorkDocument(question: String) = oneLine(
+        "$question. Search only my work Microsoft 365: my OneDrive and SharePoint files and Outlook email attachments. " +
+            "Tell me the file name, where it is and its date, with a link. Don't copy work content into anything personal. $RULES"
     )
 
     fun weeklyReview(t: LocalDateTime, money: String, bills: String, scan: String, apps: Boolean = true, max: Int = MAX_PROMPT) = oneLine(max = max, s = 

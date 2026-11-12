@@ -45,6 +45,9 @@ class SettingsActivity : Activity() {
     private lateinit var linkBox: LinearLayout
     private lateinit var keyField: EditText
     private lateinit var codeField: EditText
+    private lateinit var docsRow: Ui.Row
+    private lateinit var docsBox: LinearLayout
+    private val docs by lazy { DropboxClient(this, PhoneTools.DOCS) }
     private lateinit var syncStatus: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -124,6 +127,9 @@ class SettingsActivity : Activity() {
         linkBox.addView(Ui.spacer(this, 8))
         linkBox.addView(Ui.pill(this, "2 · Finish linking") { finishLink() })
         data.addView(linkBox)
+        docsRow = Ui.Row(this, "Dropbox documents", "Link") { docsBox.visibility = View.VISIBLE }
+        data.addView(docsRow.view)
+        data.addView(docsLinkBox().also { docsBox = it })
         smsRow = Ui.Row(this, "Text messages", "Allow") {
             requestPermissions(arrayOf(Manifest.permission.READ_SMS, Manifest.permission.READ_CONTACTS), 2)
         }
@@ -166,6 +172,40 @@ class SettingsActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refresh()
+    }
+
+    /**
+     * Linking your own Dropbox for document search: a read-only "Full Dropbox" app you make once,
+     * separate from the phone sync above.
+     */
+    private fun docsLinkBox(): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        visibility = View.GONE
+        addView(Ui.text(this@SettingsActivity, "One time: at dropbox.com/developers/apps tap Create app → Scoped access → Full Dropbox, " +
+            "give it any name. On its Permissions tab tick files.metadata.read and files.content.read and tap Submit. " +
+            "Then copy the App key from its Settings tab here.", 12.5f, Ui.MUTED))
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        val key = Ui.field(this@SettingsActivity, "Dropbox app key (Full Dropbox)").apply { setText(docs.appKey) }
+        val code = Ui.field(this@SettingsActivity, "Paste the code Dropbox shows")
+        addView(key)
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        addView(Ui.pill(this@SettingsActivity, "1 · Open Dropbox to approve") {
+            docs.appKey = key.text.toString()
+            if (docs.appKey.isBlank()) toast("Enter the Dropbox app key first")
+            else startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(docs.authorizeUrl())))
+        })
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        addView(code)
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        addView(Ui.pill(this@SettingsActivity, "2 · Finish linking") {
+            val c = code.text.toString()
+            Thread {
+                val msg = try { docs.finishLink(c); "Dropbox documents linked. Ask \"find my car insurance\"." }
+                          catch (e: Exception) { "Linking failed: ${e.message?.take(120)}" }
+                runOnUiThread { toast(msg); refresh() }
+            }.start()
+        })
+        addView(Ui.spacer(this@SettingsActivity, 8))
     }
 
     private fun finishLink() {
@@ -292,6 +332,9 @@ class SettingsActivity : Activity() {
         val notif = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")?.contains(packageName) == true
         dropboxRow.set(dropbox.isLinked, "Linked", "Link your Dropbox app key", required = false)
         if (dropbox.isLinked) linkBox.visibility = View.GONE
+        docsRow.set(docs.isLinked, "Linked: Mehitha searches your Dropbox files (read-only)",
+            "Link to let Mehitha find your documents in Dropbox", required = false)
+        if (docs.isLinked) docsBox.visibility = View.GONE
         calendarRow.set(granted(Manifest.permission.READ_CALENDAR), "Meeting reminders on",
             "Allow for meeting reminders and \"what's on today\". Add your work calendar in the phone's Calendar or Outlook app", required = false)
         smsRow.set(sms, "Syncing (OTPs skipped)", "Allow to search your SMS", required = false)

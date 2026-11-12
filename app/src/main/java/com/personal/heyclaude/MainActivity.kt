@@ -180,7 +180,11 @@ class MainActivity : Activity() {
                         !Passcode.isSet(this) -> addReply(Passcode.NOT_SET, null, spoken)
                         else -> { waitingPasscodeFor = text; addReply(Passcode.ASK, null, spoken) }
                     }
-                    result.isSuccess -> Answers.reply(this, result.getOrThrow()).let { addReply(it.display, it.speech, spoken, images = it.images) }
+                    result.isSuccess -> Answers.reply(this, result.getOrThrow()).let {
+                        // Work files live in the company OneDrive, which only the Claude app (Microsoft 365 connector) can search.
+                        val work = if (command is Command.FindDocument) listOf(WORK_SEARCH to CLAUDE_LINK + Uri.encode(Prompts.findWorkDocument(command.question))) else emptyList()
+                        addReply(it.display, it.speech, spoken, images = it.images, links = it.links + work)
+                    }
                     else -> addReply(Answers.problem(result.exceptionOrNull()!!), null, spoken, problem = true)
                 }
             }
@@ -193,7 +197,7 @@ class MainActivity : Activity() {
      */
     private fun openShop(items: List<String>, shop: String, spoken: Boolean) {
         val name = Shopping.shopName(shop)
-        val links = items.map { it to Shopping.searchUrl(shop, it) }
+        val links = items.map { "🛒 $it" to Shopping.searchUrl(shop, it) }
         val text = if (items.size == 1) "Opening $name for ${items[0]}. Tap Add on the one you want. I never place orders."
             else "Opening $name for ${items[0]} first. Come back and tap the next item. Tap Add on the ones you want; I never place orders."
         addReply(text, text, spoken, links = links)
@@ -201,7 +205,8 @@ class MainActivity : Activity() {
     }
 
     private fun openLink(url: String) {
-        try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("Couldn't open the shop") }
+        if (url.startsWith(CLAUDE_LINK)) { handOff(Uri.decode(url.removePrefix(CLAUDE_LINK)), "work files"); return }
+        try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("Couldn't open that link") }
     }
 
     /** The newest technical chart for [stock], straight from the charts branch (no API key needed). */
@@ -328,7 +333,7 @@ class MainActivity : Activity() {
             addView(LinearLayout(this@MainActivity).apply {
                 orientation = LinearLayout.HORIZONTAL
                 links.forEach { (label, url) ->
-                    addView(Ui.chip(this@MainActivity, "🛒 $label") { openLink(url) },
+                    addView(Ui.chip(this@MainActivity, if (label.first().isLetterOrDigit()) "📄 $label" else label) { openLink(url) },
                         LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { marginEnd = d(8) })
                 }
             })
@@ -571,6 +576,10 @@ class MainActivity : Activity() {
         const val EXTRA_SPEAK = "com.personal.heyclaude.SPEAK"
 
         /** Chip label to question. A question ending in a space is put in the box to finish typing. */
+        const val WORK_SEARCH = "💼 Search work OneDrive in Claude"
+        /** A button link that asks the Claude app (with its Microsoft 365 connector) instead of opening a web page. */
+        const val CLAUDE_LINK = "mehitha-claude:"
+
         val SUGGESTIONS = listOf(
             "☀️ Brief me" to "brief me",
             "🗓️ What's on today?" to "what's on today",

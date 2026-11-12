@@ -27,6 +27,9 @@ interface MehithaTools {
 
     /** The newest technical chart for a stock: its picture link and the written analysis. */
     fun stockChart(stock: String): String = "No charts available."
+
+    /** Searches Sharan's own Dropbox documents by name and content. */
+    fun searchDropbox(query: String): String = "Dropbox documents aren't linked."
 }
 
 /**
@@ -108,6 +111,11 @@ class AssistantBrain(
             "The newest technical chart for one NSE stock: the chart picture link and the written analysis " +
                 "(trend, levels, entry, stop-loss, targets, verdict). Use when Sharan asks about a stock's chart or setup.",
             "stock", "Company name or NSE symbol, e.g. PC Jeweller or PCJEWELLER"))
+        .addTool(tool("search_dropbox",
+            "Search Sharan's own Dropbox (documents, ID copies, bills, policies, statements, photos) by file name and " +
+                "content. Returns each file's name, folder, date and an open link. Use for any document Sharan looks for; " +
+                "show each file Sharan should open on its own line as \"OPEN: <file name> | <link>\" so the app shows a button.",
+            "query", "A few words from the file name or its contents, e.g. car insurance or PAN card"))
         .messages(history)
         .build()
 
@@ -131,6 +139,7 @@ class AssistantBrain(
                     "search_phone_data" -> tools.searchPhoneData(stringArg(use._input(), "query")) to false
                     "get_stock_scan" -> tools.stockScan() to false
                     "get_stock_chart" -> tools.stockChart(stringArg(use._input(), "stock")) to false
+                    "search_dropbox" -> tools.searchDropbox(stringArg(use._input(), "query")) to false
                     else -> "Unknown tool ${use.name()}" to true
                 }
             } catch (e: Exception) {
@@ -175,7 +184,7 @@ class AssistantBrain(
             - Then, only if needed, short points, each on its own line starting with "• ", at most 15 words each.
             - When there are several topics, put a short label on its own line ending with ":" (for example
               "Bills:") with its points under it, and a blank line between topics. At most 4 topics, 4 points each.
-            - No long paragraphs, no markdown such as ** or #, no tables, no links except IMAGE lines (below).
+            - No long paragraphs, no markdown such as ** or #, no tables, no links except IMAGE and OPEN lines (below).
             - Amounts as ₹ with Indian grouping, rounded: ₹3,598, ₹1.2 lakh, ₹2.5 crore.
             - Leave out detail Sharan didn't ask for. Keep the whole answer under 90 words unless Sharan asks for more.
             Sharan swing trades (holding days to a few weeks). Whenever a stock comes up, look at it as a swing
@@ -187,6 +196,7 @@ class AssistantBrain(
             Never read out OTPs or passwords.
             When a picture would help, such as a stock chart from get_stock_chart or an image link you
             found, put its direct https link alone on its own line as "IMAGE: <link>" and the app shows it.
+            To give Sharan a file or page to open, put "OPEN: <short name> | <https link>" on its own line and the app shows a button.
             Only use links you actually got from a tool, never guessed ones.
             You can set reminders: when Sharan asks to be reminded of something, work out the date and
             time from the current time below and add a line exactly like
