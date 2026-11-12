@@ -19,7 +19,19 @@ object Answers {
         }
         is Command.Alerts -> Alerts.summary(ctx)
         is Command.Today -> Today.answer(ctx, command.what)
-        is Command.ListAdd -> Shopping.add(ctx, command.items).let { "Added ${Shopping.said(command.items)}. Your list has ${it.size} item${if (it.size > 1) "s" else ""}." }
+        is Command.Usuals -> Groceries.answer(Groceries.log(ctx), Groceries.saved(ctx), PhoneData.today())
+        is Command.UsualsAdd -> Groceries.save(ctx, command.items).let {
+            "Saved ${Shopping.said(command.items.map { i -> Groceries.name(i) })} to your usuals. Say \"my usuals\" to open them in Blinkit. You have ${it.size}."
+        }
+        is Command.UsualsRemove -> Groceries.unsave(ctx, command.items).let {
+            if (it.isEmpty()) "${Shopping.said(command.items).replaceFirstChar { c -> c.uppercase() }} wasn't in your usuals." else "Removed ${Shopping.said(it)} from your usuals."
+        }
+        is Command.Bought -> {
+            Groceries.record(ctx, command.items)
+            Shopping.remove(ctx, command.items)
+            "Noted ${Shopping.said(command.items)}. I'll learn how often you buy ${if (command.items.size > 1) "them" else "it"} and remind you when ${if (command.items.size > 1) "they're" else "it's"} due."
+        }
+        is Command.ListAdd -> Shopping.add(ctx, command.items).also { Groceries.record(ctx, command.items) }.let { "Added ${Shopping.said(command.items)}. Your list has ${it.size} item${if (it.size > 1) "s" else ""}." }
         is Command.ListShow -> Shopping.listAnswer(ctx)
         is Command.ListClear -> { Shopping.clear(ctx); "Cleared your shopping list." }
         is Command.Orders -> Orders.answer(Orders.recent(AssistantActivity.phoneData ?: PhoneData(ctx)), PhoneData.today(), command.shop)

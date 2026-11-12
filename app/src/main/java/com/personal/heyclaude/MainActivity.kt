@@ -146,6 +146,7 @@ class MainActivity : Activity() {
         }
         if (echo) addMine(text)
         val command = Command.parse(text)
+        if (command is Command.Usuals) { showUsuals(spoken); return }
         Answers.local(this, command, text)?.let { addReply(it, it, spoken); return }
         if (command is Command.Chart) { showChart(command.stock, spoken); return }
         if (command is Command.Shop) { openShop(command.items, command.shop, spoken); return }
@@ -204,8 +205,26 @@ class MainActivity : Activity() {
         openLink(links[0].second)
     }
 
+    /** Your usual groceries, with a Blinkit button per item to add one at a time, and one for anything else. */
+    private fun showUsuals(spoken: Boolean) {
+        val today = PhoneData.today()
+        val log = Groceries.log(this)
+        val saved = Groceries.saved(this)
+        val text = Groceries.answer(log, saved, today)
+        val links = Groceries.buttons(log, saved, today).map { "🛒 $it" to Shopping.searchUrl("blinkit", it) } +
+            (SOMETHING_ELSE to TYPE_LINK + "blinkit ")
+        addReply(text, text.lineSequence().first(), spoken, links = links)
+    }
+
     private fun openLink(url: String) {
         if (url.startsWith(CLAUDE_LINK)) { handOff(Uri.decode(url.removePrefix(CLAUDE_LINK)), "work files"); return }
+        if (url.startsWith(TYPE_LINK)) {
+            val start = url.removePrefix(TYPE_LINK)
+            input.setText(start); input.setSelection(start.length); showKeyboard()
+            toast("Type the item, e.g. bread or 2 kg onions")
+            return
+        }
+        Groceries.blinkitItem(url)?.let { item -> try { Groceries.record(this, listOf(item)) } catch (e: Exception) { Log.w(TAG, "Grocery note failed", e) } }
         try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("Couldn't open that link") }
     }
 
@@ -580,6 +599,9 @@ class MainActivity : Activity() {
         const val WORK_SEARCH = "💼 Search work OneDrive in Claude"
         /** A button link that asks the Claude app (with its Microsoft 365 connector) instead of opening a web page. */
         const val CLAUDE_LINK = "mehitha-claude:"
+        /** A button link that puts its text in the question box to finish typing. */
+        const val TYPE_LINK = "mehitha-type:"
+        const val SOMETHING_ELSE = "➕ Something else"
 
         val SUGGESTIONS = listOf(
             "☀️ Brief me" to "brief me",
@@ -587,6 +609,7 @@ class MainActivity : Activity() {
             "🔔 Any alerts?" to "any alerts",
             "💸 Spending report" to "spending report",
             "🧾 Odd charges?" to "any odd charges this week",
+            "🛒 My usuals" to "my usual groceries",
             "📈 Check a stock" to "check ",
             "📊 Show a chart" to "show chart of ",
             "🛒 Shopping list" to "what's on my shopping list",

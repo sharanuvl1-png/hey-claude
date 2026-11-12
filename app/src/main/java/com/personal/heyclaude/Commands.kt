@@ -16,6 +16,12 @@ sealed class Command {
     /** Open [shop] search for [items], so you can tap Add. Never orders. */
     data class Shop(val items: List<String>, val shop: String) : Command()
     data class ListAdd(val items: List<String>) : Command()
+    /** Your usual groceries, with a Blinkit button for each. */
+    object Usuals : Command()
+    data class UsualsAdd(val items: List<String>) : Command()
+    data class UsualsRemove(val items: List<String>) : Command()
+    /** You bought [items]: noted so Mehitha learns how often. */
+    data class Bought(val items: List<String>) : Command()
     object ListShow : Command()
     object ListClear : Command()
     /** Open the shopping list's items in [shop]. */
@@ -44,6 +50,12 @@ sealed class Command {
         private val TODAY = re("^(so )?what'?s (on |happening )?(for )?today\\W*$|^what('?s| is) on today\\b|\\bmy (day|schedule) today\\b|^what('?s| is) my (day|schedule)( like)?( today)?\\W*$")
         private const val SHOPS = "(?<shop>blinkit|amazon|flipkart)"
         private const val LIST = "(my |the )?(shopping |grocery |groceries )?list"
+        private const val USUAL = "(my |the )?(usuals|usual (groceries|items|list|order|stuff)|regulars|regular (groceries|items|order))"
+        private val USUALS_ADD = re("^(please )?(add|put|save) (?<items>.+?) (to|in|into|as) $USUAL\\W*$")
+        private val USUALS_REMOVE = re("^(please )?(remove|delete|take|drop) (?<items>.+?) (from|off|out of) $USUAL\\W*$")
+        private val USUALS = re("\\b$USUAL\\b|\\bwhat groceries do i need\\b|\\b(order|reorder|buy) (my )?groceries\\b|\\bwhat am i running low on\\b|^groceries\\W*$")
+        private val BOUGHT = re("^(?!.*\\b(where|when|why|how|what|status|track|refund|charged?|paid|pay|money|rs|inr|rupees|amazon|flipkart|myntra)\\b)(?!.*[?₹])(i )?(just |already )?(bought|ordered|picked up)( some)? (?<items>.+?)( (from|on|at|in) (blinkit|zepto|bigbasket|jiomart|the (store|shop|market)))?( today| yesterday)?\\W*$|^(?!.*\\b(where|when|why|how|what|status|track|refund|charged?|paid|pay|money|rs|inr|rupees|amazon|flipkart|myntra)\\b)(?!.*[?₹])i (just |already )?got( some)? (?<items2>.+?)( (from|on|at|in) (blinkit|zepto|bigbasket|jiomart|the (store|shop|market)))?( today| yesterday)?\\W*$")
+        private val QUICK_BLINKIT = re("^blinkit:? (?!(my )?(orders?|status|deliver(y|ies))\\b)(?<items>.+)$")
         private val LIST_SEND = re("^(please )?(send|open|shop|add|put|take|move) $LIST (on|to|in|into) $SHOPS( cart)?\\W*$")
         private val LIST_ADD = re("^(please )?(add|put) (?<items>.+?) (to|on|in|onto) (my|the) (shopping |grocery |groceries )?list\\W*$")
         private val LIST_CLEAR = re("\\b(clear|empty|delete|reset) $LIST\\b")
@@ -73,10 +85,15 @@ sealed class Command {
             if (REMIND.containsMatchIn(t)) return Reminder(t)
             if (BRIEFING.matches(t)) return Briefing
             LIST_SEND.find(t)?.let { return ListSend(it.groups["shop"]!!.value.lowercase()) }
+            USUALS_ADD.find(t)?.let { return UsualsAdd(Shopping.items(it.groups["items"]!!.value)) }
+            USUALS_REMOVE.find(t)?.let { return UsualsRemove(Shopping.items(it.groups["items"]!!.value)) }
             LIST_ADD.find(t)?.let { return ListAdd(Shopping.items(it.groups["items"]!!.value)) }
+            QUICK_BLINKIT.find(t)?.let { return Shop(Shopping.items(it.groups["items"]!!.value), "blinkit") }
+            BOUGHT.find(t)?.let { m -> return Bought(Shopping.items((m.groups["items"] ?: m.groups["items2"])!!.value)) }
             if (LIST_CLEAR.containsMatchIn(t)) return ListClear
             if (LIST_SHOW.containsMatchIn(t)) return ListShow
             SHOP.find(t)?.let { return Shop(Shopping.items(it.groups["items"]!!.value), it.groups["shop"]!!.value.lowercase()) }
+            if (USUALS.containsMatchIn(t)) return Usuals
             ORDERS.find(t)?.let { m ->
                 val shop = listOf("s1", "s2", "s3", "s4").firstNotNullOfOrNull { g -> m.groups[g]?.value?.trim()?.lowercase() }
                 return Orders(shop)

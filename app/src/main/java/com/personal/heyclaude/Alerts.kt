@@ -190,6 +190,9 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) 
             } catch (e: Exception) { "" }
             Alerts.post(ctx, Alert("brief:$today", "Good morning", "${day}Tap for your briefing: meetings, messages, bills and stocks."), ask = "good morning")
         }
+        if (now.hour in 8..11) once("groceries") {
+            Groceries.nudge(Groceries.log(ctx), today)?.let { Alerts.post(ctx, it, ask = "my usual groceries") }
+        }
         if (now.dayOfWeek == DayOfWeek.SUNDAY && now.hour in 18..21) once("weekly") {
             Alerts.post(ctx, Alert("weekly:$today", "Your weekly review is ready", "Money, bills, stocks and the week ahead. Tap to hear it."), ask = "weekly review")
         }
