@@ -129,4 +129,25 @@ class MoreFeaturesTest {
         assertEquals(Alerts.CHANNEL, posted.channelId)
         assertTrue(Alerts.canPopUp(app))
     }
+
+    @Test fun dropboxSearchResultsAndOpenButtons() {
+        val json = """{"matches":[
+            {"metadata":{".tag":"metadata","metadata":{".tag":"file","name":"Car insurance 2026.pdf","path_display":"/Documents/Insurance/Car insurance 2026.pdf","server_modified":"2026-03-04T10:00:00Z","size":245760}}},
+            {"metadata":{".tag":"metadata","metadata":{".tag":"folder","name":"Insurance","path_display":"/Documents/Insurance"}}}
+        ]}"""
+        val files = DropboxClient.parseSearch(json)
+        assertEquals(1, files.size)
+        val f = files.single()
+        assertEquals("/Documents/Insurance", f.folder)
+        assertEquals("2026-03-04", f.modified)
+        assertEquals("https://www.dropbox.com/home/Documents/Insurance?preview=Car%20insurance%202026.pdf", f.openUrl)
+        val text = PhoneTools.dropboxText(files)
+        assertTrue(text, text.contains("Car insurance 2026.pdf | folder /Documents/Insurance | modified 2026-03-04 | 240 KB | open link https://www.dropbox.com/home/"))
+
+        val reply = AssistantText.forSpeech("SPOKEN: Found your car insurance.\nYour car insurance is in Dropbox.\nOPEN: Car insurance 2026.pdf | ${f.openUrl}\n")
+        assertEquals(listOf("Car insurance 2026.pdf" to f.openUrl), reply.links)
+        assertEquals("Your car insurance is in Dropbox.", reply.display)
+        // Not linked: says how to link, never guesses.
+        assertTrue(PhoneTools(RuntimeEnvironment.getApplication()).searchDropbox("pan card").contains("aren't linked"))
+    }
 }
