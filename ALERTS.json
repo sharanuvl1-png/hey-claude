@@ -1,20 +1,45 @@
 {
- "date": "2026-11-11",
+ "date": "2026-11-12",
  "alerts": [
   {
+   "id": "buyzone:ETERNAL:2026-11-12",
+   "title": "Eternal is in the buy zone",
+   "text": "Eternal moved from buy on dip to buy now at ₹364.4."
+  },
+  {
+   "id": "buyzone:BHARTIARTL:2026-11-12",
+   "title": "Bharti Airtel is in the buy zone",
+   "text": "Bharti Airtel moved from buy on dip to buy now at ₹2,096.0."
+  },
+  {
+   "id": "buyzone:TRENT:2026-11-12",
+   "title": "Trent is in the buy zone",
+   "text": "Trent moved from buy on dip to buy now at ₹3,180.0."
+  },
+  {
+   "id": "buyzone:GRASIM:2026-11-12",
+   "title": "Grasim Industries is in the buy zone",
+   "text": "Grasim Industries moved from buy on dip to buy now at ₹3,114.9."
+  },
+  {
+   "id": "buyzone:RELIANCE:2026-11-12",
+   "title": "Reliance Industries is in the buy zone",
+   "text": "Reliance Industries moved from buy on dip to buy now at ₹1,339.7."
+  },
+  {
    "id": "results:EICHERMOT:2026-11-13",
-   "title": "Eicher Motors results 13 Nov",
-   "text": "Eicher Motors reports quarterly results 13 Nov."
+   "title": "Eicher Motors results tomorrow",
+   "text": "Eicher Motors reports quarterly results tomorrow (13 Nov)."
   },
   {
    "id": "results:GRASIM:2026-11-13",
-   "title": "Grasim Industries results 13 Nov",
-   "text": "Grasim Industries reports quarterly results 13 Nov."
+   "title": "Grasim Industries results tomorrow",
+   "text": "Grasim Industries reports quarterly results tomorrow (13 Nov)."
   },
   {
-   "id": "news:AXISBANK:ee20fabc56",
-   "title": "News: Axis Bank",
-   "text": "Here's Where Investors Turned To As They Fled AI Stocks"
+   "id": "news:BHARTIARTL:6a6fe63994",
+   "title": "News: Bharti Airtel",
+   "text": "Bharti Airtel Ltd (BOM:532454) (Q2 2027) Earnings Call Highlights: Strong Cash Flow, Record ..."
   }
  ]
 }
