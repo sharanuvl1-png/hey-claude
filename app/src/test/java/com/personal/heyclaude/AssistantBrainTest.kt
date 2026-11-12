@@ -35,6 +35,32 @@ class AssistantBrainTest {
         assertTrue(api.requests[2].contains("\"tool_use_id\":\"tu_2\"") && api.requests[2].contains("TVBN78163260"))
     }
 
+    @Test fun readsDropboxPagesAndOffersSnippetsOnlyWhenAllowed() {
+        val tools = object : MehithaTools by FakeTools() {
+            override fun readDropboxFile(path: String) = FileForClaude("Trip plan.pdf has 1 page, attached as pictures.",
+                path.substringAfterLast('/'), pages = listOf(byteArrayOf(1, 2, 3)), snipId = Snips.register(emptyList()))
+        }
+        fun run(path: String, unlocked: Boolean): String {
+            val api = FakeApi.ok(
+                msg("tool_use", """{"type":"tool_use","id":"tu_1","name":"read_dropbox_file","input":{"path":"$path"}}"""),
+                text("Your trip starts on 5 December."),
+            )
+            val brain = AssistantBrain("test-key", tools, api.url, clock).also { it.unlocked = unlocked }
+            assertEquals("Your trip starts on 5 December.", brain.ask("When does my trip start?"))
+            api.stop()
+            assertTrue(api.requests[0].contains("read_dropbox_file") && api.requests[0].contains("SNIP"))
+            return api.requests[1]
+        }
+        val plain = run("/Travel/Trip plan.pdf", unlocked = false)
+        assertTrue(plain, plain.contains("\"tool_use_id\":\"tu_1\"") && plain.contains("Page 1:"))
+        assertTrue(plain, plain.contains("\"type\":\"image\"") && plain.contains("AQID"))
+        assertTrue(plain, plain.contains("SNIP: d"))
+        val policy = run("/Insurance/Car policy.pdf", unlocked = false)
+        assertFalse(policy, policy.contains("SNIP: d"))
+        assertTrue(policy, policy.contains("Don't add a SNIP line"))
+        assertTrue(run("/Insurance/Car policy.pdf", unlocked = true).contains("SNIP: d"))
+    }
+
     @Test fun fastModelUsesBasicWebSearchAndCanFetchCharts() {
         val api = FakeApi.ok(
             msg("tool_use", """{"type":"tool_use","id":"tu_1","name":"get_stock_chart","input":{"stock":"PC Jeweller"}}"""),

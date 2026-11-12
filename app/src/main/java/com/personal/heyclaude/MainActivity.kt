@@ -181,8 +181,8 @@ class MainActivity : Activity() {
                         else -> { waitingPasscodeFor = text; addReply(Passcode.ASK, null, spoken) }
                     }
                     result.isSuccess -> Answers.reply(this, result.getOrThrow()).let {
-                        // Work files live in the company OneDrive, which only the Claude app (Microsoft 365 connector) can search.
-                        val work = if (command is Command.FindDocument) listOf(WORK_SEARCH to CLAUDE_LINK + Uri.encode(Prompts.findWorkDocument(command.question))) else emptyList()
+                        // Until the work OneDrive is linked in Settings, only the Claude app (Microsoft 365 connector) can search it.
+                        val work = if (command is Command.FindDocument && !OneDriveClient(this).isLinked) listOf(WORK_SEARCH to CLAUDE_LINK + Uri.encode(Prompts.findWorkDocument(command.question))) else emptyList()
                         addReply(it.display, it.speech, spoken, images = it.images, links = it.links + work)
                     }
                     else -> addReply(Answers.problem(result.exceptionOrNull()!!), null, spoken, problem = true)
@@ -364,6 +364,7 @@ class MainActivity : Activity() {
             contentDescription = "Picture: $url"
             isClickable = true
             setOnClickListener {
+                if (url.startsWith("file://")) return@setOnClickListener
                 try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("No app can open this picture") }
             }
         }
@@ -373,7 +374,7 @@ class MainActivity : Activity() {
             val bmp = Charts.picture(url)
             handler.post {
                 if (isDestroyed) return@post
-                if (bmp == null) { status.text = "Couldn't load the picture. Tap to open it in the browser."; return@post }
+                if (bmp == null) { status.text = if (url.startsWith("file://")) "This snippet is no longer saved." else "Couldn't load the picture. Tap to open it in the browser."; return@post }
                 holder.removeView(status)
                 holder.addView(ImageView(this).apply {
                     setImageBitmap(bmp)

@@ -48,6 +48,9 @@ class SettingsActivity : Activity() {
     private lateinit var docsRow: Ui.Row
     private lateinit var docsBox: LinearLayout
     private val docs by lazy { DropboxClient(this, PhoneTools.DOCS) }
+    private val work by lazy { OneDriveClient(this) }
+    private lateinit var workRow: Ui.Row
+    private lateinit var workBox: LinearLayout
     private lateinit var syncStatus: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -130,6 +133,9 @@ class SettingsActivity : Activity() {
         docsRow = Ui.Row(this, "Dropbox documents", "Link") { docsBox.visibility = View.VISIBLE }
         data.addView(docsRow.view)
         data.addView(docsLinkBox().also { docsBox = it })
+        workRow = Ui.Row(this, "Work OneDrive", "Link") { workBox.visibility = View.VISIBLE }
+        data.addView(workRow.view)
+        data.addView(workLinkBox().also { workBox = it })
         smsRow = Ui.Row(this, "Text messages", "Allow") {
             requestPermissions(arrayOf(Manifest.permission.READ_SMS, Manifest.permission.READ_CONTACTS), 2)
         }
@@ -205,6 +211,47 @@ class SettingsActivity : Activity() {
                 runOnUiThread { toast(msg); refresh() }
             }.start()
         })
+        addView(Ui.spacer(this@SettingsActivity, 8))
+    }
+
+    /**
+     * Linking the work OneDrive (read-only): needs an app registration in the work directory, then
+     * a sign-in with a short code at microsoft.com/devicelogin.
+     */
+    private fun workLinkBox(): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        visibility = View.GONE
+        addView(Ui.text(this@SettingsActivity, "One time, signed in with your work account: at portal.azure.com open App registrations → " +
+            "New registration, any name, \"Accounts in this organizational directory only\", Register. Under Authentication turn on " +
+            "\"Allow public client flows\" and Save. Copy the Application (client) ID here. If the portal or the sign-in says " +
+            "admin approval is needed, your IT team has to allow it.", 12.5f, Ui.MUTED))
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        val id = Ui.field(this@SettingsActivity, "Application (client) ID").apply { setText(work.clientId) }
+        addView(id)
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        val status = Ui.text(this@SettingsActivity, "", 13f, Ui.TEXT)
+        addView(Ui.pill(this@SettingsActivity, "Sign in with work account") {
+            work.clientId = id.text.toString()
+            if (work.clientId.isBlank()) { toast("Enter the Application (client) ID first"); return@pill }
+            status.text = "Getting a sign-in code…"
+            Thread {
+                try {
+                    val s = work.startSignIn()
+                    runOnUiThread {
+                        getSystemService(android.content.ClipboardManager::class.java)
+                            ?.setPrimaryClip(android.content.ClipData.newPlainText("code", s.userCode))
+                        status.text = "Code ${s.userCode} (copied). Paste it on the Microsoft page and sign in with your work account, then come back."
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(s.url)))
+                    }
+                    work.waitForSignIn(s)
+                    runOnUiThread { status.text = ""; toast("Work OneDrive linked. Ask \"find the Acme SOW in my work files\"."); refresh() }
+                } catch (e: Exception) {
+                    runOnUiThread { status.text = "Linking failed: ${e.message?.take(160)}" }
+                }
+            }.start()
+        })
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        addView(status)
         addView(Ui.spacer(this@SettingsActivity, 8))
     }
 
@@ -335,6 +382,9 @@ class SettingsActivity : Activity() {
         docsRow.set(docs.isLinked, "Linked: Mehitha searches your Dropbox files (read-only)",
             "Link to let Mehitha find your documents in Dropbox", required = false)
         if (docs.isLinked) docsBox.visibility = View.GONE
+        workRow.set(work.isLinked, "Linked: Mehitha searches your work files for work questions (read-only)",
+            "Optional: let Mehitha find and read documents in your company OneDrive", required = false)
+        if (work.isLinked) workBox.visibility = View.GONE
         calendarRow.set(granted(Manifest.permission.READ_CALENDAR), "Meeting reminders on",
             "Allow for meeting reminders and \"what's on today\". Add your work calendar in the phone's Calendar or Outlook app", required = false)
         smsRow.set(sms, "Syncing (OTPs skipped)", "Allow to search your SMS", required = false)

@@ -3,7 +3,9 @@ package com.personal.heyclaude
 import com.anthropic.client.AnthropicClient
 import com.anthropic.client.okhttp.AnthropicOkHttpClient
 import com.anthropic.core.JsonValue
+import com.anthropic.models.messages.Base64ImageSource
 import com.anthropic.models.messages.ContentBlockParam
+import com.anthropic.models.messages.DocumentBlockParam
 import com.anthropic.models.messages.Message
 import com.anthropic.models.messages.MessageCreateParams
 import com.anthropic.models.messages.MessageParam
@@ -30,7 +32,27 @@ interface MehithaTools {
 
     /** Searches Sharan's own Dropbox documents by name and content. */
     fun searchDropbox(query: String): String = "Dropbox documents aren't linked."
+
+    /** One Dropbox file to read: a PDF or picture is passed to Claude whole, text files as text. */
+    fun readDropboxFile(path: String): FileForClaude = FileForClaude("Dropbox documents aren't linked.")
+
+    /** True when the work OneDrive is linked, so its tools are offered. */
+    val hasWorkFiles: Boolean get() = false
+
+    /** Searches Sharan's work OneDrive (read-only). Only for work questions. */
+    fun searchWorkOneDrive(query: String): String = "Work OneDrive isn't linked in Mehitha."
+
+    /** One work OneDrive file to read, by the id and name search_work_onedrive gave. */
+    fun readWorkOneDriveFile(id: String, name: String): FileForClaude = FileForClaude("Work OneDrive isn't linked in Mehitha.")
 }
+
+/**
+ * A file for Claude to read: [note] always, plus the PDF, the picture, or its [pages] as JPEG pictures.
+ * [snipId] names the saved page pictures the app can cut a snippet from (see Snips).
+ */
+class FileForClaude(val note: String, val name: String = "", val pdf: ByteArray? = null,
+                    val image: ByteArray? = null, val imageType: String = "image/jpeg",
+                    val pages: List<ByteArray> = emptyList(), val snipId: String? = null)
 
 /**
  * Talks to Claude for the voice assistant: one conversation per session, with web
@@ -113,9 +135,32 @@ class AssistantBrain(
             "stock", "Company name or NSE symbol, e.g. PC Jeweller or PCJEWELLER"))
         .addTool(tool("search_dropbox",
             "Search Sharan's own Dropbox (documents, ID copies, bills, policies, statements, photos) by file name and " +
-                "content. Returns each file's name, folder, date and an open link. Use for any document Sharan looks for; " +
+                "content. Returns each file's name, path, folder, date and an open link. Use for any document Sharan looks for, then " +
+                "read_dropbox_file to look inside the most likely one when the answer needs a date or detail from it; " +
                 "show each file Sharan should open on its own line as \"OPEN: <file name> | <link>\" so the app shows a button.",
             "query", "A few words from the file name or its contents, e.g. car insurance or PAN card"))
+        .addTool(tool("read_dropbox_file",
+            "Open one file from Sharan's Dropbox, by the path search_dropbox gave, and read it: PDFs (policies, " +
+                "statements, bills) and photos or scans are read in full. Use it to find dates, amounts or details inside a document.",
+            "path", "The file's path from search_dropbox, e.g. /Documents/Insurance/Policy.pdf"))
+        .apply { if (tools.hasWorkFiles) {
+            addTool(tool("search_work_onedrive",
+                "Search Sharan's work OneDrive (office documents) by file name and content. Only for work questions; " +
+                    "never use work files for personal expenses or notes. Returns each file's name, id, folder, date and open link; " +
+                    "show files to open as \"OPEN: <file name> | <link>\".",
+                "query", "A few words from the file name or its contents, e.g. Q3 roadmap or SOW Acme"))
+            addTool(Tool.builder().name("read_work_onedrive_file")
+                .description("Open one file from Sharan's work OneDrive, by the id and name search_work_onedrive gave, and read it: " +
+                    "PDFs, Word, Excel and PowerPoint files (as PDF pages), pictures and text files.")
+                .inputSchema(Tool.InputSchema.builder()
+                    .properties(Tool.InputSchema.Properties.builder()
+                        .putAdditionalProperty("id", JsonValue.from(mapOf("type" to "string", "description" to "The file's id from search_work_onedrive")))
+                        .putAdditionalProperty("name", JsonValue.from(mapOf("type" to "string", "description" to "The file's name from search_work_onedrive")))
+                        .build())
+                    .required(listOf("id", "name"))
+                    .build())
+                .build())
+        } }
         .messages(history)
         .build()
 
@@ -134,12 +179,19 @@ class AssistantBrain(
 
     private fun runTools(response: Message): MessageParam {
         val results = response.content().mapNotNull { it.toolUse().orElse(null) }.map { use ->
+            if (use.name() == "read_dropbox_file") stringArg(use._input(), "path").let { path ->
+                return@map fileResult(use.id(), path) { tools.readDropboxFile(path) }
+            }
+            if (use.name() == "read_work_onedrive_file") stringArg(use._input(), "name").let { name ->
+                return@map fileResult(use.id(), name) { tools.readWorkOneDriveFile(stringArg(use._input(), "id"), name) }
+            }
             val (text, failed) = try {
                 when (use.name()) {
                     "search_phone_data" -> tools.searchPhoneData(stringArg(use._input(), "query")) to false
                     "get_stock_scan" -> tools.stockScan() to false
                     "get_stock_chart" -> tools.stockChart(stringArg(use._input(), "stock")) to false
                     "search_dropbox" -> tools.searchDropbox(stringArg(use._input(), "query")) to false
+                    "search_work_onedrive" -> tools.searchWorkOneDrive(stringArg(use._input(), "query")) to false
                     else -> "Unknown tool ${use.name()}" to true
                 }
             } catch (e: Exception) {
@@ -154,6 +206,30 @@ class AssistantBrain(
         return MessageParam.ofUserOfContentBlockParams(results)
     }
 
+    /** The file as a tool result: its note, then the PDF as a document or the picture as an image. */
+    private fun fileResult(id: String, path: String, read: () -> FileForClaude): ContentBlockParam {
+        val file = try { read() } catch (e: Exception) {
+            FileForClaude("Could not open $path: ${e.message ?: e.javaClass.simpleName}")
+        }
+        val blocks = mutableListOf(ToolResultBlockParam.Content.Block.ofText(file.note.take(MAX_TOOL_CHARS)))
+        file.pdf?.let { blocks += ToolResultBlockParam.Content.Block.ofDocument(DocumentBlockParam.builder()
+            .base64Source(java.util.Base64.getEncoder().encodeToString(it)).title(file.name.ifBlank { path }).build()) }
+        file.image?.let { blocks += image(it, file.imageType) }
+        file.pages.forEachIndexed { i, page ->
+            blocks += ToolResultBlockParam.Content.Block.ofText("Page ${i + 1}:")
+            blocks += image(page, "image/jpeg")
+        }
+        file.snipId?.let { id ->
+            blocks += ToolResultBlockParam.Content.Block.ofText(
+                if (unlocked || !Snips.isPrivate(file.name)) snipHint(id)
+                else { Snips.drop(id); "Don't add a SNIP line for this file: it may hold confidential details." })
+        }
+        return ContentBlockParam.ofToolResult(ToolResultBlockParam.builder().toolUseId(id).contentOfBlocks(blocks).build())
+    }
+
+    private fun image(bytes: ByteArray, type: String) = ToolResultBlockParam.Content.Block.ofImage(Base64ImageSource.builder()
+        .data(java.util.Base64.getEncoder().encodeToString(bytes)).mediaType(Base64ImageSource.MediaType.of(type)).build())
+
     private fun stringArg(input: JsonValue, key: String): String =
         (input.convert(Map::class.java)?.get(key) as? String).orEmpty()
 
@@ -161,6 +237,11 @@ class AssistantBrain(
         response.content().mapNotNull { it.text().orElse(null)?.text() }.joinToString("\n").trim()
 
     companion object {
+        /** Tells Claude how to ask the app for a cut-out of the page that holds the answer. */
+        fun snipHint(id: String) = "Snippet id $id. When your answer comes from this file, add a line " +
+            "\"SNIP: $id | page <n> | <top>-<bottom>\" where top and bottom are where the answer sits on that page, " +
+            "as fractions of the page height from 0 (top) to 1 (bottom), e.g. \"SNIP: $id | page 1 | 0.42-0.50\". " +
+            "The app shows that part of the page as a picture. At most 2 SNIP lines; keep the band tight around the answer."
         const val MODEL = "claude-opus-5-5"
 
         /** The models Mehitha can answer with, fastest first: label to model id. */
@@ -196,6 +277,10 @@ class AssistantBrain(
             Never read out OTPs or passwords.
             When a picture would help, such as a stock chart from get_stock_chart or an image link you
             found, put its direct https link alone on its own line as "IMAGE: <link>" and the app shows it.
+            Work files (search_work_onedrive) are only for work questions; never mix office data into
+            Sharan's personal expenses or notes.
+            When you read a document with read_dropbox_file or read_work_onedrive_file, give the answer in words and add the SNIP line it
+            describes so Sharan sees the matching part of the page without opening the file.
             To give Sharan a file or page to open, put "OPEN: <short name> | <https link>" on its own line and the app shows a button.
             Only use links you actually got from a tool, never guessed ones.
             You can set reminders: when Sharan asks to be reminded of something, work out the date and

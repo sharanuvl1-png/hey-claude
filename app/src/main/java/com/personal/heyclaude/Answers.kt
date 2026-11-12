@@ -97,8 +97,9 @@ object Answers {
         if (Passcode.isNeeded(text)) return AssistantText.Reply(Passcode.USE_CHAT, Passcode.USE_CHAT)
         val (reminders, rest) = Prompts.reminders(text)
         val set = try { Reminders.schedule(ctx, reminders) } catch (e: Exception) { Log.w(TAG, "Reminder failed", e); emptyList() }
-        val reply = AssistantText.forSpeech(rest)
-        return reply.copy(display = (listOf(reply.display) + set).joinToString("\n\n"))
+        val (words, snips) = try { Snips.apply(ctx, rest) } catch (e: Exception) { Log.w(TAG, "Snippet failed", e); Snips.parse(rest).first to emptyList() }
+        val reply = AssistantText.forSpeech(words)
+        return reply.copy(display = (listOf(reply.display) + set).joinToString("\n\n"), images = snips + reply.images)
     }
 
     /** A plain-words explanation of why asking Claude failed. */

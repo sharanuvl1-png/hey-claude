@@ -102,6 +102,17 @@ class DropboxClient(context: Context, store: String = "dropbox") {
         return parseSearch(read(conn))
     }
 
+    /** The file's bytes, or null when it is bigger than [max] bytes. */
+    fun downloadBytes(path: String, max: Long): ByteArray? {
+        val conn = open("https://content.dropboxapi.com/2/files/download")
+        conn.setRequestProperty("Dropbox-API-Arg", asciiJson(JSONObject().put("path", path)))
+        val code = conn.responseCode
+        if (code !in 200..299) read(conn)
+        val result = conn.getHeaderField("Dropbox-API-Result")?.let { JSONObject(it) }
+        if ((result?.optLong("size") ?: 0) > max) { conn.disconnect(); return null }
+        return conn.inputStream.use { it.readBytes() }.takeIf { it.size <= max }
+    }
+
     fun download(path: String): String {
         val conn = open("https://content.dropboxapi.com/2/files/download")
         conn.setRequestProperty("Dropbox-API-Arg", asciiJson(JSONObject().put("path", path)))
