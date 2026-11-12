@@ -224,6 +224,21 @@ class HomeChatTest {
         assertFalse(api!!.requests.any { it.contains("4321") })
     }
 
+    @Test fun aPasscodeTypedWithoutBeingAskedNeverReachesClaude() {
+        val a = open(replies = listOf(200 to text("Please say your Mehitha passcode, and I'll pull them up."),
+            200 to text("Your card statement comes on the 5th.")))
+        Passcode.set(app, "4321")
+        type(a, "my card billing cycle")
+        waitFor("the passcode question") { chat(a).contains(Passcode.ASK) }
+        type(a, "hello")
+        assertTrue(chat(a).contains(Passcode.WRONG))
+        type(a, "4321")
+        waitFor("the answer") { chat(a).contains("Your card statement comes on the 5th.") }
+        assertFalse(chat(a).contains("4321"))
+        assertFalse(api!!.requests.any { it.contains("4321") })
+        assertTrue(api!!.requests.last().contains("said the right passcode"))
+    }
+
     @Test fun wrongPasscodeSharesNothing() {
         val a = open(replies = listOf(200 to text("PASSCODE_NEEDED")))
         Passcode.set(app, "4321")

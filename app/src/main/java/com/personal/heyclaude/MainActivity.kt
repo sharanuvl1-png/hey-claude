@@ -40,6 +40,9 @@ class MainActivity : Activity() {
     private var brain: AssistantBrain? = null
     private var brainKey = ""
     private var brainModel = ""
+    /** The last question sent to Claude, asked again when the passcode is typed on its own. */
+    private var lastQuestion: String? = null
+
     /** The question waiting for the passcode, if Mehitha just asked for it. */
     private var waitingPasscodeFor: String? = null
     /** The chat on screen, saved on the phone as it grows. */
@@ -154,6 +157,13 @@ class MainActivity : Activity() {
             else addReply(Passcode.WRONG, null, spoken, problem = true)
             return
         }
+        if (Passcode.check(this, text)) {
+            // The passcode typed on its own, even when Mehitha didn't just ask: never show it or send it to Claude.
+            addMine("••••••")
+            brain()?.unlocked = true
+            lastQuestion?.let { ask(it, spoken, echo = false) } ?: addReply("Passcode accepted. What would you like to know?", null, spoken)
+            return
+        }
         if (echo) addMine(text)
         val command = Command.parse(text)
         if (command is Command.Usuals) { showUsuals(spoken); return }
@@ -168,6 +178,7 @@ class MainActivity : Activity() {
         }
 
         val b = brain()
+        lastQuestion = text
         busy = true
         updateSend()
         val thinking = addThinking()

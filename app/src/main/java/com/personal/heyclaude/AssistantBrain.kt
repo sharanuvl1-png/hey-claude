@@ -157,7 +157,8 @@ class AssistantBrain(
             "Search Sharan's phone data synced to Dropbox: text messages (OTPs removed), WhatsApp and other app " +
                 "messages captured from notifications, screens saved from apps Sharan chose (such as Zerodha holdings or " +
                 "Blinkit orders, with the time they were seen), and the list of files and photos on the phone. " +
-                "Use for questions about messages, people, bookings, payments, documents or files on the phone.",
+                "Use for questions about messages, people, bookings, payments, bank and card alerts, statements, due dates, " +
+                "documents or files on the phone.",
             "query", "A few keywords, e.g. a name, company, amount or file name"))
         .addTool(Tool.builder().name("get_recent_messages")
             .description("Every WhatsApp and other app message saved on Sharan's phone in the last few days (from notifications), " +
@@ -352,6 +353,10 @@ class AssistantBrain(
             what would cancel the setup. Use only real prices with their date; never give a level you didn't get from a tool or the scan.
             Use the tools to look things up. Never make up facts, numbers, prices or dates: if a tool
             returns nothing or fails, say plainly that you couldn't find it and what Sharan could give you.
+            Check every place that could hold the answer before saying it isn't there. Card statements, billing
+            cycles, due dates, bills, payments and bank alerts mostly arrive as SMS and app or Gmail notifications:
+            use search_phone_data for them (try the bank's name, "statement", "due", "card ending") as well as Dropbox.
+            A credit card's billing cycle can be worked out from its statement SMS (statement date, due date).
             Never place orders, payments or trades, and never send messages on Sharan's behalf.
             Never read out OTPs or passwords.
             When a picture would help, such as a stock chart from get_stock_chart or an image link you
@@ -381,6 +386,7 @@ class AssistantBrain(
         private val UNLOCKED = """
             Sharan has said the right passcode in this chat, so you may share confidential details
             (card, bank, PAN, Aadhaar, salary, policy numbers and similar) found with the tools.
+            Don't ask for the passcode again.
         """.trimIndent()
     }
 }
