@@ -19,6 +19,7 @@ object Answers {
         }
         is Command.Alerts -> Alerts.summary(ctx)
         is Command.Today -> Today.answer(ctx, command.what)
+        is Command.MyReminders -> Reminders.listText(Reminders.upcoming(ctx))
         is Command.Usuals -> Groceries.answer(Groceries.log(ctx), Groceries.saved(ctx), PhoneData.today())
         is Command.UsualsAdd -> Groceries.save(ctx, command.items).let {
             "Saved ${Shopping.said(command.items.map { i -> Groceries.name(i) })} to your usuals. Say \"my usuals\" to open them in Blinkit. You have ${it.size}."

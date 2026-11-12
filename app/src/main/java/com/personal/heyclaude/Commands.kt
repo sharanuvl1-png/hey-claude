@@ -31,6 +31,8 @@ sealed class Command {
     data class FindDocument(val question: String) : Command()
     data class Remember(val fact: String) : Command()
     data class Reminder(val request: String) : Command()
+    /** The reminders still to come. */
+    object MyReminders : Command()
     data class Ask(val question: String) : Command()
 
     companion object {
@@ -63,6 +65,7 @@ sealed class Command {
         private val SHOP = re("^(please )?(add|put|get|buy|search( for)?|find|look for|show me|order)( me)? (?<items>.+?) (on|in|from|to|into)( my)? $SHOPS( cart| app)?\\W*$")
         private val ORDERS = re("\\bwhere('?s| is| are) my (?<s1>blinkit |amazon |flipkart )?(\\w+ )?(orders?|parcels?|packages?|stuff)\\b|\\border status\\b|\\btrack (my )?(?<s2>blinkit |amazon |flipkart )?orders?\\b|\\bmy (?<s3>blinkit|amazon|flipkart|myntra) orders?\\b|\\b(status of|updates? on) my (?<s4>blinkit |amazon |flipkart )?orders?\\b")
         private val REMEMBER = re("^(please )?remember( that)?\\s+(.{3,})$")
+        private val MY_REMINDERS = re("\\b(my|show|list|any|upcoming|all|the|what are my) reminders\\b|^reminders\\W*$|\\bwhere\\b.*\\breminders?\\b|\\breminders? (list|set)\\W*$")
         private val REMIND = re("^(please )?(r[ei]?[mn]{1,2}i?nd|set (a )?reminder)\\b.{3,}")
         private val MONEY = re("\\b(spen[dt]|spending|expenses?|subscriptions?|how much (did|have) i (pay|paid)|paid for|my money)\\b")
         private val DOC = re("\\b(expire|expires|expiry|expiring|renewal|renew)\\b|^(find|where('s| is)) my\\b.*\\b(policy|document|certificate|card|bill|receipt|invoice|papers?|insurance|passport|licen[cs]e|rc)\\b")
@@ -83,6 +86,7 @@ sealed class Command {
             val t = heard.trim().replace(Regex("\\s+"), " ")
             REMEMBER.find(t)?.let { return Remember(it.groupValues[3].trim().trimEnd('.')) }
             if (REMIND.containsMatchIn(t)) return Reminder(t)
+            if (MY_REMINDERS.containsMatchIn(t)) return MyReminders
             if (BRIEFING.matches(t)) return Briefing
             LIST_SEND.find(t)?.let { return ListSend(it.groups["shop"]!!.value.lowercase()) }
             USUALS_ADD.find(t)?.let { return UsualsAdd(Shopping.items(it.groups["items"]!!.value)) }

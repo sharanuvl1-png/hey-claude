@@ -56,6 +56,8 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
             (if (notes.isEmpty()) "" else "\n\n" + notes.joinToString("\n"))
     }
 
+    override fun reminders(): String = Reminders.listText(Reminders.upcoming(ctx))
+
     override fun recentMessages(days: Int, app: String): String {
         val d = days.coerceIn(1, 14).toLong()
         return Chats.listText(Chats.read(java.io.File(ctx.filesDir, "notifications"), PhoneData.today(), d), d, app)

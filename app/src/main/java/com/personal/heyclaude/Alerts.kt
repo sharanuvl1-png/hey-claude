@@ -282,6 +282,8 @@ object Memory {
 /** Reminders Claude worked out (REMIND lines), shown as notifications at the time. */
 object Reminders {
     private val SHOWN = DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.US)
+    private val LISTED = DateTimeFormatter.ofPattern("EEE d MMM, h:mm a", Locale.US)
+    private const val PREFS = "reminders"
 
     /** Schedules each reminder; returns a line per reminder for the screen. */
     fun schedule(ctx: Context, notes: List<ReminderNote>): List<String> = notes.mapNotNull { r ->
@@ -292,14 +294,39 @@ object Reminders {
             .setInputData(Data.Builder().putString("text", r.text).putString("at", r.at.toString()).build())
             .build()
         WorkManager.getInstance(ctx).enqueueUniqueWork("remind:${r.at}:${r.text.hashCode()}", ExistingWorkPolicy.REPLACE, work)
-        "Reminder set for ${r.at.format(SHOWN)}: ${r.text}"
+        save(ctx, saved(ctx).filter { it != r } + r)
+        "Reminder set for ${r.at.format(SHOWN)}: ${r.text}. It pops up with a sound. Say \"my reminders\" to see them all."
+    }
+
+    /** Reminders still to come, soonest first. */
+    fun upcoming(ctx: Context, now: LocalDateTime = PhoneData.now()): List<ReminderNote> =
+        saved(ctx).filter { it.at.isAfter(now) }.sortedBy { it.at }
+
+    /** The answer to "my reminders". */
+    fun listText(list: List<ReminderNote>): String =
+        if (list.isEmpty()) "You have no reminders set. Say something like \"remind me to call Ravi at 6 pm\"."
+        else "You have ${list.size} reminder${if (list.size > 1) "s" else ""}:\n" + list.take(10).joinToString("\n") { "• ${it.at.format(LISTED)}: ${it.text}" }
+
+    /** Forgets a reminder once it has gone off. */
+    fun done(ctx: Context, at: String?, text: String) = save(ctx, saved(ctx).filterNot { it.at.toString() == at && it.text == text })
+
+    private fun saved(ctx: Context): List<ReminderNote> =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("list", "").orEmpty().lines().mapNotNull { l ->
+            val (at, text) = l.split("|", limit = 2).takeIf { it.size == 2 } ?: return@mapNotNull null
+            try { ReminderNote(LocalDateTime.parse(at), text) } catch (e: Exception) { null }
+        }
+
+    private fun save(ctx: Context, list: List<ReminderNote>) {
+        val keep = list.filter { it.at.isAfter(PhoneData.now().minusDays(1)) }
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putString("list", keep.joinToString("\n") { "${it.at}|${it.text.replace("\n", " ")}" }).apply()
     }
 }
-
 class ReminderWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
     override fun doWork(): Result {
         val text = inputData.getString("text") ?: return Result.success()
         Alerts.post(applicationContext, Alert("remind:${inputData.getString("at")}:${text.hashCode()}", "Reminder", text))
+        Reminders.done(applicationContext, inputData.getString("at"), text)
         return Result.success()
     }
 }

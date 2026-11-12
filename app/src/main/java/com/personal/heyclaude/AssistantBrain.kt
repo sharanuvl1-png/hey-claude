@@ -39,6 +39,9 @@ interface MehithaTools {
     /** Every WhatsApp and app message saved in the last [days] days, optionally from one [app]. */
     fun recentMessages(days: Int, app: String): String = "No messages are saved on this phone."
 
+    /** Reminders Mehitha has set that are still to come. */
+    fun reminders(): String = "No reminders are set."
+
     /** True when the work OneDrive is linked, so its tools are offered. */
     val hasWorkFiles: Boolean get() = false
 
@@ -141,6 +144,9 @@ class AssistantBrain(
                 .required(listOf("days"))
                 .build())
             .build())
+        .addTool(tool("get_reminders",
+            "The reminders Mehitha has set on this phone that are still to come, with date and time. Use it when Sharan asks about reminders.",
+            null, null))
         .addTool(tool("get_stock_scan",
             "Today's swing-trading stock scan: watchlist verdicts, entry, stop-loss, targets, and top picks " +
                 "from Nifty 50, Midcap 150 and Smallcap 100. Use for any question about stocks or the market scan.",
@@ -210,6 +216,7 @@ class AssistantBrain(
                         ((use._input().convert(Map::class.java)?.get("days"))?.toString()?.toDoubleOrNull()?.toInt() ?: 3).coerceIn(1, 14),
                         stringArg(use._input(), "app")) to false
                     "search_dropbox" -> tools.searchDropbox(stringArg(use._input(), "query")) to false
+                    "get_reminders" -> tools.reminders() to false
                     "search_work_onedrive" -> tools.searchWorkOneDrive(stringArg(use._input(), "query")) to false
                     else -> "Unknown tool ${use.name()}" to true
                 }
@@ -305,6 +312,8 @@ class AssistantBrain(
             You can set reminders: when Sharan asks to be reminded of something, work out the date and
             time from the current time below and add a line exactly like
             "REMIND: YYYY-MM-DD HH:MM | what to remind" (24-hour time; 09:00 if no time is given).
+            Write the reminder text cleanly, fixing obvious voice typos ("joined ting" means "Join meeting").
+            The reminder pops up with the phone's notification sound.
             The app turns that line into a notification, so confirm the reminder in one short sentence.
         """.trimIndent()
 

@@ -84,7 +84,7 @@ object Prompts {
 
     fun reminder(t: LocalDateTime, request: String) = oneLine(
         "$request. ${now(t)} Work out the date and time I mean. Reply with a line exactly like REMIND: YYYY-MM-DD HH:MM | what to remind, " +
-            "then confirm it in one short sentence. If no time is given use 09:00."
+            "then confirm it in one short sentence. If no time is given use 09:00. Write the reminder text cleanly, fixing obvious voice typos."
     )
 
     fun ask(question: String) = question
