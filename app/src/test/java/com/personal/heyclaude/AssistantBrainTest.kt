@@ -88,6 +88,25 @@ class AssistantBrainTest {
         assertFalse(api.requests[1], api.requests[1].contains("car renewal"))
     }
 
+    @Test fun searchesGmailOnlyWhenLinked() {
+        val linked = object : MehithaTools by FakeTools() {
+            override val hasGmail = true
+            override fun searchGmail(query: String) = "Gmail messages for \"$query\" (1): id 1a | ICICI statement"
+        }
+        val api = FakeApi.ok(
+            msg("tool_use", """{"type":"tool_use","id":"tu_1","name":"search_gmail","input":{"query":"credit card statement newer_than:2m"}}"""),
+            text("Your ICICI card is due on 30 Nov."),
+        )
+        assertEquals("Your ICICI card is due on 30 Nov.", AssistantBrain("k", linked, api.url, clock).ask("my card due dates"))
+        api.stop()
+        assertTrue(api.requests[0].contains("\"search_gmail\"") && api.requests[0].contains("cover every card"))
+        assertTrue(api.requests[1].contains("ICICI statement"))
+        val off = FakeApi.ok(text("ok"))
+        AssistantBrain("k", FakeTools(), off.url, clock).ask("hi")
+        off.stop()
+        assertFalse(off.requests[0].contains("\"search_gmail\""))
+    }
+
     @Test fun readsTheCalendarForAnotherDay() {
         var asked = ""
         val tools = object : MehithaTools by FakeTools() {

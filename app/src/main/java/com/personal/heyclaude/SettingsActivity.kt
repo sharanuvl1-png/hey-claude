@@ -50,6 +50,9 @@ class SettingsActivity : Activity() {
     private val docs by lazy { DropboxClient(this, PhoneTools.DOCS) }
     private val work by lazy { OneDriveClient(this) }
     private lateinit var workRow: Ui.Row
+    private lateinit var gmailRow: Ui.Row
+    private lateinit var gmailBox: LinearLayout
+    private val gmail by lazy { GmailClient(this) }
     private lateinit var screensRow: Ui.Row
     private lateinit var workBox: LinearLayout
     private lateinit var syncStatus: TextView
@@ -134,6 +137,9 @@ class SettingsActivity : Activity() {
         docsRow = Ui.Row(this, "Dropbox documents", "Link") { docsBox.visibility = View.VISIBLE }
         data.addView(docsRow.view)
         data.addView(docsLinkBox().also { docsBox = it })
+        gmailRow = Ui.Row(this, "Gmail", "Link") { gmailBox.visibility = View.VISIBLE }
+        data.addView(gmailRow.view)
+        data.addView(gmailLinkBox().also { gmailBox = it })
         workRow = Ui.Row(this, "Work OneDrive", "Link") { workBox.visibility = View.VISIBLE }
         data.addView(workRow.view)
         data.addView(workLinkBox().also { workBox = it })
@@ -214,6 +220,42 @@ class SettingsActivity : Activity() {
                 runOnUiThread { toast(msg); refresh() }
             }.start()
         })
+        addView(Ui.spacer(this@SettingsActivity, 8))
+    }
+
+    /**
+     * Linking the personal Gmail (read-only) through a small script in Sharan's own Google account
+     * (tools/gmail-link): paste its web app URL and key.
+     */
+    private fun gmailLinkBox(): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        visibility = View.GONE
+        addView(Ui.text(this@SettingsActivity, "One time, on a computer signed in to this Gmail: open the Mehitha Gmail script, " +
+            "and follow the steps at its top (make a project at script.google.com, paste it, run setup, deploy as a web app). " +
+            "It can only search and read your mail, never send or delete. Then paste the web app URL and the key here.", 12.5f, Ui.MUTED))
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        addView(Ui.pill(this@SettingsActivity, "1 · Open the Gmail script") {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GMAIL_SCRIPT)))
+        })
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        val url = Ui.field(this@SettingsActivity, "Web app URL (https://script.google.com/…)").apply { setText(gmail.url) }
+        addView(url)
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        val key = Ui.field(this@SettingsActivity, "Key from the script's log")
+        addView(key)
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        val status = Ui.text(this@SettingsActivity, "", 13f, Ui.TEXT)
+        addView(Ui.pill(this@SettingsActivity, "2 · Link Gmail") {
+            status.text = "Checking…"
+            val u = url.text.toString(); val k = key.text.toString()
+            Thread {
+                val msg = try { "Gmail linked (${gmail.link(u, k)}). Ask \"my credit card due dates\"." }
+                    catch (e: Exception) { "Linking failed: ${e.message?.take(160)}" }
+                runOnUiThread { status.text = if (msg.startsWith("Linking")) msg else ""; toast(msg); refresh() }
+            }.start()
+        })
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        addView(status)
         addView(Ui.spacer(this@SettingsActivity, 8))
     }
 
@@ -415,6 +457,9 @@ class SettingsActivity : Activity() {
         docsRow.set(docs.isLinked, "Linked: Mehitha searches your Dropbox files (read-only)",
             "Link to let Mehitha find your documents in Dropbox", required = false)
         if (docs.isLinked) docsBox.visibility = View.GONE
+        gmailRow.set(gmail.isLinked, "Linked: Mehitha searches your Gmail for bills, statements and orders (read-only)",
+            "Link to let Mehitha search your personal Gmail", required = false)
+        if (gmail.isLinked) gmailBox.visibility = View.GONE
         workRow.set(work.isLinked, "Linked: Mehitha searches your work files for work questions (read-only)",
             "Optional: let Mehitha find and read documents in your company OneDrive", required = false)
         if (work.isLinked) workBox.visibility = View.GONE
@@ -441,6 +486,9 @@ class SettingsActivity : Activity() {
     }
 
     companion object {
+        /** The Gmail link script and its setup steps. */
+        const val GMAIL_SCRIPT = "https://github.com/sharanuvl1-png/hey-claude/blob/main/tools/gmail-link/Code.gs"
+
         fun hasService(ctx: Context, cls: Class<*>) = try {
             ctx.packageManager.getServiceInfo(ComponentName(ctx, cls), 0); true
         } catch (e: PackageManager.NameNotFoundException) { false }

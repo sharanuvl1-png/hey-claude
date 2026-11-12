@@ -46,6 +46,15 @@ interface MehithaTools {
     /** The phone calendar's meetings for [days] days from [date] (YYYY-MM-DD). */
     fun calendar(date: String, days: Int): String = "The calendar isn't available here."
 
+    /** True when Sharan's personal Gmail is linked (read-only), so its tools are offered. */
+    val hasGmail: Boolean get() = false
+
+    /** Searches Sharan's personal Gmail with a Gmail search query. */
+    fun searchGmail(query: String): String = "Gmail isn't linked in Mehitha."
+
+    /** One Gmail message's text, by the id search_gmail gave. */
+    fun readGmail(id: String): String = "Gmail isn't linked in Mehitha."
+
     /** True when the work OneDrive is linked, so its tools are offered. */
     val hasWorkFiles: Boolean get() = false
 
@@ -205,6 +214,17 @@ class AssistantBrain(
             "Open one file from Sharan's Dropbox, by the path search_dropbox gave, and read it: PDFs (policies, " +
                 "statements, bills) and photos or scans are read in full. Use it to find dates, amounts or details inside a document.",
             "path", "The file's path from search_dropbox, e.g. /Documents/Insurance/Policy.pdf"))
+        .apply { if (tools.hasGmail) {
+            addTool(tool("search_gmail",
+                "Search Sharan's personal Gmail (read-only). Use it for card statements and bills, due dates, bank and " +
+                    "payment emails, orders, bookings, tickets, policies and anything Sharan says is in email. Returns each " +
+                    "message's id, date, sender, subject and preview, newest first; then read_gmail for the full text.",
+                "query", "A Gmail search, e.g. statement newer_than:2m, from:icici bill, subject:(ticket OR booking)"))
+            addTool(tool("read_gmail",
+                "Read one message from Sharan's Gmail by the id search_gmail gave: sender, date, subject, open link and text. " +
+                    "Attachments are listed by name but not read.",
+                "id", "The message id from search_gmail"))
+        } }
         .apply { if (tools.hasWorkFiles) {
             addTool(tool("search_work_onedrive",
                 "Search Sharan's work OneDrive (office documents) by file name and content. Only for work questions; " +
@@ -263,6 +283,8 @@ class AssistantBrain(
                         stringArg(use._input(), "app")) to false
                     "search_dropbox" -> tools.searchDropbox(stringArg(use._input(), "query")) to false
                     "get_reminders" -> tools.reminders() to false
+                    "search_gmail" -> tools.searchGmail(stringArg(use._input(), "query")) to false
+                    "read_gmail" -> tools.readGmail(stringArg(use._input(), "id")) to false
                     "get_calendar" -> tools.calendar(stringArg(use._input(), "date"),
                         ((use._input().convert(Map::class.java)?.get("days"))?.toString()?.toDoubleOrNull()?.toInt() ?: 1).coerceIn(1, 14)) to false
                     "search_work_onedrive" -> tools.searchWorkOneDrive(stringArg(use._input(), "query")) to false
@@ -354,9 +376,12 @@ class AssistantBrain(
             Use the tools to look things up. Never make up facts, numbers, prices or dates: if a tool
             returns nothing or fails, say plainly that you couldn't find it and what Sharan could give you.
             Check every place that could hold the answer before saying it isn't there. Card statements, billing
-            cycles, due dates, bills, payments and bank alerts mostly arrive as SMS and app or Gmail notifications:
-            use search_phone_data for them (try the bank's name, "statement", "due", "card ending") as well as Dropbox.
-            A credit card's billing cycle can be worked out from its statement SMS (statement date, due date).
+            cycles, due dates, bills, payments and bank alerts mostly arrive by email (search_gmail, when offered)
+            and as SMS or app notifications (search_phone_data); try the bank's name, "statement", "due", "bill" as well as Dropbox.
+            A credit card's billing cycle comes from its statement (the period it covers, or the statement and due dates).
+            For any question about Sharan's credit cards, cover every card Sharan has, not only the first ones found:
+            search widely (e.g. "credit card statement newer_than:2m", then each bank such as SBI, HDFC, ICICI, Axis,
+            Kotak, AU, IDFC, IndusInd, RBL, Yes, OneCard, American Express, CRED bill mails) and list each card on its own line.
             Never place orders, payments or trades, and never send messages on Sharan's behalf.
             Never read out OTPs or passwords.
             When a picture would help, such as a stock chart from get_stock_chart or an image link you

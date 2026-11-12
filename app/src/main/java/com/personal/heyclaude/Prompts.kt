@@ -26,7 +26,7 @@ object Prompts {
     private const val REMIND_HOW = "If there is a date worth a reminder, add a line exactly like REMIND: YYYY-MM-DD HH:MM | what to remind, and I will set it on my phone."
 
     /** For answers inside Mehitha, which can't reach Outlook, Slack, Gmail or Drive: use only the phone's data. */
-    private const val PHONE_ONLY = "Use only the facts given here and your tools. Don't mention Outlook, Slack, Gmail or Drive, or that you can't reach them."
+    private const val PHONE_ONLY = "Use only the facts given here and your tools (search_gmail too when you have it). Don't mention Outlook, Slack or Drive, or that you can't reach them."
 
     private fun now(t: LocalDateTime) = "It is ${t.format(STAMP)} in India."
 
@@ -66,7 +66,7 @@ object Prompts {
     )
 
     fun findDocument(t: LocalDateTime, question: String, files: String, apps: Boolean = true, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
-        "$question ${now(t)} " + (if (apps) "Search my Dropbox, Gmail and Google Drive for it. " else "$PHONE_ONLY Search my Dropbox documents with search_dropbox and read the best match. If it's a work document and you have search_work_onedrive, search my work OneDrive instead. ") +
+        "$question ${now(t)} " + (if (apps) "Search my Dropbox, Gmail and Google Drive for it. " else "$PHONE_ONLY Search my Dropbox documents with search_dropbox and read the best match; if it may be an email (statements, bills, tickets), also use search_gmail when you have it. If it's a work document and you have search_work_onedrive, search my work OneDrive instead. ") +
             "Matching file names on my phone: $files. " +
             "Tell me the key date and where the document is. $REMIND_HOW Set it one month before an expiry. $RULES"
     )

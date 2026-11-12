@@ -58,6 +58,20 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
 
     override fun reminders(): String = Reminders.listText(Reminders.upcoming(ctx))
 
+    override val hasGmail: Boolean get() = GmailClient(ctx).isLinked
+
+    override fun searchGmail(query: String): String {
+        val gmail = GmailClient(ctx)
+        if (!gmail.isLinked) return "Gmail isn't linked in Mehitha. Sharan can link it in Settings, Phone data, Gmail."
+        return GmailClient.text(query, gmail.search(query, 15))
+    }
+
+    override fun readGmail(id: String): String {
+        val gmail = GmailClient(ctx)
+        if (!gmail.isLinked) return "Gmail isn't linked in Mehitha."
+        return GmailClient.mailText(gmail.read(id)).take(14_000)
+    }
+
     override fun calendar(date: String, days: Int): String {
         val from = runCatching { java.time.LocalDate.parse(date.trim()) }.getOrNull() ?: PhoneData.today()
         return Today.calendarText(ctx, from, days.coerceIn(1, 14))
