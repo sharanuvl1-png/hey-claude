@@ -633,7 +633,8 @@ def report(name, symbol, d, h4, lv, setup, pats, divs, cands, rec, conf, grade, 
               "", "🛑 **Stop-Loss**",
               f"- Conservative: below daily swing low (₹{setup['stop_cons']:.1f})",
               f"- Aggressive: below 4H structure (₹{setup['stop_aggr']:.1f})",
-              f"- Risk per share ≈ ₹{setup['risk']:.1f}; reward:risk to T1 ≈ {setup['rr1']:.1f}", "",
+              f"- Risk per share ≈ ₹{setup['risk']:.1f}; reward:risk to T1 ≈ {setup['rr1']:.1f}"] + [
+              f"- Time to T{i}: {timeline_text(t)}" for i, t in enumerate(setup.get("timeline", []), 1)] + ["",
               "**📌 Strategy Notes**"]
     notes = [f"Higher timeframe: daily trend is {d['trend'][0].lower()}; only take longs while price holds above ₹{lv['strong'][0]:.1f}.",
              f"Entry timing: wait for a bullish 4H candle (engulfing/hammer) inside {rng(setup['entry'])} rather than buying mid-range.",
@@ -654,6 +655,37 @@ def report(name, symbol, d, h4, lv, setup, pats, divs, cands, rec, conf, grade, 
 
 
 # ----------------------------------------------------------------- main
+
+def timeline_text(t):
+    """'about 9 trading days (did so 62% of the time in the last 2 years)', from time_to_target."""
+    if not t:
+        return "not enough history to say"
+    if t["median"] is None:
+        return f"it never rose this much within {t['horizon']} trading days in the price history"
+    return (f"about {t['median']} trading days (it rose this much within {t['horizon']} trading days "
+            f"{100 * t['hit_rate']:.0f}% of the time in the last 2 years)")
+
+
+def time_to_target(df, gain, horizon=60):
+    """How long this stock took, in the price history we have, to rise by `gain` (0.06 = 6%).
+
+    From every close at least `horizon` trading days ago, finds the first later day whose high
+    reached close × (1 + gain) within `horizon` trading days. Returns the median trading days
+    of the times it did, how often it did, and how many starting days were checked, or None
+    when there is too little history. This is the stock's own past behaviour, not a forecast.
+    """
+    closes, highs = df["Close"].to_numpy(dtype=float), df["High"].to_numpy(dtype=float)
+    starts = range(0, len(df) - horizon)
+    if gain <= 0 or len(starts) < 60:
+        return None
+    days = []
+    for i in starts:
+        hit = np.nonzero(highs[i + 1:i + 1 + horizon] >= closes[i] * (1 + gain))[0]
+        if len(hit):
+            days.append(int(hit[0]) + 1)
+    return {"median": int(np.median(days)) if days else None, "hit_rate": len(days) / len(starts),
+            "samples": len(starts), "horizon": horizon}
+
 
 def analyse(frame):
     df = add_indicators(frame)
@@ -676,6 +708,8 @@ def run(symbol, name, out):
         h4t = h4["trend"][0]
     lv = key_levels(d["df"], d["highs"], d["lows"])
     setup = swing_setup(d["df"], h4["df"] if h4["df"] is not None else pd.DataFrame(), lv, d["highs"], d["lows"])
+    mid = sum(setup["entry"]) / 2
+    setup["timeline"] = [time_to_target(d["df"], t / mid - 1) for t in setup["targets"][:2]]
     pats = detect_patterns(d["df"], d["highs"], d["lows"])
     divs = divergence(d["df"], d["highs"], d["lows"])
     cands = candle_signals(d["df"])

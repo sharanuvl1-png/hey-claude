@@ -143,6 +143,15 @@ def setup_cells(r):
             f"₹{s['targets'][0]:.1f}")
 
 
+def extra_cells(r):
+    """Target 2, Target 3 and the usual time to T1 (median trading days, and how often it got there)."""
+    s = r["setup"]
+    t = (s.get("timeline") or [None])[0]
+    when = "n/a" if not t else (f"not within {t['horizon']} days" if t["median"] is None
+                                else f"~{t['median']} trading days ({100 * t['hit_rate']:.0f}% of the time)")
+    return f"₹{s['targets'][1]:.1f} | ₹{s['targets'][2]:.1f} | {when}"
+
+
 def perf_points(ret6m):
     return 2 if ret6m >= 0.20 else 1 if ret6m > 0 else -1 if ret6m < -0.10 else 0
 
@@ -238,17 +247,20 @@ def main():
     lines += ["## Watchlist", "",
               f"Your own stocks plus the strongest {', '.join(f'{k} {t}' for t, _, k in INDICES)} stocks "
               f"(list from {made.isoformat() if made else 'n/a'}, rebuilt every Monday).", ""]
-    lines += ["| Group | Stock | Close | Verdict | Grade | Entry | Stop-loss (risk) | Target 1 | Chart |",
-              "|---|---|---|---|---|---|---|---|---|"]
+    # New columns go after Chart so older Mehitha builds, which read columns by position, still work.
+    lines += ["Time to T1: the median number of trading days this stock took, in the last 2 years, to rise from a close "
+              "by as much as T1 is above the entry, and how often it managed that within 60 trading days. Past behaviour, not a forecast.", "",
+              "| Group | Stock | Close | Verdict | Grade | Entry | Stop-loss (risk) | Target 1 | Chart | Target 2 | Target 3 | Time to T1 |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for group, w, name in watch:
         try:
             symbol, found = tc.resolve_symbol(w)
             r = tc.run(symbol, name or found, args.out)
             results[symbol] = r
             lines.append(f"| {group} | {r['name']} | ₹{r['close']:.1f} | {r['rec']} | {r['grade']} | {setup_cells(r)} | "
-                         f"{os.path.relpath(r['png'], args.out)} |")
+                         f"{os.path.relpath(r['png'], args.out)} | {extra_cells(r)} |")
         except BaseException as e:  # techchart raises SystemExit on bad or stale data
-            lines.append(f"| {group} | {w} | – | NO DATA | – | – | – | – | {str(e)[:120]} |")
+            lines.append(f"| {group} | {w} | – | NO DATA | – | – | – | – | {str(e)[:120]} | – | – | – |")
     lines += [""] + [f"- {n}" for n in notes] + ([""] if notes else [])
 
     # Today's buy setups per index.

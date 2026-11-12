@@ -61,23 +61,27 @@ object Answers {
         val t = PhoneData.now()
         val day = t.toLocalDate()
         val data = AssistantActivity.phoneData ?: PhoneData(ctx)
+        // Claude inside Mehitha takes long prompts; the Claude app needs them short (see Prompts.oneLine).
+        val max = if (inApp) 8000 else Prompts.MAX_PROMPT
+        val dataMax = if (inApp) 4000 else MAX_DATA
+        fun scan() = Prompts.scanSummary(data.scan(), if (inApp) 3000 else 450)
         fun bills() = (if (Bills.hasSource(ctx, data)) Money.billsText(Bills.upcoming(ctx, data, day), day) else PhoneData.NO_SMS).take(300)
         return when (command) {
-            is Command.Briefing -> Prompts.briefing(t, bills(), Prompts.scanSummary(data.scan()),
-                try { Today.answer(ctx, "all") } catch (e: Exception) { "" }, apps)
-            is Command.Money -> Prompts.money(t, command.question, data.moneyFacts(command.question).take(MAX_DATA))
+            is Command.Briefing -> Prompts.briefing(t, bills(), scan(),
+                try { Today.answer(ctx, "all") } catch (e: Exception) { "" }, apps, max)
+            is Command.Money -> Prompts.money(t, command.question, data.moneyFacts(command.question).take(dataMax), max)
             is Command.SpendingReport -> Prompts.spendingReport(t,
-                (if (data.canReadSms) Money.report(data.spends(), day) else PhoneData.NO_SMS).take(MAX_DATA))
+                (if (data.canReadSms) Money.report(data.spends(), day) else PhoneData.NO_SMS).take(dataMax), max)
             is Command.OddCharges -> {
                 val spends = data.spends()
                 val flags = Money.oddCharges(spends, t, days = 7).joinToString("; ") { it.text }.ifEmpty { "none" }
-                Prompts.oddCharges(t, if (data.canReadSms) flags else PhoneData.NO_SMS, Money.recentLines(spends, t, 7).take(MAX_DATA))
+                Prompts.oddCharges(t, if (data.canReadSms) flags else PhoneData.NO_SMS, Money.recentLines(spends, t, 7).take(dataMax), max)
             }
-            is Command.StockCheck -> Prompts.stockCheck(t, command.stock, Prompts.scanFor(data.scan(), command.stock))
-            is Command.CatchUp -> Prompts.catchUp(t, data.messagesToday(MAX_DATA), apps)
-            is Command.FindDocument -> Prompts.findDocument(t, command.question, data.files(command.question), apps)
+            is Command.StockCheck -> Prompts.stockCheck(t, command.stock, Prompts.scanFor(data.scan(), command.stock), max)
+            is Command.CatchUp -> Prompts.catchUp(t, data.messagesToday(dataMax), apps, max)
+            is Command.FindDocument -> Prompts.findDocument(t, command.question, data.files(command.question), apps, max)
             is Command.WeeklyReview -> Prompts.weeklyReview(t,
-                (if (data.canReadSms) Money.week(data.spends(), t) else PhoneData.NO_SMS).take(MAX_DATA / 2), bills(), Prompts.scanSummary(data.scan()), apps)
+                (if (data.canReadSms) Money.week(data.spends(), t) else PhoneData.NO_SMS).take(dataMax / 2), bills(), scan(), apps, max)
             is Command.Reminder -> Prompts.reminder(t, command.request)
             else -> text
         }
