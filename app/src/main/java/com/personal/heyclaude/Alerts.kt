@@ -32,7 +32,31 @@ import java.util.concurrent.TimeUnit
 
 /** Mehitha speaking up first: notifications, each said only once, and a list for "any alerts?". */
 object Alerts {
-    private const val CHANNEL = "mehitha_alerts"
+    /**
+     * A new channel id, so every phone gets a pop-up (heads-up) channel: Android never raises the
+     * importance of a channel that already exists, and the old one may have been set to silent.
+     */
+    const val CHANNEL = "mehitha_popup"
+    private const val OLD_CHANNEL = "mehitha_alerts"
+
+    /** Creates the pop-up channel (high importance, sound and vibration) and removes the old one. */
+    fun ensureChannel(ctx: Context) {
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        if (nm.getNotificationChannel(CHANNEL) == null) {
+            nm.createNotificationChannel(NotificationChannel(CHANNEL, "Mehitha alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Morning briefing, meetings, deliveries, bills and stock alerts"
+                enableVibration(true)
+            })
+        }
+        nm.deleteNotificationChannel(OLD_CHANNEL)
+    }
+
+    /** True when Mehitha's alerts can show and pop up on screen. */
+    fun canPopUp(ctx: Context): Boolean {
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        ensureChannel(ctx)
+        return nm.areNotificationsEnabled() && (nm.getNotificationChannel(CHANNEL)?.importance ?: 0) >= NotificationManager.IMPORTANCE_HIGH
+    }
     private const val PREFS = "alerts"
     private val TIME = DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.US)
     /** Set on a tap intent when the answer to EXTRA_ASK should be read aloud straight away. */
@@ -44,7 +68,7 @@ object Alerts {
         val seen = prefs.getStringSet("seen", emptySet())!!
         if (alert.id in seen) return false
         val nm = ctx.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL, "Mehitha alerts", NotificationManager.IMPORTANCE_HIGH))
+        ensureChannel(ctx)
         val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         fun web(url: String, code: Int) = PendingIntent.getActivity(ctx, code,
             Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), flags)
@@ -57,6 +81,7 @@ object Alerts {
         val builder = Notification.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_mehitha)
             .setContentTitle(alert.title)
+            .setCategory(Notification.CATEGORY_REMINDER)
             .setContentText(alert.text)
             .setStyle(if (chart != null) Notification.BigPictureStyle().bigPicture(chart).setSummaryText(alert.text)
                       else Notification.BigTextStyle().bigText(alert.text))

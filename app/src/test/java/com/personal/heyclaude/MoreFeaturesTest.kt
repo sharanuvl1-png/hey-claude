@@ -116,4 +116,17 @@ class MoreFeaturesTest {
         assertTrue(text, !text.contains("Good morning"))
         assertEquals("No new alerts in the last two days.", Alerts.listText(listOf("Good morning: 2 meetings.")))
     }
+
+    @Test fun alertsUseAPopUpChannel() {
+        val app = RuntimeEnvironment.getApplication()
+        val nm = app.getSystemService(android.app.NotificationManager::class.java)
+        nm.createNotificationChannel(android.app.NotificationChannel("mehitha_alerts", "old", android.app.NotificationManager.IMPORTANCE_LOW))
+        Alerts.post(app, Alert("popup:test", "Good morning", "Tap for your briefing."))
+        val channel = nm.getNotificationChannel(Alerts.CHANNEL)!!
+        assertEquals(android.app.NotificationManager.IMPORTANCE_HIGH, channel.importance)
+        assertNull(nm.getNotificationChannel("mehitha_alerts"))
+        val posted = org.robolectric.Shadows.shadowOf(nm).allNotifications.single()
+        assertEquals(Alerts.CHANNEL, posted.channelId)
+        assertTrue(Alerts.canPopUp(app))
+    }
 }
