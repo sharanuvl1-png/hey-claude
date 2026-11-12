@@ -44,11 +44,13 @@ object AssistantText {
         return Reply(reply.trim(), sentences.take(2).joinToString(" "), pictures)
     }
 
+    /** [text] as it should be said: bullets aren't read, and each line of a list is its own sentence. */
+    fun speakable(text: String): String =
+        text.replace("•", " ").replace(Regex("(?<![.!?:])[ \\t]*\\n+\\s*(?=\\S)"), ". ").replace(Regex("\\s+"), " ").trim()
+
     /** Splits text into chunks the speech engine accepts, breaking at sentence ends. */
     fun chunksForSpeech(text: String, max: Int = 3500): List<String> {
-        // Each line of a list is its own sentence when read aloud; bullets aren't said.
-        val sentences = text.replace("•", " ").replace(Regex("(?<![.!?:])\\s*\\n+\\s*"), ". ").replace(Regex("\\s+"), " ").trim()
-            .split(Regex("(?<=[.!?])\\s+"))
+        val sentences = speakable(text).split(Regex("(?<=[.!?])\\s+"))
         val out = mutableListOf<String>()
         val sb = StringBuilder()
         for (s in sentences) {

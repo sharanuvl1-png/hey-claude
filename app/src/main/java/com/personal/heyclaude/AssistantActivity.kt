@@ -360,7 +360,7 @@ class AssistantActivity : Activity() {
         if (then != null) afterSpeech[id] = then
         if (flush) afterSpeech.keys.retainAll(setOf(id))
         val mode = if (flush) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
-        if (engine.speak(text, mode, null, id) != TextToSpeech.SUCCESS) afterSpeech.remove(id)?.let { handler.post(it) }
+        if (engine.speak(AssistantText.speakable(text), mode, null, id) != TextToSpeech.SUCCESS) afterSpeech.remove(id)?.let { handler.post(it) }
     }
 
     private fun stopSpeaking() {
