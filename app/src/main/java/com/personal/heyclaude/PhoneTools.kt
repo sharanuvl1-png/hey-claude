@@ -45,7 +45,7 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
             parts += section("Screens saved from Sharan's chosen apps (newest first)", AssistantText.bestLines(lines, words, limit = 5))
         }
 
-        if (Environment.isExternalStorageManager()) {
+        if (try { Environment.isExternalStorageManager() } catch (e: Exception) { false }) {
             parts += section("Files on the phone", searchFiles(words))
         } else {
             notes += "Files: not searchable until 'Files and photos' is allowed in the Mehitha app."
