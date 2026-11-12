@@ -90,9 +90,26 @@ object Alerts {
         val items = (ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("recent", "") ?: "").lines()
             .mapNotNull { l -> l.split("\t", limit = 2).takeIf { it.size == 2 }?.let { it[0].toLongOrNull()?.to(it[1]) } }
             .filter { it.first >= since }.sortedByDescending { it.first }
-        if (items.isEmpty()) return "No new alerts in the last two days."
-        return "You have ${items.size} alert${if (items.size > 1) "s" else ""}. " + items.joinToString(" ") { it.second.trimEnd('.') + "." }
+        return listText(items.map { it.second })
     }
+
+    /**
+     * Alerts as a short list, newest first: one line each ("• Bill due tomorrow: Airtel 799 rupees"),
+     * the first sentence only, at most [max] lines. Nudges like "Good morning" are left out.
+     */
+    fun listText(items: List<String>, max: Int = 6): String {
+        val shown = items.filterNot { NUDGE.containsMatchIn(it) }
+        if (shown.isEmpty()) return "No new alerts in the last two days."
+        val lines = shown.take(max).map { a ->
+            val first = a.split(Regex("(?<![Rr][Ss]|[Nn]o|vs)\\.\\s+(?=[A-Z])")).first().trimEnd('.')
+            "• " + (if (first.length > 110) first.take(107).trimEnd() + "…" else first)
+        }
+        val more = shown.size - lines.size
+        return "${shown.size} alert${if (shown.size > 1) "s" else ""} in the last two days:\n" + lines.joinToString("\n") +
+            (if (more > 0) "\n…and $more more." else "")
+    }
+
+    private val NUDGE = Regex("(?i)^(good morning|weekly review|your weekly review)\\b")
 
     /** Runs the hourly checks (see AlertWorker) and the market-hours breakout checks (see BreakoutWorker). */
     fun schedule(ctx: Context) {

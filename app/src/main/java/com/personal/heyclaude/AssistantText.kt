@@ -40,13 +40,15 @@ object AssistantText {
             val display = reply.removeRange(m.range).trim().ifBlank { speech }
             return Reply(display, speech, pictures)
         }
-        val sentences = reply.replace(Regex("\\s+"), " ").trim().split(Regex("(?<=[.!?])\\s+"))
+        val sentences = reply.replace("•", " ").replace(Regex("\\s+"), " ").trim().split(Regex("(?<=[.!?])\\s+"))
         return Reply(reply.trim(), sentences.take(2).joinToString(" "), pictures)
     }
 
     /** Splits text into chunks the speech engine accepts, breaking at sentence ends. */
     fun chunksForSpeech(text: String, max: Int = 3500): List<String> {
-        val sentences = text.replace(Regex("\\s+"), " ").trim().split(Regex("(?<=[.!?])\\s+"))
+        // Each line of a list is its own sentence when read aloud; bullets aren't said.
+        val sentences = text.replace("•", " ").replace(Regex("(?<![.!?:])\\s*\\n+\\s*"), ". ").replace(Regex("\\s+"), " ").trim()
+            .split(Regex("(?<=[.!?])\\s+"))
         val out = mutableListOf<String>()
         val sb = StringBuilder()
         for (s in sentences) {
