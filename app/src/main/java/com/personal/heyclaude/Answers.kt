@@ -128,7 +128,9 @@ object Answers {
             "429" in m || "rate" in m -> "Claude is busy right now. Please try again in a minute."
             "unknownhost" in m || "unable to resolve" in m || "timeout" in m || "timed out" in m || "connect" in m ->
                 "I couldn't reach Claude. Please check the internet connection."
-            else -> "Something went wrong asking Claude. Please try again."
+            "400" in m || "invalid_request" in m || "could not process" in m ->
+                "Claude couldn't read that. If it was a document, it may be password-protected; please open it from Dropbox."
+            else -> "Something went wrong asking Claude (${e.javaClass.simpleName}). Please try again."
         }
     }
 }

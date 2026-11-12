@@ -3,6 +3,7 @@ package com.personal.heyclaude
 import com.anthropic.client.AnthropicClient
 import com.anthropic.client.okhttp.AnthropicOkHttpClient
 import com.anthropic.core.JsonValue
+import com.anthropic.errors.BadRequestException
 import com.anthropic.models.messages.Base64ImageSource
 import com.anthropic.models.messages.ContentBlockParam
 import com.anthropic.models.messages.DocumentBlockParam
@@ -42,6 +43,9 @@ interface MehithaTools {
     /** Reminders Mehitha has set that are still to come. */
     fun reminders(): String = "No reminders are set."
 
+    /** The phone calendar's meetings for [days] days from [date] (YYYY-MM-DD). */
+    fun calendar(date: String, days: Int): String = "The calendar isn't available here."
+
     /** True when the work OneDrive is linked, so its tools are offered. */
     val hasWorkFiles: Boolean get() = false
 
@@ -78,6 +82,9 @@ class AssistantBrain(
 
     private val history = mutableListOf<MessageParam>()
 
+    /** The last tool results with every file left out, to send instead if Claude can't take a file. */
+    private var plainResults: MessageParam? = null
+
     /** Set once Sharan has said the right passcode in this chat: confidential details may then be shared. */
     @Volatile var unlocked = false
 
@@ -102,9 +109,29 @@ class AssistantBrain(
 
     /** Answers one spoken question, running tools as needed. Returns plain text. */
     fun ask(question: String): String {
+        val start = history.size
+        try {
+            return answer(question)
+        } catch (e: Exception) {
+            // A failed question must not stay in the conversation, or every later question fails too.
+            while (history.size > start) history.removeAt(history.size - 1)
+            throw e
+        }
+    }
+
+    private fun answer(question: String): String {
         history += MessageParam.ofUser(question)
         repeat(MAX_ROUNDS) {
-            val response = client.messages().create(request())
+            val response = try {
+                client.messages().create(request())
+            } catch (e: BadRequestException) {
+                // Claude couldn't take a file (say a password-protected PDF): send it again as words only.
+                val plain = plainResults ?: throw e
+                plainResults = null
+                history[history.size - 1] = plain
+                client.messages().create(request())
+            }
+            plainResults = null
             history += response.toParam()
             when (response.stopReason().orElse(null)) {
                 StopReason.TOOL_USE -> history += runTools(response)
@@ -142,6 +169,18 @@ class AssistantBrain(
                     .putAdditionalProperty("app", JsonValue.from(mapOf("type" to "string", "description" to "Optional app name such as WhatsApp or Gmail; leave empty for all apps")))
                     .build())
                 .required(listOf("days"))
+                .build())
+            .build())
+        .addTool(Tool.builder().name("get_calendar")
+            .description("Sharan's meetings from the phone's calendar (work and personal calendars synced to the phone) for a day " +
+                "or a few days. Use it for any question about meetings, the calendar or the schedule on a day other than today, " +
+                "e.g. tomorrow, Monday or next week; work out the date from the current date.")
+            .inputSchema(Tool.InputSchema.builder()
+                .properties(Tool.InputSchema.Properties.builder()
+                    .putAdditionalProperty("date", JsonValue.from(mapOf("type" to "string", "description" to "First day, as YYYY-MM-DD")))
+                    .putAdditionalProperty("days", JsonValue.from(mapOf("type" to "integer", "description" to "How many days from that date, 1 to 14")))
+                    .build())
+                .required(listOf("date"))
                 .build())
             .build())
         .addTool(tool("get_reminders",
@@ -200,12 +239,18 @@ class AssistantBrain(
     }
 
     private fun runTools(response: Message): MessageParam {
+        val plain = mutableListOf<ContentBlockParam>()
+        var hasFile = false
         val results = response.content().mapNotNull { it.toolUse().orElse(null) }.map { use ->
-            if (use.name() == "read_dropbox_file") stringArg(use._input(), "path").let { path ->
-                return@map fileResult(use.id(), path) { tools.readDropboxFile(path) }
-            }
-            if (use.name() == "read_work_onedrive_file") stringArg(use._input(), "name").let { name ->
-                return@map fileResult(use.id(), name) { tools.readWorkOneDriveFile(stringArg(use._input(), "id"), name) }
+            if (use.name() == "read_dropbox_file" || use.name() == "read_work_onedrive_file") {
+                val name = stringArg(use._input(), if (use.name() == "read_dropbox_file") "path" else "name")
+                val (full, words) = fileResult(use.id(), name) {
+                    if (use.name() == "read_dropbox_file") tools.readDropboxFile(name)
+                    else tools.readWorkOneDriveFile(stringArg(use._input(), "id"), name)
+                }
+                hasFile = true
+                plain += words
+                return@map full
             }
             val (text, failed) = try {
                 when (use.name()) {
@@ -217,6 +262,8 @@ class AssistantBrain(
                         stringArg(use._input(), "app")) to false
                     "search_dropbox" -> tools.searchDropbox(stringArg(use._input(), "query")) to false
                     "get_reminders" -> tools.reminders() to false
+                    "get_calendar" -> tools.calendar(stringArg(use._input(), "date"),
+                        ((use._input().convert(Map::class.java)?.get("days"))?.toString()?.toDoubleOrNull()?.toInt() ?: 1).coerceIn(1, 14)) to false
                     "search_work_onedrive" -> tools.searchWorkOneDrive(stringArg(use._input(), "query")) to false
                     else -> "Unknown tool ${use.name()}" to true
                 }
@@ -227,13 +274,14 @@ class AssistantBrain(
                 .toolUseId(use.id())
                 .content(text.take(MAX_TOOL_CHARS))
                 .isError(failed)
-                .build())
+                .build()).also { plain += it }
         }
+        plainResults = if (hasFile) MessageParam.ofUserOfContentBlockParams(plain) else null
         return MessageParam.ofUserOfContentBlockParams(results)
     }
 
     /** The file as a tool result: its note, then the PDF as a document or the picture as an image. */
-    private fun fileResult(id: String, path: String, read: () -> FileForClaude): ContentBlockParam {
+    private fun fileResult(id: String, path: String, read: () -> FileForClaude): Pair<ContentBlockParam, ContentBlockParam> {
         val file = try { read() } catch (e: Exception) {
             FileForClaude("Could not open $path: ${e.message ?: e.javaClass.simpleName}")
         }
@@ -250,7 +298,12 @@ class AssistantBrain(
                 if (unlocked || !Snips.isPrivate(file.name)) snipHint(id)
                 else { Snips.drop(id); "Don't add a SNIP line for this file: it may hold confidential details." })
         }
-        return ContentBlockParam.ofToolResult(ToolResultBlockParam.builder().toolUseId(id).contentOfBlocks(blocks).build())
+        val words = ContentBlockParam.ofToolResult(ToolResultBlockParam.builder().toolUseId(id)
+            .content(file.note.take(MAX_TOOL_CHARS) + if (file.pdf == null && file.image == null && file.pages.isEmpty()) "" else
+                "\nThe file itself couldn't be read here: it may be password-protected or damaged. Say so, and give its OPEN link " +
+                    "so Sharan can open it; don't guess what it says.")
+            .build())
+        return ContentBlockParam.ofToolResult(ToolResultBlockParam.builder().toolUseId(id).contentOfBlocks(blocks).build()) to words
     }
 
     private fun image(bytes: ByteArray, type: String) = ToolResultBlockParam.Content.Block.ofImage(Base64ImageSource.builder()

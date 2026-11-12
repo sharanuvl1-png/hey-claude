@@ -22,6 +22,7 @@ object Snips {
     private val next = AtomicInteger(1)
     const val MAX_PAGES = 5
     private const val WIDTH = 1240
+    private const val MAX_SIDE = 1600
 
     private val LINE = Regex("(?im)^[ \\t*_>-]*snip[ \\t*_]*:[ \\t*_]*(d\\d+)[ \\t]*\\|[ \\t]*page[ \\t]*(\\d+)[ \\t]*\\|[ \\t]*([0-9.]+)[ \\t]*[-–to ]+[ \\t]*([0-9.]+)[^\\n]*(\\r?\\n|\\z)")
 
@@ -100,6 +101,19 @@ object Snips {
             }
         }.also { src.delete() }
     } catch (e: Exception) { emptyList() }
+
+    /** The picture as a JPEG no bigger than [MAX_SIDE] pixels a side, or null if it can't be read. */
+    fun shrink(bytes: ByteArray): ByteArray? = try {
+        val size = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, size)
+        var sample = 1
+        while (maxOf(size.outWidth, size.outHeight) / (sample * 2) >= MAX_SIDE) sample *= 2
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })?.let { b ->
+            val scale = minOf(1.0, MAX_SIDE.toDouble() / maxOf(b.width, b.height))
+            val fit = if (scale < 1.0) Bitmap.createScaledBitmap(b, (b.width * scale).toInt().coerceAtLeast(1), (b.height * scale).toInt().coerceAtLeast(1), true) else b
+            java.io.ByteArrayOutputStream().also { fit.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
+        }
+    } catch (e: Exception) { null }
 
     /** Saves a picture file as a single "page". */
     fun imagePage(ctx: Context, bytes: ByteArray, ext: String): List<File> {

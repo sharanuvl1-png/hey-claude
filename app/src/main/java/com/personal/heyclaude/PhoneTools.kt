@@ -58,6 +58,11 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
 
     override fun reminders(): String = Reminders.listText(Reminders.upcoming(ctx))
 
+    override fun calendar(date: String, days: Int): String {
+        val from = runCatching { java.time.LocalDate.parse(date.trim()) }.getOrNull() ?: PhoneData.today()
+        return Today.calendarText(ctx, from, days.coerceIn(1, 14))
+    }
+
     override fun recentMessages(days: Int, app: String): String {
         val d = days.coerceIn(1, 14).toLong()
         return Chats.listText(Chats.read(java.io.File(ctx.filesDir, "notifications"), PhoneData.today(), d), d, app)
@@ -102,11 +107,13 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
     /** Reads one document by its [name]'s type: text as text, PDFs as page pictures, photos as a picture. */
     private fun readFile(name: String, where: String, text: () -> String, bytes: (Long) -> ByteArray?): FileForClaude = when {
         TEXT_FILE.containsMatchIn(name) -> FileForClaude("$name:\n" + text().take(20_000), name)
-        name.endsWith(".pdf", true) -> bytes(MAX_PDF)?.let { pdf(name, it) }
+        name.endsWith(".pdf", true) -> bytes(MAX_PDF)?.let { pdf(name, it, where) }
             ?: FileForClaude("$name is over ${MAX_PDF / 1_048_576} MB, too big to read here. Sharan can open it from $where.", name)
-        IMAGE_FILE.containsMatchIn(name) -> bytes(MAX_IMAGE)?.let {
-            val id = Snips.register(Snips.imagePage(ctx, it, name.substringAfterLast('.').lowercase()))
-            FileForClaude("The picture $name is attached.", name, image = it, imageType = imageType(name), snipId = id) }
+        IMAGE_FILE.containsMatchIn(name) -> bytes(MAX_IMAGE)?.let { raw ->
+            // Phone photos are made smaller (and plain JPEG) first: Claude refuses pictures over 5 MB.
+            val pic = Snips.shrink(raw) ?: return FileForClaude("$name couldn't be opened here. Sharan can open it from $where.", name)
+            val id = Snips.register(Snips.imagePage(ctx, pic, "jpg"))
+            FileForClaude("The picture $name is attached.", name, image = pic, imageType = "image/jpeg", snipId = id) }
             ?: FileForClaude("$name is over ${MAX_IMAGE / 1_048_576} MB, too big to read here. Sharan can open it from $where.", name)
         else -> FileForClaude("$name can't be read here (only PDFs, Office files, pictures and text files). Sharan can open it from $where.", name)
     }
@@ -115,8 +122,11 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
      * A short PDF goes to Claude as page pictures, so it can point at the part with the answer;
      * a longer one goes whole, with its first pages still kept for snippets.
      */
-    private fun pdf(name: String, bytes: ByteArray): FileForClaude {
+    private fun pdf(name: String, bytes: ByteArray, where: String): FileForClaude {
         val pages = Snips.pdfPages(ctx, bytes)
+        // A PDF the phone can't open is usually password-protected (many policies and statements are); Claude can't open it either.
+        if (pages.isEmpty()) return FileForClaude("$name couldn't be opened here: it may be password-protected. " +
+            "Sharan can open it from $where.", name)
         val id = pages.takeIf { it.isNotEmpty() }?.let { Snips.register(it) }
         val count = if (pages.isEmpty()) 0 else Snips.pageCount(ctx, bytes)
         return if (pages.isNotEmpty() && count <= Snips.MAX_PAGES)
@@ -189,7 +199,7 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
         private val TEXT_FILE = Regex("(?i)\\.(txt|md|csv|json)$")
         private val IMAGE_FILE = Regex("(?i)\\.(jpe?g|png|webp|gif)$")
         private const val MAX_PDF = 8L * 1_048_576
-        private const val MAX_IMAGE = 4L * 1_048_576
+        private const val MAX_IMAGE = 15L * 1_048_576
 
         fun imageType(name: String) = when (name.substringAfterLast('.').lowercase()) {
             "png" -> "image/png"; "webp" -> "image/webp"; "gif" -> "image/gif"; else -> "image/jpeg"

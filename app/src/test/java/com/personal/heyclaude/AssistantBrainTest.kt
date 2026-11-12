@@ -61,6 +61,53 @@ class AssistantBrainTest {
         assertTrue(run("/Insurance/Car policy.pdf", unlocked = true).contains("SNIP: d"))
     }
 
+    @Test fun aFileClaudeCannotTakeIsSentAgainAsWordsOnly() {
+        val tools = object : MehithaTools by FakeTools() {
+            override fun readDropboxFile(path: String) = FileForClaude("Car policy.pdf has 1 page, attached as pictures.",
+                "Car policy.pdf", pages = listOf(byteArrayOf(1, 2, 3)))
+        }
+        val api = FakeApi(listOf(
+            200 to msg("tool_use", """{"type":"tool_use","id":"tu_1","name":"read_dropbox_file","input":{"path":"/Insurance/Car policy.pdf"}}"""),
+            400 to BAD_FILE,
+            200 to text("I couldn't open the policy. Open it from Dropbox."),
+        ))
+        val brain = AssistantBrain("k", tools, api.url, clock)
+        assertEquals("I couldn't open the policy. Open it from Dropbox.", brain.ask("When is my car insurance due?"))
+        api.stop()
+        assertTrue(api.requests[1].contains("\"type\":\"image\""))
+        assertFalse(api.requests[2], api.requests[2].contains("\"type\":\"image\""))
+        assertTrue(api.requests[2], api.requests[2].contains("password-protected") && api.requests[2].contains("\"tool_use_id\":\"tu_1\""))
+    }
+
+    @Test fun aFailedQuestionDoesNotBreakTheNextOne() {
+        val api = FakeApi(listOf(400 to BAD_FILE, 200 to text("Your bike insurance is in Dropbox.")))
+        val brain = AssistantBrain("k", FakeTools(), api.url, clock)
+        assertTrue(runCatching { brain.ask("car renewal") }.isFailure)
+        assertEquals("Your bike insurance is in Dropbox.", brain.ask("bike insurance"))
+        api.stop()
+        assertFalse(api.requests[1], api.requests[1].contains("car renewal"))
+    }
+
+    @Test fun readsTheCalendarForAnotherDay() {
+        var asked = ""
+        val tools = object : MehithaTools by FakeTools() {
+            override fun calendar(date: String, days: Int): String { asked = "$date/$days"; return "Fri 27 Oct 2026: 10 AM to 11 AM Standup." }
+        }
+        val api = FakeApi.ok(
+            msg("tool_use", """{"type":"tool_use","id":"tu_1","name":"get_calendar","input":{"date":"2026-10-27","days":1}}"""),
+            text("Tomorrow you have Standup at 10 AM."),
+        )
+        assertEquals("Tomorrow you have Standup at 10 AM.", AssistantBrain("k", tools, api.url, clock).ask("how does my calendar look tomorrow"))
+        api.stop()
+        assertEquals("2026-10-27/1", asked)
+        val day = java.time.LocalDate.of(2026, 11, 13)
+        assertEquals("Fri 13 Nov 2026: 10 AM to 10:30 AM Standup (Room 4); all day Holiday.", Today.dayText(day, listOf(
+            Meeting(1, "Standup", day.atTime(10, 0), day.atTime(10, 30), false, "Room 4"),
+            Meeting(2, "Holiday", day.atStartOfDay(), day.plusDays(1).atStartOfDay(), true, ""))))
+        assertEquals("Fri 13 Nov 2026: no meetings.", Today.dayText(day, emptyList()))
+        assertTrue(api.requests[0].contains("get_calendar") && api.requests[1].contains("Standup"))
+    }
+
     @Test fun fastModelUsesBasicWebSearchAndCanFetchCharts() {
         val api = FakeApi.ok(
             msg("tool_use", """{"type":"tool_use","id":"tu_1","name":"get_stock_chart","input":{"stock":"PC Jeweller"}}"""),
@@ -111,5 +158,9 @@ class AssistantBrainTest {
         api.stop()
         assertTrue(api.requests[1].contains("\"is_error\":true") && api.requests[1].contains("Dropbox not linked"))
         assertTrue(a.contains("couldn't"))
+    }
+
+    private companion object {
+        const val BAD_FILE = """{"type":"error","error":{"type":"invalid_request_error","message":"The PDF specified could not be processed"}}"""
     }
 }
