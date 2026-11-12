@@ -1,4 +1,4 @@
-101 passed, 0 failed
+106 passed, 0 failed
 PASS AskJobTest.givesUpAfterTimeoutWithReason
 PASS AskJobTest.findsQuestionEvenWhenCutShortOnScreen
 PASS AskJobTest.opensNewChatWhenNoMessageBox
@@ -74,19 +74,24 @@ PASS HomeChatTest.tappedAlertAsksStraightAway
 PASS HomeChatTest.keepsTheBreakoutAlertsScheduled
 PASS IconTest.appIconIsAdaptive
 PASS MoneyTest.findsSubscriptions
+PASS MoneyTest.reminderWithATypoIsStillAReminder
 PASS MoneyTest.flagsUnusualCategorySpend
 PASS MoneyTest.readsTheRowsPhoneSyncWrites
 PASS MoneyTest.flagsDoubleAndLargeCharges
 PASS MoneyTest.summaryStartsWithTodayAndTheWeek
 PASS MoneyTest.summaryHasTotalsAndMatchingSpends
+PASS MoneyTest.skipsBalancesLimitsForeignSpendsAndCardBills
 PASS MoneyTest.readsBillDueDates
+PASS MoreFeaturesTest.alertsUseAPopUpChannel
 PASS MoreFeaturesTest.whatsAppBankAlertsCountButFriendsDoNot
+PASS MoreFeaturesTest.alertsAreAShortReadableList
 PASS MoreFeaturesTest.passcodeIsCheckedNotStored
 PASS MoreFeaturesTest.shoppingListAndSearchLinks
 PASS MoreFeaturesTest.orderStatusFromMessages
 PASS MoreFeaturesTest.chatsSaveAndLoad
 PASS MoreFeaturesTest.billsFromWhatsAppAndGmailButNotOfficeMail
 PASS PromptsTest.remindLinesBecomeReminders
+PASS PromptsTest.scanWithSecondAndThirdTargetsAndTimeToTarget
 PASS PromptsTest.promptsStayShortEnoughToSendAsAMessage
 PASS PromptsTest.promptsAreOneLineWithDateAndRules
 PASS PromptsTest.recallAnswersFromNotes
