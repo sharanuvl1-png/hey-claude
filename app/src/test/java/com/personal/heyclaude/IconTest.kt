@@ -12,7 +12,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class IconTest {
-    /** The app icon is an adaptive icon: soft background, the photo with a voice badge, and a themed (monochrome) sparkle. */
+    /** The app icon is an adaptive icon with a background, a sparkle and a themed (monochrome) layer. */
     @Test fun appIconIsAdaptive() {
         val app = RuntimeEnvironment.getApplication()
         val icon = app.getDrawable(R.drawable.ic_mehitha)

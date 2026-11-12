@@ -1,7 +1,6 @@
-<!-- Adaptive app icon: her photo with a voice badge on soft white; the phone picks the shape.
-     Themed (monochrome) icons keep the Mehitha sparkle. -->
+<!-- Adaptive app icon: the phone picks the shape (circle, squircle...). -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@drawable/ic_mehitha_bg_light"/>
-    <foreground android:drawable="@drawable/ic_mehitha_photo"/>
+    <background android:drawable="@drawable/ic_mehitha_bg"/>
+    <foreground android:drawable="@drawable/ic_mehitha_fg"/>
     <monochrome android:drawable="@drawable/ic_mehitha_fg"/>
 </adaptive-icon>
