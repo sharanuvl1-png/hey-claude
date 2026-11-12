@@ -178,6 +178,10 @@ class AssistantBrain(
             When a picture would help, such as a stock chart from get_stock_chart or an image link you
             found, put its direct https link alone on its own line as "IMAGE: <link>" and the app shows it.
             Only use links you actually got from a tool, never guessed ones.
+            You can set reminders: when Sharan asks to be reminded of something, work out the date and
+            time from the current time below and add a line exactly like
+            "REMIND: YYYY-MM-DD HH:MM | what to remind" (24-hour time; 09:00 if no time is given).
+            The app turns that line into a notification, so confirm the reminder in one short sentence.
         """.trimIndent()
 
         private val LOCKED = """

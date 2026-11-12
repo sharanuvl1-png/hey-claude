@@ -117,6 +117,10 @@ object PhoneSync {
     private val AMOUNT = Regex("(?i)(?:rs\\.?|inr|₹|debited (?:by|for|with))\\s*(?:rs\\.?|inr|₹)?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)")
     private val DEBIT = Regex("(?i)\\b(debited|spent|paid|sent|withdrawn|purchase|debit of|txn of|transaction of)\\b")
     private val NOT_SPEND = Regex("(?i)\\b(will be debited|due|requested|request|declined|failed|reversed|refund(ed)?|cashback|statement|min(imum)? amount|auto ?pay set|mandate|emi of .* is due|credited to your a/c)\\b")
+    private val BALANCE = Regex("(?i)(avl|avbl|available|bal|balance|limit|lmt|outstanding|o/s)\\b[^0-9]{0,20}$")
+    private val FOREIGN = Regex("(?i)\\b(usd|eur|gbp|aed|sgd|aud|cad|jpy|chf)\\s*[0-9]|\\$\\s*[0-9]")
+    /** Paying a credit card bill (directly or through CRED) moves money to the card; the card spends already count. */
+    private val CARD_BILL = Regex("(?i)credit card (bill|payment|dues)|towards (your )?(credit )?card|card bill|payment (of|for) .{0,30}credit card")
     private val MERCHANT = listOf(
         Regex("(?i)\\b(?:to|trf to|towards)\\s+(?:vpa\\s+)?([A-Za-z0-9@._&' -]{2,40}?)\\s*(?:\\bon\\b|\\bref|\\bupi|\\bvia\\b|\\(|\\.(?:\\s|$)|,|-\\s|$)"),
         Regex("(?i)\\bat\\s+([A-Za-z0-9@._&' -]{2,40}?)\\s*(?:\\bon\\b|\\bfrom\\b|\\bref|\\bvia\\b|\\(|\\.(?:\\s|$)|,|$)"),
@@ -140,11 +144,17 @@ object PhoneSync {
     fun expenseRow(date: Date, sender: String, body: String): String? {
         if (sender.count { it.isLetter() } < 3 || !DEBIT.containsMatchIn(body) || NOT_SPEND.containsMatchIn(body)) return null
         if (Regex("(?i)\\bcredited\\b").containsMatchIn(body) && !Regex("(?i)\\bdebited\\b").containsMatchIn(body)) return null
-        val amount = AMOUNT.find(body)?.groupValues?.get(1)?.replace(",", "")?.toDoubleOrNull() ?: return null
+        if (CARD_BILL.containsMatchIn(body)) return null
+        // The first rupee amount that isn't a balance or limit ("Avl Lmt INR 6,87,246"). A card
+        // spend in dollars or another currency has no rupee amount left, so it isn't counted.
+        val amount = AMOUNT.findAll(body).firstOrNull { m -> !BALANCE.containsMatchIn(body.substring(maxOf(0, m.range.first - 25), m.range.first)) }
+            ?.takeIf { m -> FOREIGN.find(body)?.let { it.range.first > m.range.first } ?: true }
+            ?.groupValues?.get(1)?.replace(",", "")?.toDoubleOrNull() ?: return null
         if (amount <= 0) return null
         val merchant = MERCHANT.firstNotNullOfOrNull { it.find(body)?.groupValues?.get(1)?.trim() }
             ?.takeIf { m -> m.any { it.isLetter() } && !Regex("(?i)^(your|a/c|ac|account|card)\\b").containsMatchIn(m) }
             ?: "Unknown"
+        if (Regex("(?i)^cred(\\.?club)?\\b").containsMatchIn(merchant)) return null // a card bill paid through CRED
         val category = CATEGORIES.firstOrNull { (_, re) -> re.containsMatchIn(merchant) || re.containsMatchIn(body) }?.first ?: "Other"
         val via = when {
             Regex("(?i)\\bupi\\b|vpa").containsMatchIn(body) -> "UPI"
