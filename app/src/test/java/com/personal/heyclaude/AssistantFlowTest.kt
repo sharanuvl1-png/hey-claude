@@ -353,6 +353,17 @@ class AssistantFlowTest {
         assertFalse(answerText(a).contains("REMIND:"))
         val work = androidx.work.WorkManager.getInstance(app).getWorkInfosForUniqueWork("remind:2030-01-01T18:00:${"Call Ravi".hashCode()}").get()
         assertEquals(1, work.size)
+        // "my reminders" lists it, and so does "where is my reminder"; Claude can look them up too.
+        val list = Reminders.listText(Reminders.upcoming(app))
+        assertTrue(list, list.startsWith("You have 1 reminder:") && list.contains("Tue 1 Jan, 6:00 PM: Call Ravi"))
+        assertEquals(Command.MyReminders, Command.parse("my reminders"))
+        assertEquals(Command.MyReminders, Command.parse("Were is it updated? Reminder"))
+        assertEquals(Command.MyReminders, Command.parse("where is my reminder saved"))
+        assertTrue(Command.parse("remind me to call Ravi at 6 pm") is Command.Reminder)
+        assertTrue(Command.parse("can you set a reminder for 5 pm to call mom") !is Command.MyReminders)
+        assertEquals(list, PhoneTools(app).reminders())
+        Reminders.done(app, "2030-01-01T18:00", "Call Ravi")
+        assertTrue(Reminders.listText(Reminders.upcoming(app)).startsWith("You have no reminders set."))
     }
 
     @Test fun alertsAreListedAndTapOpensTheAnswer() {

@@ -49,8 +49,10 @@ object Charts {
         return Chart(symbol, date, "$RAW/$symbol/$png", "$RAW/$symbol/$date.md")
     }
 
-    /** Downloads a picture from any https link; null if it isn't a picture or can't be fetched. */
-    fun picture(url: String, maxBytes: Int = 8_000_000): Bitmap? = try {
+    /** Downloads a picture from any https link (or a file:// snippet saved on the phone); null if it isn't a picture or can't be fetched. */
+    fun picture(url: String, maxBytes: Int = 8_000_000): Bitmap? = if (url.startsWith("file://")) {
+        try { BitmapFactory.decodeFile(url.removePrefix("file://")) } catch (e: Exception) { null }
+    } else try {
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 10_000
         conn.readTimeout = 20_000

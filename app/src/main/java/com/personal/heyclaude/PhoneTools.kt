@@ -39,7 +39,13 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
             notes += "WhatsApp and app messages: none captured yet."
         }
 
-        if (Environment.isExternalStorageManager()) {
+        val screens = ScreenApps.dir(ctx).listFiles()?.sortedByDescending { it.name }.orEmpty()
+        if (screens.isNotEmpty()) {
+            val lines = screens.asSequence().flatMap { f -> f.readLines().asReversed().asSequence().map { "${f.nameWithoutExtension} $it" } }
+            parts += section("Screens saved from Sharan's chosen apps (newest first)", AssistantText.bestLines(lines, words, limit = 5))
+        }
+
+        if (try { Environment.isExternalStorageManager() } catch (e: Exception) { false }) {
             parts += section("Files on the phone", searchFiles(words))
         } else {
             notes += "Files: not searchable until 'Files and photos' is allowed in the Mehitha app."
@@ -48,6 +54,13 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
         val found = parts.filter { it.isNotEmpty() }
         return (if (found.isEmpty()) "Nothing matched: ${words.joinToString(", ")}." else found.joinToString("\n\n")) +
             (if (notes.isEmpty()) "" else "\n\n" + notes.joinToString("\n"))
+    }
+
+    override fun reminders(): String = Reminders.listText(Reminders.upcoming(ctx))
+
+    override fun recentMessages(days: Int, app: String): String {
+        val d = days.coerceIn(1, 14).toLong()
+        return Chats.listText(Chats.read(java.io.File(ctx.filesDir, "notifications"), PhoneData.today(), d), d, app)
     }
 
     override fun searchDropbox(query: String): String {
@@ -59,6 +72,57 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
             // Small text files are read so the answer can quote them; other files are found by name and content.
             if (f.size in 1..200_000 && TEXT_FILE.containsMatchIn(f.name)) try { box.download(f.path).take(1500) } catch (e: Exception) { null } else null
         }
+    }
+
+    override fun readDropboxFile(path: String): FileForClaude {
+        val box = DropboxClient(ctx, DOCS)
+        if (!box.isLinked) return FileForClaude("Sharan's Dropbox documents aren't linked yet.")
+        return readFile(path.substringAfterLast('/'), "Dropbox", { box.download(path) }, { max -> box.downloadBytes(path, max) })
+    }
+
+    override val hasWorkFiles: Boolean get() = OneDriveClient(ctx).isLinked
+
+    override fun searchWorkOneDrive(query: String): String {
+        val drive = OneDriveClient(ctx)
+        if (!drive.isLinked) return "Sharan's work OneDrive isn't linked in Mehitha. Say they can link it in Settings, Phone data, Work OneDrive, or use the Claude app for work files."
+        val files = drive.search(query)
+        return if (files.isEmpty()) "No work OneDrive files match \"$query\". Try other words from the file name." else OneDriveClient.text(files)
+    }
+
+    override fun readWorkOneDriveFile(id: String, name: String): FileForClaude {
+        val drive = OneDriveClient(ctx)
+        if (!drive.isLinked) return FileForClaude("Sharan's work OneDrive isn't linked in Mehitha.")
+        val office = OneDriveClient.WorkFile(id, name, "", "", 0, "").isOffice
+        // Word, Excel and PowerPoint files are turned into PDF by OneDrive, so they read like any PDF.
+        val shown = if (office) name.substringBeforeLast('.') + ".pdf" else name
+        return readFile(shown, "work OneDrive", { String(drive.downloadBytes(id, 2_000_000) ?: ByteArray(0)) },
+            { max -> drive.downloadBytes(id, max, asPdf = office) })
+    }
+
+    /** Reads one document by its [name]'s type: text as text, PDFs as page pictures, photos as a picture. */
+    private fun readFile(name: String, where: String, text: () -> String, bytes: (Long) -> ByteArray?): FileForClaude = when {
+        TEXT_FILE.containsMatchIn(name) -> FileForClaude("$name:\n" + text().take(20_000), name)
+        name.endsWith(".pdf", true) -> bytes(MAX_PDF)?.let { pdf(name, it) }
+            ?: FileForClaude("$name is over ${MAX_PDF / 1_048_576} MB, too big to read here. Sharan can open it from $where.", name)
+        IMAGE_FILE.containsMatchIn(name) -> bytes(MAX_IMAGE)?.let {
+            val id = Snips.register(Snips.imagePage(ctx, it, name.substringAfterLast('.').lowercase()))
+            FileForClaude("The picture $name is attached.", name, image = it, imageType = imageType(name), snipId = id) }
+            ?: FileForClaude("$name is over ${MAX_IMAGE / 1_048_576} MB, too big to read here. Sharan can open it from $where.", name)
+        else -> FileForClaude("$name can't be read here (only PDFs, Office files, pictures and text files). Sharan can open it from $where.", name)
+    }
+
+    /**
+     * A short PDF goes to Claude as page pictures, so it can point at the part with the answer;
+     * a longer one goes whole, with its first pages still kept for snippets.
+     */
+    private fun pdf(name: String, bytes: ByteArray): FileForClaude {
+        val pages = Snips.pdfPages(ctx, bytes)
+        val id = pages.takeIf { it.isNotEmpty() }?.let { Snips.register(it) }
+        val count = if (pages.isEmpty()) 0 else Snips.pageCount(ctx, bytes)
+        return if (pages.isNotEmpty() && count <= Snips.MAX_PAGES)
+            FileForClaude("$name has $count page${if (count > 1) "s" else ""}, attached as pictures.", name, pages = pages.map { it.readBytes() }, snipId = id)
+        else FileForClaude("The PDF $name is attached" + (if (id != null) "; snippets can come from its first ${Snips.MAX_PAGES} pages." else "."),
+            name, pdf = bytes, snipId = id)
     }
 
     override fun stockChart(stock: String): String {
@@ -123,12 +187,19 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
         /** The read-only link to Sharan's own Dropbox (Full Dropbox app), kept apart from the phone sync. */
         const val DOCS = "dropbox_docs"
         private val TEXT_FILE = Regex("(?i)\\.(txt|md|csv|json)$")
+        private val IMAGE_FILE = Regex("(?i)\\.(jpe?g|png|webp|gif)$")
+        private const val MAX_PDF = 8L * 1_048_576
+        private const val MAX_IMAGE = 4L * 1_048_576
+
+        fun imageType(name: String) = when (name.substringAfterLast('.').lowercase()) {
+            "png" -> "image/png"; "webp" -> "image/webp"; "gif" -> "image/gif"; else -> "image/jpeg"
+        }
 
         /** One block per file: name, folder, date, size, open link, and the text when [content] gives it. */
         fun dropboxText(files: List<DropboxClient.DropboxFile>, content: (DropboxClient.DropboxFile) -> String? = { null }): String =
             "Dropbox files found (${files.size}):\n" + files.joinToString("\n\n") { f ->
                 val kb = if (f.size >= 1_048_576) "%.1f MB".format(Locale.US, f.size / 1_048_576.0) else "${(f.size + 1023) / 1024} KB"
-                "${f.name} | folder ${f.folder} | modified ${f.modified} | $kb | open link ${f.openUrl}" +
+                "${f.name} | path ${f.path} | folder ${f.folder} | modified ${f.modified} | $kb | open link ${f.openUrl}" +
                     (content(f)?.let { "\nText: $it" } ?: "")
             }
     }

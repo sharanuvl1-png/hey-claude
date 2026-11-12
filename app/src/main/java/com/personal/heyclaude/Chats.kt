@@ -29,6 +29,26 @@ object Chats {
         if (!file.exists()) emptyList() else parse(file.readLines(), day)
     }
 
+    /**
+     * Every saved message from the last days, for "WhatsApp messages from the last 5 days":
+     * one line each, oldest first, only apps matching [app] when given, OTPs left out. When there
+     * is more than [max] characters, the oldest are dropped and the answer says so.
+     */
+    fun listText(chats: List<Chat>, days: Long, app: String = "", max: Int = 11_000): String {
+        val picked = chats.filter { app.isBlank() || it.app.contains(app.trim(), ignoreCase = true) }
+            .filter { !PhoneSync.looksLikeOtp(it.text) }
+        val what = if (app.isBlank()) "app messages" else "${app.trim()} messages"
+        if (picked.isEmpty()) return "No $what saved in the last $days days. Messages are saved from notifications only " +
+            "after \"WhatsApp & app messages\" is allowed in Mehitha Settings."
+        val lines = picked.map { "${it.time.toLocalDate()} ${it.time.toLocalTime()} | ${it.app} | ${it.sender} | ${it.text.take(400)}" }
+        val kept = ArrayDeque<String>()
+        var size = 0
+        for (l in lines.asReversed()) { if (size + l.length + 1 > max) break; kept.addFirst(l); size += l.length + 1 }
+        val head = "All ${picked.size} $what saved in the last $days days (oldest first)" +
+            (if (kept.size < picked.size) "; only the newest ${kept.size} fit here" else "") + ":\n"
+        return head + kept.joinToString("\n")
+    }
+
     /** Lines `HH:mm | app | sender | text` from one day's file. */
     fun parse(lines: List<String>, day: LocalDate): List<Chat> = lines.mapNotNull { line ->
         val p = line.split(" | ", limit = 4)

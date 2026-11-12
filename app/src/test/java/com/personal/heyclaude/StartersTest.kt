@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.personal.heyclaude.FakeApi.Companion.text
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -147,5 +148,49 @@ class StartersTest {
         val all = chat(a).joinToString("\n")
         assertTrue(all, all.contains("Amazon: out for delivery") && all.contains("Flipkart: shipped"))
         assertTrue(all, all.contains("Your shopping list is empty."))
+    }
+
+    @Test fun aQuestionAskedWhileBusyIsAnsweredNext() {
+        AssistantActivity.saveApiKey(app, "sk-ant-test")
+        api = FakeApi.ok(text("First answer."), text("Second answer."))
+        AssistantActivity.apiBaseUrl = api!!.url
+        controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        idle()
+        val a = controller!!.get()
+        field<EditText>(a, "input").setText("who called me yesterday")
+        field<View>(a, "send").performClick()
+        assertTrue(field<Boolean>(a, "busy"))
+        field<EditText>(a, "input").setText("what is my next bill")
+        field<View>(a, "send").performClick()
+        assertEquals("", field<EditText>(a, "input").text.toString())
+        val until = System.currentTimeMillis() + 15_000
+        while (System.currentTimeMillis() < until) {
+            idle()
+            if (!field<Boolean>(a, "busy") && answers(a).contains("Second answer.")) break
+            Thread.sleep(30)
+        }
+        val shown = answers(a).filter { it in listOf("who called me yesterday", "First answer.", "what is my next bill", "Second answer.") }
+        assertEquals(listOf("who called me yesterday", "First answer.", "what is my next bill", "Second answer."), shown)
+    }
+
+    @Test fun usualGroceriesGiveABlinkitButtonPerItem() {
+        controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        idle()
+        val a = controller!!.get()
+        for (q in listOf("add milk, eggs and bread to my usuals", "my usuals")) {
+            field<EditText>(a, "input").setText(q)
+            field<View>(a, "send").performClick()
+            idle()
+        }
+        val all = chat(a)
+        assertTrue(all.joinToString("\n"), all.any { it.startsWith("Saved milk, eggs and bread to your usuals") })
+        assertTrue(all.joinToString("\n"), all.containsAll(listOf("🛒 milk", "🛒 eggs", "🛒 bread", MainActivity.SOMETHING_ELSE)))
+        // "Something else" puts "blinkit " in the box to type the extra item.
+        all.indexOf(MainActivity.SOMETHING_ELSE).let { _ ->
+            fun find(v: View): View? = if (v is TextView && v.text.toString() == MainActivity.SOMETHING_ELSE) v
+                else (v as? ViewGroup)?.let { g -> (0 until g.childCount).firstNotNullOfOrNull { find(g.getChildAt(it)) } }
+            find(field<ViewGroup>(a, "messages"))!!.performClick()
+        }
+        assertEquals("blinkit ", field<EditText>(a, "input").text.toString())
     }
 }

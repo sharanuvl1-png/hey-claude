@@ -48,6 +48,10 @@ class SettingsActivity : Activity() {
     private lateinit var docsRow: Ui.Row
     private lateinit var docsBox: LinearLayout
     private val docs by lazy { DropboxClient(this, PhoneTools.DOCS) }
+    private val work by lazy { OneDriveClient(this) }
+    private lateinit var workRow: Ui.Row
+    private lateinit var screensRow: Ui.Row
+    private lateinit var workBox: LinearLayout
     private lateinit var syncStatus: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -130,6 +134,9 @@ class SettingsActivity : Activity() {
         docsRow = Ui.Row(this, "Dropbox documents", "Link") { docsBox.visibility = View.VISIBLE }
         data.addView(docsRow.view)
         data.addView(docsLinkBox().also { docsBox = it })
+        workRow = Ui.Row(this, "Work OneDrive", "Link") { workBox.visibility = View.VISIBLE }
+        data.addView(workRow.view)
+        data.addView(workLinkBox().also { workBox = it })
         smsRow = Ui.Row(this, "Text messages", "Allow") {
             requestPermissions(arrayOf(Manifest.permission.READ_SMS, Manifest.permission.READ_CONTACTS), 2)
         }
@@ -146,7 +153,9 @@ class SettingsActivity : Activity() {
         batteryRow = Ui.Row(this, "Alerts on time", "Allow") {
             startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
         }
-        listOf(calendarRow, smsRow, filesRow, notifRow, popupRow, batteryRow).forEach { data.addView(it.view) }
+        screensRow = Ui.Row(this, "App screens", "Choose") { chooseScreenApps() }
+        listOf(calendarRow, smsRow, filesRow, notifRow, screensRow, popupRow, batteryRow).forEach { data.addView(it.view) }
+        if (!hasService(ScreenReader::class.java)) screensRow.view.visibility = View.GONE
         // The basic build leaves these out so Play Protect lets it install.
         if (!declares(Manifest.permission.READ_SMS)) smsRow.view.visibility = View.GONE
         if (!hasService(NotificationCatcher::class.java)) notifRow.view.visibility = View.GONE
@@ -206,6 +215,77 @@ class SettingsActivity : Activity() {
             }.start()
         })
         addView(Ui.spacer(this@SettingsActivity, 8))
+    }
+
+    /**
+     * Linking the work OneDrive (read-only): needs an app registration in the work directory, then
+     * a sign-in with a short code at microsoft.com/devicelogin.
+     */
+    private fun workLinkBox(): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        visibility = View.GONE
+        addView(Ui.text(this@SettingsActivity, "One time, signed in with your work account: at portal.azure.com open App registrations → " +
+            "New registration, any name, \"Accounts in this organizational directory only\", Register. Under Authentication turn on " +
+            "\"Allow public client flows\" and Save. Copy the Application (client) ID here. If the portal or the sign-in says " +
+            "admin approval is needed, your IT team has to allow it.", 12.5f, Ui.MUTED))
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        val id = Ui.field(this@SettingsActivity, "Application (client) ID").apply { setText(work.clientId) }
+        addView(id)
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        val status = Ui.text(this@SettingsActivity, "", 13f, Ui.TEXT)
+        addView(Ui.pill(this@SettingsActivity, "Sign in with work account") {
+            work.clientId = id.text.toString()
+            if (work.clientId.isBlank()) { toast("Enter the Application (client) ID first"); return@pill }
+            status.text = "Getting a sign-in code…"
+            Thread {
+                try {
+                    val s = work.startSignIn()
+                    runOnUiThread {
+                        getSystemService(android.content.ClipboardManager::class.java)
+                            ?.setPrimaryClip(android.content.ClipData.newPlainText("code", s.userCode))
+                        status.text = "Code ${s.userCode} (copied). Paste it on the Microsoft page and sign in with your work account, then come back."
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(s.url)))
+                    }
+                    work.waitForSignIn(s)
+                    runOnUiThread { status.text = ""; toast("Work OneDrive linked. Ask \"find the Acme SOW in my work files\"."); refresh() }
+                } catch (e: Exception) {
+                    runOnUiThread { status.text = "Linking failed: ${e.message?.take(160)}" }
+                }
+            }.start()
+        })
+        addView(Ui.spacer(this@SettingsActivity, 8))
+        addView(status)
+        addView(Ui.spacer(this@SettingsActivity, 8))
+    }
+
+    /**
+     * Pick the apps whose screens Mehitha may save (for example Kite or Blinkit), then turn on
+     * "Mehitha app screens" in Accessibility. Only the picked apps are read.
+     */
+    private fun chooseScreenApps() {
+        val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val apps = packageManager.queryIntentActivities(launcher, 0)
+            .map { it.activityInfo.packageName to it.loadLabel(packageManager).toString() }
+            .filter { it.first != packageName && it.first != LaunchClaudeActivity.CLAUDE_PACKAGE }
+            .distinctBy { it.first }.sortedBy { it.second.lowercase() }
+        if (apps.isEmpty()) { toast("No apps found"); return }
+        val chosen = ScreenApps.chosen(this).toMutableSet()
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Apps Mehitha may read")
+            .setMultiChoiceItems(apps.map { it.second }.toTypedArray(), apps.map { it.first in chosen }.toBooleanArray()) { _, i, on ->
+                if (on) chosen += apps[i].first else chosen -= apps[i].first
+            }
+            .setPositiveButton("Save") { _, _ ->
+                ScreenApps.choose(this, chosen)
+                if (chosen.isNotEmpty() && !ScreenReader.isEnabled(this)) {
+                    toast("Now turn on \"Mehitha app screens\" in Accessibility (Installed apps)")
+                    ScreenReader.openSettings(this)
+                }
+                refresh()
+            }
+            .setNeutralButton("Forget saved screens") { _, _ -> ScreenApps.clear(this); toast("Saved screens deleted") }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun finishLink() {
@@ -335,11 +415,22 @@ class SettingsActivity : Activity() {
         docsRow.set(docs.isLinked, "Linked: Mehitha searches your Dropbox files (read-only)",
             "Link to let Mehitha find your documents in Dropbox", required = false)
         if (docs.isLinked) docsBox.visibility = View.GONE
+        workRow.set(work.isLinked, "Linked: Mehitha searches your work files for work questions (read-only)",
+            "Optional: let Mehitha find and read documents in your company OneDrive", required = false)
+        if (work.isLinked) workBox.visibility = View.GONE
         calendarRow.set(granted(Manifest.permission.READ_CALENDAR), "Meeting reminders on",
             "Allow for meeting reminders and \"what's on today\". Add your work calendar in the phone's Calendar or Outlook app", required = false)
         smsRow.set(sms, "Syncing (OTPs skipped)", "Allow to search your SMS", required = false)
         filesRow.set(files, "Indexed", "Allow to find documents and photos", required = false)
         notifRow.set(notif, "Capturing new messages", "Allow to save WhatsApp messages", required = false)
+        val screenApps = ScreenApps.chosen(this).map { pkg ->
+            try { packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString() } catch (e: Exception) { pkg }
+        }.sorted()
+        screensRow.set(screenApps.isNotEmpty() && ScreenReader.isEnabled(this),
+            "Reading ${screenApps.joinToString(", ")} when you open ${if (screenApps.size > 1) "them" else "it"}. Tap to change",
+            if (screenApps.isEmpty()) "Optional: pick apps (like Kite or Blinkit) whose screens Mehitha may read. Kept on this phone only"
+            else "Turn on \"Mehitha app screens\" in Accessibility to start reading ${screenApps.joinToString(", ")}", required = false)
+        screensRow.view.setOnClickListener { chooseScreenApps() }
         popupRow.set(Alerts.canPopUp(this), "On: alerts pop up on screen",
             "Allow notifications and pop-ups so the morning briefing and other alerts show on screen", required = false)
         val unrestricted = getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(packageName) == true

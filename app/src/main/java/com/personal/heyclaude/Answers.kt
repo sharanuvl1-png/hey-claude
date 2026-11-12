@@ -19,7 +19,20 @@ object Answers {
         }
         is Command.Alerts -> Alerts.summary(ctx)
         is Command.Today -> Today.answer(ctx, command.what)
-        is Command.ListAdd -> Shopping.add(ctx, command.items).let { "Added ${Shopping.said(command.items)}. Your list has ${it.size} item${if (it.size > 1) "s" else ""}." }
+        is Command.MyReminders -> Reminders.listText(Reminders.upcoming(ctx))
+        is Command.Usuals -> Groceries.answer(Groceries.log(ctx), Groceries.saved(ctx), PhoneData.today())
+        is Command.UsualsAdd -> Groceries.save(ctx, command.items).let {
+            "Saved ${Shopping.said(command.items.map { i -> Groceries.name(i) })} to your usuals. Say \"my usuals\" to open them in Blinkit. You have ${it.size}."
+        }
+        is Command.UsualsRemove -> Groceries.unsave(ctx, command.items).let {
+            if (it.isEmpty()) "${Shopping.said(command.items).replaceFirstChar { c -> c.uppercase() }} wasn't in your usuals." else "Removed ${Shopping.said(it)} from your usuals."
+        }
+        is Command.Bought -> {
+            Groceries.record(ctx, command.items)
+            Shopping.remove(ctx, command.items)
+            "Noted ${Shopping.said(command.items)}. I'll learn how often you buy ${if (command.items.size > 1) "them" else "it"} and remind you when ${if (command.items.size > 1) "they're" else "it's"} due."
+        }
+        is Command.ListAdd -> Shopping.add(ctx, command.items).also { Groceries.record(ctx, command.items) }.let { "Added ${Shopping.said(command.items)}. Your list has ${it.size} item${if (it.size > 1) "s" else ""}." }
         is Command.ListShow -> Shopping.listAnswer(ctx)
         is Command.ListClear -> { Shopping.clear(ctx); "Cleared your shopping list." }
         is Command.Orders -> Orders.answer(Orders.recent(AssistantActivity.phoneData ?: PhoneData(ctx)), PhoneData.today(), command.shop)
@@ -96,9 +109,13 @@ object Answers {
         // The voice sheet can't take a passcode; the chat handles it before calling this.
         if (Passcode.isNeeded(text)) return AssistantText.Reply(Passcode.USE_CHAT, Passcode.USE_CHAT)
         val (reminders, rest) = Prompts.reminders(text)
-        val set = try { Reminders.schedule(ctx, reminders) } catch (e: Exception) { Log.w(TAG, "Reminder failed", e); emptyList() }
-        val reply = AssistantText.forSpeech(rest)
-        return reply.copy(display = (listOf(reply.display) + set).joinToString("\n\n"))
+        // A reminder in the next day also becomes a Clock app alarm; then its notification doesn't ring as well.
+        val clock = try { reminders.filter { Reminders.clockAlarm(ctx, it) } } catch (e: Exception) { emptyList() }
+        val set = try { Reminders.schedule(ctx, reminders, clock.toSet()) } catch (e: Exception) { Log.w(TAG, "Reminder failed", e); emptyList() }
+        val set2 = if (clock.isEmpty()) set else set + "Also set as an alarm in your Clock app."
+        val (words, snips) = try { Snips.apply(ctx, rest) } catch (e: Exception) { Log.w(TAG, "Snippet failed", e); Snips.parse(rest).first to emptyList() }
+        val reply = AssistantText.forSpeech(words)
+        return reply.copy(display = (listOf(reply.display) + set2).joinToString("\n\n"), images = snips + reply.images)
     }
 
     /** A plain-words explanation of why asking Claude failed. */

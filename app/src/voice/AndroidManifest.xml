@@ -6,5 +6,6 @@
 
     <application>
         <service android:name=".NotificationCatcher" tools:node="remove" />
+        <service android:name=".ScreenReader" tools:node="remove" />
     </application>
 </manifest>

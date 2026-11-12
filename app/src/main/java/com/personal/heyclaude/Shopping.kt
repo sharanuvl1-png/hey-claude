@@ -44,6 +44,12 @@ object Shopping {
 
     fun clear(ctx: Context) = prefs(ctx).edit().remove("list").apply()
 
+    /** Takes [items] off the list (any wording of the same item). */
+    fun remove(ctx: Context, items: List<String>) {
+        val keys = items.map { Groceries.key(it) }.toSet()
+        prefs(ctx).edit().putString("list", list(ctx).filter { Groceries.key(it) !in keys }.joinToString("\n")).apply()
+    }
+
     fun said(items: List<String>) = when (items.size) {
         0 -> "nothing"
         1 -> items[0]

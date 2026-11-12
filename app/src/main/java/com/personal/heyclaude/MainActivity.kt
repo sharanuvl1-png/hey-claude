@@ -47,6 +47,8 @@ class MainActivity : Activity() {
     private val entries = mutableListOf<ChatEntry>()
     private var restoring = false
     private var busy = false
+    /** Questions asked while Mehitha was still answering; each is answered in turn. */
+    private val waiting = ArrayDeque<Triple<String, Boolean, Boolean>>()
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     /** Speech asked for before the engine finished starting (e.g. a tapped alert on a cold start). */
@@ -132,7 +134,15 @@ class MainActivity : Activity() {
     private fun ask(raw: String, spoken: Boolean = false, echo: Boolean = true) {
         val text = raw.trim()
         if (text.isEmpty()) return
-        if (busy) { toast("One moment, I'm still on the last question"); return }
+        if (busy) {
+            // Keep the question and answer it (and show it) as soon as the current one is done,
+            // so each answer sits right under its question.
+            waiting.addLast(Triple(text, spoken, echo))
+            input.setText("")
+            hideKeyboard()
+            toast(if (waiting.size == 1) "Got it. I'll answer this next" else "Got it. ${waiting.size} questions waiting")
+            return
+        }
         input.setText("")
         hideKeyboard()
         stopSpeaking()
@@ -146,6 +156,7 @@ class MainActivity : Activity() {
         }
         if (echo) addMine(text)
         val command = Command.parse(text)
+        if (command is Command.Usuals) { showUsuals(spoken); return }
         Answers.local(this, command, text)?.let { addReply(it, it, spoken); return }
         if (command is Command.Chart) { showChart(command.stock, spoken); return }
         if (command is Command.Shop) { openShop(command.items, command.shop, spoken); return }
@@ -174,6 +185,7 @@ class MainActivity : Activity() {
                 messages.removeView(thinking)
                 busy = false
                 updateSend()
+                handler.post { askNext() }
                 when {
                     result == null -> handOff(prompt, text)
                     result.isSuccess && Passcode.isNeeded(result.getOrThrow()) -> when {
@@ -181,8 +193,8 @@ class MainActivity : Activity() {
                         else -> { waitingPasscodeFor = text; addReply(Passcode.ASK, null, spoken) }
                     }
                     result.isSuccess -> Answers.reply(this, result.getOrThrow()).let {
-                        // Work files live in the company OneDrive, which only the Claude app (Microsoft 365 connector) can search.
-                        val work = if (command is Command.FindDocument) listOf(WORK_SEARCH to CLAUDE_LINK + Uri.encode(Prompts.findWorkDocument(command.question))) else emptyList()
+                        // Until the work OneDrive is linked in Settings, only the Claude app (Microsoft 365 connector) can search it.
+                        val work = if (command is Command.FindDocument && !OneDriveClient(this).isLinked) listOf(WORK_SEARCH to CLAUDE_LINK + Uri.encode(Prompts.findWorkDocument(command.question))) else emptyList()
                         addReply(it.display, it.speech, spoken, images = it.images, links = it.links + work)
                     }
                     else -> addReply(Answers.problem(result.exceptionOrNull()!!), null, spoken, problem = true)
@@ -204,8 +216,26 @@ class MainActivity : Activity() {
         openLink(links[0].second)
     }
 
+    /** Your usual groceries, with a Blinkit button per item to add one at a time, and one for anything else. */
+    private fun showUsuals(spoken: Boolean) {
+        val today = PhoneData.today()
+        val log = Groceries.log(this)
+        val saved = Groceries.saved(this)
+        val text = Groceries.answer(log, saved, today)
+        val links = Groceries.buttons(log, saved, today).map { "🛒 $it" to Shopping.searchUrl("blinkit", it) } +
+            (SOMETHING_ELSE to TYPE_LINK + "blinkit ")
+        addReply(text, text.lineSequence().first(), spoken, links = links)
+    }
+
     private fun openLink(url: String) {
         if (url.startsWith(CLAUDE_LINK)) { handOff(Uri.decode(url.removePrefix(CLAUDE_LINK)), "work files"); return }
+        if (url.startsWith(TYPE_LINK)) {
+            val start = url.removePrefix(TYPE_LINK)
+            input.setText(start); input.setSelection(start.length); showKeyboard()
+            toast("Type the item, e.g. bread or 2 kg onions")
+            return
+        }
+        Groceries.blinkitItem(url)?.let { item -> try { Groceries.record(this, listOf(item)) } catch (e: Exception) { Log.w(TAG, "Grocery note failed", e) } }
         try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("Couldn't open that link") }
     }
 
@@ -226,6 +256,7 @@ class MainActivity : Activity() {
                 messages.removeView(thinking)
                 busy = false
                 updateSend()
+                handler.post { askNext() }
                 addReply(say, say, spoken, problem = pictures.isEmpty(), images = pictures)
             }
         }.start()
@@ -255,6 +286,13 @@ class MainActivity : Activity() {
             addReply("I copied your question for the Claude app. Paste it there. To answer right here instead, add your Claude API key in Settings.", null, false)
         }
         handler.postDelayed({ if (!isFinishing) LaunchClaudeActivity.openNewChat(this) }, 900)
+    }
+
+    /** Answers the next question that was asked while Mehitha was busy. */
+    private fun askNext() {
+        if (busy || isDestroyed) return
+        val (text, spoken, echo) = waiting.removeFirstOrNull() ?: return
+        ask(text, spoken, echo)
     }
 
     private fun newChat() {
@@ -364,6 +402,7 @@ class MainActivity : Activity() {
             contentDescription = "Picture: $url"
             isClickable = true
             setOnClickListener {
+                if (url.startsWith("file://")) return@setOnClickListener
                 try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { toast("No app can open this picture") }
             }
         }
@@ -373,7 +412,7 @@ class MainActivity : Activity() {
             val bmp = Charts.picture(url)
             handler.post {
                 if (isDestroyed) return@post
-                if (bmp == null) { status.text = "Couldn't load the picture. Tap to open it in the browser."; return@post }
+                if (bmp == null) { status.text = if (url.startsWith("file://")) "This snippet is no longer saved." else "Couldn't load the picture. Tap to open it in the browser."; return@post }
                 holder.removeView(status)
                 holder.addView(ImageView(this).apply {
                     setImageBitmap(bmp)
@@ -579,6 +618,9 @@ class MainActivity : Activity() {
         const val WORK_SEARCH = "💼 Search work OneDrive in Claude"
         /** A button link that asks the Claude app (with its Microsoft 365 connector) instead of opening a web page. */
         const val CLAUDE_LINK = "mehitha-claude:"
+        /** A button link that puts its text in the question box to finish typing. */
+        const val TYPE_LINK = "mehitha-type:"
+        const val SOMETHING_ELSE = "➕ Something else"
 
         val SUGGESTIONS = listOf(
             "☀️ Brief me" to "brief me",
@@ -586,6 +628,7 @@ class MainActivity : Activity() {
             "🔔 Any alerts?" to "any alerts",
             "💸 Spending report" to "spending report",
             "🧾 Odd charges?" to "any odd charges this week",
+            "🛒 My usuals" to "my usual groceries",
             "📈 Check a stock" to "check ",
             "📊 Show a chart" to "show chart of ",
             "🛒 Shopping list" to "what's on my shopping list",

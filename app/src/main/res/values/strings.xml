@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="screen_reader_description">Saves the text on screen while you use the apps you picked in Mehitha Settings, App screens, so Mehitha can answer from it. Only those apps. Never password boxes or OTPs. Kept on this phone only. It never taps or types.</string>
     <string name="voice_helper_description">When Mehitha asks the Claude app a question for you, types it in and brings the reply back. It only looks at the Claude app, only while Mehitha is asking.</string>
     <string name="widget_description">Ask Mehitha in one tap, with bills due and today\'s breakouts.</string>
 </resources>

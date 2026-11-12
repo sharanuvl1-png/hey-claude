@@ -66,7 +66,7 @@ object Prompts {
     )
 
     fun findDocument(t: LocalDateTime, question: String, files: String, apps: Boolean = true, max: Int = MAX_PROMPT) = oneLine(max = max, s = 
-        "$question ${now(t)} " + (if (apps) "Search my Dropbox, Gmail and Google Drive for it. " else "$PHONE_ONLY Search my Dropbox documents with search_dropbox. ") +
+        "$question ${now(t)} " + (if (apps) "Search my Dropbox, Gmail and Google Drive for it. " else "$PHONE_ONLY Search my Dropbox documents with search_dropbox and read the best match. If it's a work document and you have search_work_onedrive, search my work OneDrive instead. ") +
             "Matching file names on my phone: $files. " +
             "Tell me the key date and where the document is. $REMIND_HOW Set it one month before an expiry. $RULES"
     )
@@ -84,7 +84,7 @@ object Prompts {
 
     fun reminder(t: LocalDateTime, request: String) = oneLine(
         "$request. ${now(t)} Work out the date and time I mean. Reply with a line exactly like REMIND: YYYY-MM-DD HH:MM | what to remind, " +
-            "then confirm it in one short sentence. If no time is given use 09:00."
+            "then confirm it in one short sentence. If no time is given use 09:00. Write the reminder text cleanly, fixing obvious voice typos."
     )
 
     fun ask(question: String) = question

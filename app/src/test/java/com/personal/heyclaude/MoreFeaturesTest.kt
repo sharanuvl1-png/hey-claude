@@ -142,12 +142,68 @@ class MoreFeaturesTest {
         assertEquals("2026-03-04", f.modified)
         assertEquals("https://www.dropbox.com/home/Documents/Insurance?preview=Car%20insurance%202026.pdf", f.openUrl)
         val text = PhoneTools.dropboxText(files)
-        assertTrue(text, text.contains("Car insurance 2026.pdf | folder /Documents/Insurance | modified 2026-03-04 | 240 KB | open link https://www.dropbox.com/home/"))
+        assertTrue(text, text.contains("Car insurance 2026.pdf | path /Documents/Insurance/Car insurance 2026.pdf | folder /Documents/Insurance | modified 2026-03-04 | 240 KB | open link https://www.dropbox.com/home/"))
 
         val reply = AssistantText.forSpeech("SPOKEN: Found your car insurance.\nYour car insurance is in Dropbox.\nOPEN: Car insurance 2026.pdf | ${f.openUrl}\n")
         assertEquals(listOf("Car insurance 2026.pdf" to f.openUrl), reply.links)
         assertEquals("Your car insurance is in Dropbox.", reply.display)
         // Not linked: says how to link, never guesses.
         assertTrue(PhoneTools(RuntimeEnvironment.getApplication()).searchDropbox("pan card").contains("aren't linked"))
+    }
+
+    @Test fun workOneDriveSearchResults() {
+        val json = """{"value":[
+            {"id":"01ABC","name":"Acme SOW 2026.docx","webUrl":"https://planview-my.sharepoint.com/personal/x/Documents/Acme%20SOW%202026.docx",
+             "lastModifiedDateTime":"2026-10-01T09:00:00Z","size":52000,"file":{},"parentReference":{"path":"/drive/root:/Customers/Acme%20Corp"}},
+            {"id":"01DEF","name":"Customers","folder":{"childCount":3},"parentReference":{"path":"/drive/root:"}}
+        ]}"""
+        val files = OneDriveClient.parseSearch(json)
+        assertEquals(1, files.size)
+        val f = files.single()
+        assertEquals("/Customers/Acme Corp", f.folder)
+        assertTrue(f.isOffice)
+        val text = OneDriveClient.text(files)
+        assertTrue(text, text.contains("Acme SOW 2026.docx | id 01ABC | folder /Customers/Acme Corp | modified 2026-10-01 | 51 KB | open link https://planview-my.sharepoint.com/"))
+        assertFalse(OneDriveClient(RuntimeEnvironment.getApplication()).isLinked)
+    }
+
+    @Test fun recentMessagesListsEveryMessageNotJustMatches() {
+        val chats = Chats.parse(listOf(
+            "09:00 | WhatsApp | Paytm Insurance | Your policy for KA32EY7273 is due for renewal on 17 Nov",
+            "09:30 | WhatsApp | Tiny Treasures | Homework: Maths notebook page 48",
+            "10:00 | WhatsApp | HDFC Bank | Your OTP is 123456",
+            "11:00 | Gmail | Amazon | Your order has shipped",
+        ), day)
+        val all = Chats.listText(chats, 5)
+        assertTrue(all, all.startsWith("All 3 app messages saved in the last 5 days (oldest first):"))
+        assertTrue(all, all.contains("2026-11-11 09:30 | WhatsApp | Tiny Treasures | Homework: Maths notebook page 48"))
+        assertFalse(all, all.contains("123456"))
+        val whatsApp = Chats.listText(chats, 5, "whatsapp")
+        assertTrue(whatsApp, whatsApp.startsWith("All 2 whatsapp messages") && !whatsApp.contains("Amazon"))
+        val cut = Chats.listText(chats, 5, max = 120)
+        assertTrue(cut, cut.contains("only the newest 1 fit here") && cut.contains("Amazon"))
+        assertTrue(Chats.listText(emptyList(), 5).startsWith("No app messages saved in the last 5 days."))
+    }
+
+    @Test fun remindersRingLikeAnAlarmAndGoInTheClockApp() {
+        val app = RuntimeEnvironment.getApplication()
+        val nm = app.getSystemService(android.app.NotificationManager::class.java)
+        Alerts.post(app, Alert("remind:test", "Reminder", "Join meeting"), alarm = true)
+        val posted = org.robolectric.Shadows.shadowOf(nm).allNotifications.single()
+        assertEquals(Alerts.ALARM_CHANNEL, posted.channelId)
+        assertTrue(posted.flags and android.app.Notification.FLAG_INSISTENT != 0)
+        assertEquals(android.media.AudioAttributes.USAGE_ALARM, nm.getNotificationChannel(Alerts.ALARM_CHANNEL)!!.audioAttributes.usage)
+
+        val activity = org.robolectric.Robolectric.buildActivity(android.app.Activity::class.java).setup().get()
+        val now = LocalDateTime.of(2026, 11, 12, 16, 30)
+        assertTrue(Reminders.clockAlarm(activity, ReminderNote(LocalDateTime.of(2026, 11, 12, 19, 55), "Join meeting"), now))
+        val started = org.robolectric.Shadows.shadowOf(activity).nextStartedActivity
+        assertEquals(android.provider.AlarmClock.ACTION_SET_ALARM, started.action)
+        assertEquals(19, started.getIntExtra(android.provider.AlarmClock.EXTRA_HOUR, -1))
+        assertEquals(55, started.getIntExtra(android.provider.AlarmClock.EXTRA_MINUTES, -1))
+        assertEquals("Join meeting", started.getStringExtra(android.provider.AlarmClock.EXTRA_MESSAGE))
+        // Further than a day away, or from the background: notification only.
+        assertFalse(Reminders.clockAlarm(activity, ReminderNote(LocalDateTime.of(2026, 11, 14, 9, 0), "Pay rent"), now))
+        assertFalse(Reminders.clockAlarm(app, ReminderNote(LocalDateTime.of(2026, 11, 12, 19, 55), "Join meeting"), now))
     }
 }
