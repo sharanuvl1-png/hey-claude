@@ -1,4 +1,4 @@
-107 passed, 0 failed
+123 passed, 0 failed
 PASS AskJobTest.givesUpAfterTimeoutWithReason
 PASS AskJobTest.findsQuestionEvenWhenCutShortOnScreen
 PASS AskJobTest.opensNewChatWhenNoMessageBox
@@ -13,6 +13,7 @@ PASS AssistantBrainTest.refusalGivesPoliteLine
 PASS AssistantBrainTest.followUpKeepsConversation
 PASS AssistantBrainTest.fastModelUsesBasicWebSearchAndCanFetchCharts
 PASS AssistantBrainTest.pauseTurnIsResumed
+PASS AssistantBrainTest.readsDropboxPagesAndOffersSnippetsOnlyWhenAllowed
 PASS AssistantBrainTest.toolFailureIsReportedNotThrown
 PASS AssistantBrainTest.runsToolsThenAnswers
 PASS AssistantFlowTest.claudeAppReplyIsOfferedThenRead
@@ -55,6 +56,10 @@ PASS CommandsTest.shopping
 PASS CommandsTest.money
 PASS CommandsTest.today
 PASS CommandsTest.briefing
+PASS GroceriesTest.groceryWordsAreUnderstood
+PASS GroceriesTest.savedUsualsAndPurchasesStayOnThePhone
+PASS GroceriesTest.sameItemHoweverItIsSaid
+PASS GroceriesTest.learnsHowOftenAndWhatIsDue
 PASS HomeChatTest.answersAlertsByItself
 PASS HomeChatTest.saysWhatIsMissingInsteadOfAskingClaudeWithNoData
 PASS HomeChatTest.showsAProblemPlainly
@@ -84,13 +89,16 @@ PASS MoneyTest.skipsBalancesLimitsForeignSpendsAndCardBills
 PASS MoneyTest.readsBillDueDates
 PASS MoreFeaturesTest.alertsUseAPopUpChannel
 PASS MoreFeaturesTest.dropboxSearchResultsAndOpenButtons
+PASS MoreFeaturesTest.remindersRingLikeAnAlarmAndGoInTheClockApp
 PASS MoreFeaturesTest.whatsAppBankAlertsCountButFriendsDoNot
 PASS MoreFeaturesTest.alertsAreAShortReadableList
 PASS MoreFeaturesTest.passcodeIsCheckedNotStored
 PASS MoreFeaturesTest.shoppingListAndSearchLinks
 PASS MoreFeaturesTest.orderStatusFromMessages
 PASS MoreFeaturesTest.chatsSaveAndLoad
+PASS MoreFeaturesTest.recentMessagesListsEveryMessageNotJustMatches
 PASS MoreFeaturesTest.billsFromWhatsAppAndGmailButNotOfficeMail
+PASS MoreFeaturesTest.workOneDriveSearchResults
 PASS PromptsTest.remindLinesBecomeReminders
 PASS PromptsTest.scanWithSecondAndThirdTargetsAndTimeToTarget
 PASS PromptsTest.promptsStayShortEnoughToSendAsAMessage
@@ -101,7 +109,15 @@ PASS PromptsTest.inAppPromptsUseOnlyPhoneData
 PASS PromptsTest.scanSummaryPutsBuysFirst
 PASS ScanDigestTest.summarisesYourPicksAndTopPickPerGroup
 PASS ScanDigestTest.staleOrMissingScanGivesNothing
+PASS ScreenAppsTest.onlyPickedAppsAndNoRepeats
+PASS ScreenAppsTest.screenTextIsCleanedBeforeSaving
+PASS SnipsTest.confidentialFilesAreSpotted
+PASS SnipsTest.bandIsPaddedAndStaysOnThePage
+PASS SnipsTest.snipLinesAreReadAndRemoved
+PASS SnipsTest.cutsTheAskedPartOfThePage
 PASS StartersTest.localStartersNeedNoClaude
+PASS StartersTest.usualGroceriesGiveABlinkitButtonPerItem
+PASS StartersTest.aQuestionAskedWhileBusyIsAnsweredNext
 PASS StartersTest.everyStarterGetsARealAnswer
 PASS TodayTest.meetingReminderShowsOnceShortlyBefore
 PASS TodayTest.deliveriesFromMessages
