@@ -56,6 +56,11 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
             (if (notes.isEmpty()) "" else "\n\n" + notes.joinToString("\n"))
     }
 
+    override fun recentMessages(days: Int, app: String): String {
+        val d = days.coerceIn(1, 14).toLong()
+        return Chats.listText(Chats.read(java.io.File(ctx.filesDir, "notifications"), PhoneData.today(), d), d, app)
+    }
+
     override fun searchDropbox(query: String): String {
         val box = DropboxClient(ctx, DOCS)
         if (!box.isLinked) return "Sharan's Dropbox documents aren't linked yet. Say they can link them in Mehitha Settings, Phone data, Dropbox documents."

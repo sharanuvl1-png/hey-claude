@@ -47,6 +47,8 @@ class MainActivity : Activity() {
     private val entries = mutableListOf<ChatEntry>()
     private var restoring = false
     private var busy = false
+    /** Questions asked while Mehitha was still answering; each is answered in turn. */
+    private val waiting = ArrayDeque<Triple<String, Boolean, Boolean>>()
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     /** Speech asked for before the engine finished starting (e.g. a tapped alert on a cold start). */
@@ -132,7 +134,15 @@ class MainActivity : Activity() {
     private fun ask(raw: String, spoken: Boolean = false, echo: Boolean = true) {
         val text = raw.trim()
         if (text.isEmpty()) return
-        if (busy) { toast("One moment, I'm still on the last question"); return }
+        if (busy) {
+            // Keep the question and answer it (and show it) as soon as the current one is done,
+            // so each answer sits right under its question.
+            waiting.addLast(Triple(text, spoken, echo))
+            input.setText("")
+            hideKeyboard()
+            toast(if (waiting.size == 1) "Got it. I'll answer this next" else "Got it. ${waiting.size} questions waiting")
+            return
+        }
         input.setText("")
         hideKeyboard()
         stopSpeaking()
@@ -175,6 +185,7 @@ class MainActivity : Activity() {
                 messages.removeView(thinking)
                 busy = false
                 updateSend()
+                handler.post { askNext() }
                 when {
                     result == null -> handOff(prompt, text)
                     result.isSuccess && Passcode.isNeeded(result.getOrThrow()) -> when {
@@ -245,6 +256,7 @@ class MainActivity : Activity() {
                 messages.removeView(thinking)
                 busy = false
                 updateSend()
+                handler.post { askNext() }
                 addReply(say, say, spoken, problem = pictures.isEmpty(), images = pictures)
             }
         }.start()
@@ -274,6 +286,13 @@ class MainActivity : Activity() {
             addReply("I copied your question for the Claude app. Paste it there. To answer right here instead, add your Claude API key in Settings.", null, false)
         }
         handler.postDelayed({ if (!isFinishing) LaunchClaudeActivity.openNewChat(this) }, 900)
+    }
+
+    /** Answers the next question that was asked while Mehitha was busy. */
+    private fun askNext() {
+        if (busy || isDestroyed) return
+        val (text, spoken, echo) = waiting.removeFirstOrNull() ?: return
+        ask(text, spoken, echo)
     }
 
     private fun newChat() {

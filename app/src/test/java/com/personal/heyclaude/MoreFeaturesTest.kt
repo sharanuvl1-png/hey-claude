@@ -166,4 +166,22 @@ class MoreFeaturesTest {
         assertTrue(text, text.contains("Acme SOW 2026.docx | id 01ABC | folder /Customers/Acme Corp | modified 2026-10-01 | 51 KB | open link https://planview-my.sharepoint.com/"))
         assertFalse(OneDriveClient(RuntimeEnvironment.getApplication()).isLinked)
     }
+
+    @Test fun recentMessagesListsEveryMessageNotJustMatches() {
+        val chats = Chats.parse(listOf(
+            "09:00 | WhatsApp | Paytm Insurance | Your policy for KA32EY7273 is due for renewal on 17 Nov",
+            "09:30 | WhatsApp | Tiny Treasures | Homework: Maths notebook page 48",
+            "10:00 | WhatsApp | HDFC Bank | Your OTP is 123456",
+            "11:00 | Gmail | Amazon | Your order has shipped",
+        ), day)
+        val all = Chats.listText(chats, 5)
+        assertTrue(all, all.startsWith("All 3 app messages saved in the last 5 days (oldest first):"))
+        assertTrue(all, all.contains("2026-11-11 09:30 | WhatsApp | Tiny Treasures | Homework: Maths notebook page 48"))
+        assertFalse(all, all.contains("123456"))
+        val whatsApp = Chats.listText(chats, 5, "whatsapp")
+        assertTrue(whatsApp, whatsApp.startsWith("All 2 whatsapp messages") && !whatsApp.contains("Amazon"))
+        val cut = Chats.listText(chats, 5, max = 120)
+        assertTrue(cut, cut.contains("only the newest 1 fit here") && cut.contains("Amazon"))
+        assertTrue(Chats.listText(emptyList(), 5).startsWith("No app messages saved in the last 5 days."))
+    }
 }

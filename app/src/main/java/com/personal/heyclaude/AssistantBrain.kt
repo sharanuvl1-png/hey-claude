@@ -36,6 +36,9 @@ interface MehithaTools {
     /** One Dropbox file to read: a PDF or picture is passed to Claude whole, text files as text. */
     fun readDropboxFile(path: String): FileForClaude = FileForClaude("Dropbox documents aren't linked.")
 
+    /** Every WhatsApp and app message saved in the last [days] days, optionally from one [app]. */
+    fun recentMessages(days: Int, app: String): String = "No messages are saved on this phone."
+
     /** True when the work OneDrive is linked, so its tools are offered. */
     val hasWorkFiles: Boolean get() = false
 
@@ -126,6 +129,18 @@ class AssistantBrain(
                 "Blinkit orders, with the time they were seen), and the list of files and photos on the phone. " +
                 "Use for questions about messages, people, bookings, payments, documents or files on the phone.",
             "query", "A few keywords, e.g. a name, company, amount or file name"))
+        .addTool(Tool.builder().name("get_recent_messages")
+            .description("Every WhatsApp and other app message saved on Sharan's phone in the last few days (from notifications), " +
+                "oldest first. Use this, not search_phone_data, for questions like \"WhatsApp messages from the last 5 days\" " +
+                "or \"anything I need to know from my chats this week\", then pick out what matters.")
+            .inputSchema(Tool.InputSchema.builder()
+                .properties(Tool.InputSchema.Properties.builder()
+                    .putAdditionalProperty("days", JsonValue.from(mapOf("type" to "integer", "description" to "How many days back, 1 to 14")))
+                    .putAdditionalProperty("app", JsonValue.from(mapOf("type" to "string", "description" to "Optional app name such as WhatsApp or Gmail; leave empty for all apps")))
+                    .build())
+                .required(listOf("days"))
+                .build())
+            .build())
         .addTool(tool("get_stock_scan",
             "Today's swing-trading stock scan: watchlist verdicts, entry, stop-loss, targets, and top picks " +
                 "from Nifty 50, Midcap 150 and Smallcap 100. Use for any question about stocks or the market scan.",
@@ -191,6 +206,9 @@ class AssistantBrain(
                     "search_phone_data" -> tools.searchPhoneData(stringArg(use._input(), "query")) to false
                     "get_stock_scan" -> tools.stockScan() to false
                     "get_stock_chart" -> tools.stockChart(stringArg(use._input(), "stock")) to false
+                    "get_recent_messages" -> tools.recentMessages(
+                        ((use._input().convert(Map::class.java)?.get("days"))?.toString()?.toDoubleOrNull()?.toInt() ?: 3).coerceIn(1, 14),
+                        stringArg(use._input(), "app")) to false
                     "search_dropbox" -> tools.searchDropbox(stringArg(use._input(), "query")) to false
                     "search_work_onedrive" -> tools.searchWorkOneDrive(stringArg(use._input(), "query")) to false
                     else -> "Unknown tool ${use.name()}" to true
