@@ -50,6 +50,7 @@ class SettingsActivity : Activity() {
     private val docs by lazy { DropboxClient(this, PhoneTools.DOCS) }
     private val work by lazy { OneDriveClient(this) }
     private lateinit var workRow: Ui.Row
+    private lateinit var screensRow: Ui.Row
     private lateinit var workBox: LinearLayout
     private lateinit var syncStatus: TextView
 
@@ -152,7 +153,9 @@ class SettingsActivity : Activity() {
         batteryRow = Ui.Row(this, "Alerts on time", "Allow") {
             startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
         }
-        listOf(calendarRow, smsRow, filesRow, notifRow, popupRow, batteryRow).forEach { data.addView(it.view) }
+        screensRow = Ui.Row(this, "App screens", "Choose") { chooseScreenApps() }
+        listOf(calendarRow, smsRow, filesRow, notifRow, screensRow, popupRow, batteryRow).forEach { data.addView(it.view) }
+        if (!hasService(ScreenReader::class.java)) screensRow.view.visibility = View.GONE
         // The basic build leaves these out so Play Protect lets it install.
         if (!declares(Manifest.permission.READ_SMS)) smsRow.view.visibility = View.GONE
         if (!hasService(NotificationCatcher::class.java)) notifRow.view.visibility = View.GONE
@@ -253,6 +256,36 @@ class SettingsActivity : Activity() {
         addView(Ui.spacer(this@SettingsActivity, 8))
         addView(status)
         addView(Ui.spacer(this@SettingsActivity, 8))
+    }
+
+    /**
+     * Pick the apps whose screens Mehitha may save (for example Kite or Blinkit), then turn on
+     * "Mehitha app screens" in Accessibility. Only the picked apps are read.
+     */
+    private fun chooseScreenApps() {
+        val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val apps = packageManager.queryIntentActivities(launcher, 0)
+            .map { it.activityInfo.packageName to it.loadLabel(packageManager).toString() }
+            .filter { it.first != packageName && it.first != LaunchClaudeActivity.CLAUDE_PACKAGE }
+            .distinctBy { it.first }.sortedBy { it.second.lowercase() }
+        if (apps.isEmpty()) { toast("No apps found"); return }
+        val chosen = ScreenApps.chosen(this).toMutableSet()
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Apps Mehitha may read")
+            .setMultiChoiceItems(apps.map { it.second }.toTypedArray(), apps.map { it.first in chosen }.toBooleanArray()) { _, i, on ->
+                if (on) chosen += apps[i].first else chosen -= apps[i].first
+            }
+            .setPositiveButton("Save") { _, _ ->
+                ScreenApps.choose(this, chosen)
+                if (chosen.isNotEmpty() && !ScreenReader.isEnabled(this)) {
+                    toast("Now turn on \"Mehitha app screens\" in Accessibility (Installed apps)")
+                    ScreenReader.openSettings(this)
+                }
+                refresh()
+            }
+            .setNeutralButton("Forget saved screens") { _, _ -> ScreenApps.clear(this); toast("Saved screens deleted") }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun finishLink() {
@@ -390,6 +423,14 @@ class SettingsActivity : Activity() {
         smsRow.set(sms, "Syncing (OTPs skipped)", "Allow to search your SMS", required = false)
         filesRow.set(files, "Indexed", "Allow to find documents and photos", required = false)
         notifRow.set(notif, "Capturing new messages", "Allow to save WhatsApp messages", required = false)
+        val screenApps = ScreenApps.chosen(this).map { pkg ->
+            try { packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString() } catch (e: Exception) { pkg }
+        }.sorted()
+        screensRow.set(screenApps.isNotEmpty() && ScreenReader.isEnabled(this),
+            "Reading ${screenApps.joinToString(", ")} when you open ${if (screenApps.size > 1) "them" else "it"}. Tap to change",
+            if (screenApps.isEmpty()) "Optional: pick apps (like Kite or Blinkit) whose screens Mehitha may read. Kept on this phone only"
+            else "Turn on \"Mehitha app screens\" in Accessibility to start reading ${screenApps.joinToString(", ")}", required = false)
+        screensRow.view.setOnClickListener { chooseScreenApps() }
         popupRow.set(Alerts.canPopUp(this), "On: alerts pop up on screen",
             "Allow notifications and pop-ups so the morning briefing and other alerts show on screen", required = false)
         val unrestricted = getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(packageName) == true

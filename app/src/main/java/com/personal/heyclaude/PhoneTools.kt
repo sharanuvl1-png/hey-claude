@@ -39,6 +39,12 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
             notes += "WhatsApp and app messages: none captured yet."
         }
 
+        val screens = ScreenApps.dir(ctx).listFiles()?.sortedByDescending { it.name }.orEmpty()
+        if (screens.isNotEmpty()) {
+            val lines = screens.asSequence().flatMap { f -> f.readLines().asReversed().asSequence().map { "${f.nameWithoutExtension} $it" } }
+            parts += section("Screens saved from Sharan's chosen apps (newest first)", AssistantText.bestLines(lines, words, limit = 5))
+        }
+
         if (Environment.isExternalStorageManager()) {
             parts += section("Files on the phone", searchFiles(words))
         } else {

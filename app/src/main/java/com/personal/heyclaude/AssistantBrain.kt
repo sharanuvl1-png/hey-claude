@@ -122,7 +122,8 @@ class AssistantBrain(
         }
         .addTool(tool("search_phone_data",
             "Search Sharan's phone data synced to Dropbox: text messages (OTPs removed), WhatsApp and other app " +
-                "messages captured from notifications, and the list of files and photos on the phone. " +
+                "messages captured from notifications, screens saved from apps Sharan chose (such as Zerodha holdings or " +
+                "Blinkit orders, with the time they were seen), and the list of files and photos on the phone. " +
                 "Use for questions about messages, people, bookings, payments, documents or files on the phone.",
             "query", "A few keywords, e.g. a name, company, amount or file name"))
         .addTool(tool("get_stock_scan",
