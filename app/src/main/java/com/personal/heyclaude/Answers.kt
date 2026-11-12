@@ -109,10 +109,13 @@ object Answers {
         // The voice sheet can't take a passcode; the chat handles it before calling this.
         if (Passcode.isNeeded(text)) return AssistantText.Reply(Passcode.USE_CHAT, Passcode.USE_CHAT)
         val (reminders, rest) = Prompts.reminders(text)
-        val set = try { Reminders.schedule(ctx, reminders) } catch (e: Exception) { Log.w(TAG, "Reminder failed", e); emptyList() }
+        // A reminder in the next day also becomes a Clock app alarm; then its notification doesn't ring as well.
+        val clock = try { reminders.filter { Reminders.clockAlarm(ctx, it) } } catch (e: Exception) { emptyList() }
+        val set = try { Reminders.schedule(ctx, reminders, clock.toSet()) } catch (e: Exception) { Log.w(TAG, "Reminder failed", e); emptyList() }
+        val set2 = if (clock.isEmpty()) set else set + "Also set as an alarm in your Clock app."
         val (words, snips) = try { Snips.apply(ctx, rest) } catch (e: Exception) { Log.w(TAG, "Snippet failed", e); Snips.parse(rest).first to emptyList() }
         val reply = AssistantText.forSpeech(words)
-        return reply.copy(display = (listOf(reply.display) + set).joinToString("\n\n"), images = snips + reply.images)
+        return reply.copy(display = (listOf(reply.display) + set2).joinToString("\n\n"), images = snips + reply.images)
     }
 
     /** A plain-words explanation of why asking Claude failed. */

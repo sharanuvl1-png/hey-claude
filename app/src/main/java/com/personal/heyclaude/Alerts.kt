@@ -51,6 +51,21 @@ object Alerts {
         nm.deleteNotificationChannel(OLD_CHANNEL)
     }
 
+    /** Reminders ring with the alarm sound until you tap or swipe them away. */
+    const val ALARM_CHANNEL = "mehitha_reminder_alarm"
+
+    fun ensureAlarmChannel(ctx: Context) {
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        if (nm.getNotificationChannel(ALARM_CHANNEL) != null) return
+        nm.createNotificationChannel(NotificationChannel(ALARM_CHANNEL, "Mehitha reminders", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "Reminders you set with Mehitha. They ring like an alarm until you tap or swipe them."
+            enableVibration(true)
+            setSound(android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM),
+                android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+        })
+    }
+
     /** True when Mehitha's alerts can show and pop up on screen. */
     fun canPopUp(ctx: Context): Boolean {
         val nm = ctx.getSystemService(NotificationManager::class.java)
@@ -63,12 +78,14 @@ object Alerts {
     const val EXTRA_SPEAK = "com.personal.heyclaude.SPEAK"
 
     /** Shows [alert] unless it was shown before. Tapping it asks Mehitha [ask], if given. */
-    fun post(ctx: Context, alert: Alert, ask: String? = null, speak: Boolean = false): Boolean {
+    /** [alarm]: a reminder, which rings with the alarm sound until it is tapped or swiped away. */
+    fun post(ctx: Context, alert: Alert, ask: String? = null, speak: Boolean = false, alarm: Boolean = false): Boolean {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val seen = prefs.getStringSet("seen", emptySet())!!
         if (alert.id in seen) return false
         val nm = ctx.getSystemService(NotificationManager::class.java)
         ensureChannel(ctx)
+        if (alarm) ensureAlarmChannel(ctx)
         val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         fun web(url: String, code: Int) = PendingIntent.getActivity(ctx, code,
             Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), flags)
@@ -78,10 +95,10 @@ object Alerts {
         val tap = alert.link?.let { web(it, alert.id.hashCode()) }
             ?: PendingIntent.getActivity(ctx, alert.id.hashCode(), open, flags)
         val chart = alert.image?.let { picture(it) }
-        val builder = Notification.Builder(ctx, CHANNEL)
+        val builder = Notification.Builder(ctx, if (alarm) ALARM_CHANNEL else CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_mehitha)
             .setContentTitle(alert.title)
-            .setCategory(Notification.CATEGORY_REMINDER)
+            .setCategory(if (alarm) Notification.CATEGORY_ALARM else Notification.CATEGORY_REMINDER)
             .setContentText(alert.text)
             .setStyle(if (chart != null) Notification.BigPictureStyle().bigPicture(chart).setSummaryText(alert.text)
                       else Notification.BigTextStyle().bigText(alert.text))
@@ -91,6 +108,7 @@ object Alerts {
         alert.image?.let { builder.addAction(Notification.Action.Builder(null, "Chart", web(it, alert.id.hashCode() + 1)).build()) }
         alert.link?.let { builder.addAction(Notification.Action.Builder(null, "Full analysis", web(it, alert.id.hashCode() + 2)).build()) }
         val n = builder.build()
+        if (alarm) n.flags = n.flags or Notification.FLAG_INSISTENT
         try { nm.notify(alert.id.hashCode(), n) } catch (e: SecurityException) { Log.w("Mehitha", "No notification permission") }
         val recent = (prefs.getString("recent", "") ?: "").lines().filter { it.isNotBlank() }.takeLast(29) +
             "${System.currentTimeMillis()}\t${alert.title}: ${alert.text}"
@@ -286,16 +304,32 @@ object Reminders {
     private const val PREFS = "reminders"
 
     /** Schedules each reminder; returns a line per reminder for the screen. */
-    fun schedule(ctx: Context, notes: List<ReminderNote>): List<String> = notes.mapNotNull { r ->
+    /** [quiet]: reminders already set as a Clock alarm, whose notification shouldn't ring too. */
+    fun schedule(ctx: Context, notes: List<ReminderNote>, quiet: Set<ReminderNote> = emptySet()): List<String> = notes.mapNotNull { r ->
         val delay = Duration.between(PhoneData.now(), r.at)
         if (delay.isNegative) return@mapNotNull null
         val work = OneTimeWorkRequestBuilder<ReminderWorker>()
             .setInitialDelay(delay.toMillis(), TimeUnit.MILLISECONDS)
-            .setInputData(Data.Builder().putString("text", r.text).putString("at", r.at.toString()).build())
+            .setInputData(Data.Builder().putString("text", r.text).putString("at", r.at.toString()).putBoolean("ring", r !in quiet).build())
             .build()
         WorkManager.getInstance(ctx).enqueueUniqueWork("remind:${r.at}:${r.text.hashCode()}", ExistingWorkPolicy.REPLACE, work)
         save(ctx, saved(ctx).filter { it != r } + r)
-        "Reminder set for ${r.at.format(SHOWN)}: ${r.text}. It pops up with a sound. Say \"my reminders\" to see them all."
+        "Reminder set for ${r.at.format(SHOWN)}: ${r.text}. It rings until you stop it. Say \"my reminders\" to see them all."
+    }
+
+    /**
+     * Also sets an alarm in the phone's Clock app for a reminder in the next 24 hours, so it rings
+     * until stopped and shows in the Clock app. Only from a screen you're using (Android doesn't
+     * let apps open the Clock app in the background). Returns true when the Clock app took it.
+     */
+    fun clockAlarm(ctx: Context, r: ReminderNote, now: LocalDateTime = PhoneData.now()): Boolean {
+        if (ctx !is android.app.Activity || !r.at.isAfter(now) || r.at.isAfter(now.plusHours(24))) return false
+        val i = Intent(android.provider.AlarmClock.ACTION_SET_ALARM)
+            .putExtra(android.provider.AlarmClock.EXTRA_HOUR, r.at.hour)
+            .putExtra(android.provider.AlarmClock.EXTRA_MINUTES, r.at.minute)
+            .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE, r.text.take(60))
+            .putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI, true)
+        return try { ctx.startActivity(i); true } catch (e: Exception) { Log.w("Mehitha", "Clock alarm failed", e); false }
     }
 
     /** Reminders still to come, soonest first. */
@@ -325,7 +359,7 @@ object Reminders {
 class ReminderWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
     override fun doWork(): Result {
         val text = inputData.getString("text") ?: return Result.success()
-        Alerts.post(applicationContext, Alert("remind:${inputData.getString("at")}:${text.hashCode()}", "Reminder", text))
+        Alerts.post(applicationContext, Alert("remind:${inputData.getString("at")}:${text.hashCode()}", "Reminder", text), alarm = inputData.getBoolean("ring", true))
         Reminders.done(applicationContext, inputData.getString("at"), text)
         return Result.success()
     }

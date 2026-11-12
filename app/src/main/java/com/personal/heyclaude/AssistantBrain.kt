@@ -313,7 +313,7 @@ class AssistantBrain(
             time from the current time below and add a line exactly like
             "REMIND: YYYY-MM-DD HH:MM | what to remind" (24-hour time; 09:00 if no time is given).
             Write the reminder text cleanly, fixing obvious voice typos ("joined ting" means "Join meeting").
-            The reminder pops up with the phone's notification sound.
+            The reminder rings like an alarm until Sharan stops it; one in the next 24 hours is also set in the Clock app.
             The app turns that line into a notification, so confirm the reminder in one short sentence.
         """.trimIndent()
 

@@ -184,4 +184,26 @@ class MoreFeaturesTest {
         assertTrue(cut, cut.contains("only the newest 1 fit here") && cut.contains("Amazon"))
         assertTrue(Chats.listText(emptyList(), 5).startsWith("No app messages saved in the last 5 days."))
     }
+
+    @Test fun remindersRingLikeAnAlarmAndGoInTheClockApp() {
+        val app = RuntimeEnvironment.getApplication()
+        val nm = app.getSystemService(android.app.NotificationManager::class.java)
+        Alerts.post(app, Alert("remind:test", "Reminder", "Join meeting"), alarm = true)
+        val posted = org.robolectric.Shadows.shadowOf(nm).allNotifications.single()
+        assertEquals(Alerts.ALARM_CHANNEL, posted.channelId)
+        assertTrue(posted.flags and android.app.Notification.FLAG_INSISTENT != 0)
+        assertEquals(android.media.AudioAttributes.USAGE_ALARM, nm.getNotificationChannel(Alerts.ALARM_CHANNEL)!!.audioAttributes.usage)
+
+        val activity = org.robolectric.Robolectric.buildActivity(android.app.Activity::class.java).setup().get()
+        val now = LocalDateTime.of(2026, 11, 12, 16, 30)
+        assertTrue(Reminders.clockAlarm(activity, ReminderNote(LocalDateTime.of(2026, 11, 12, 19, 55), "Join meeting"), now))
+        val started = org.robolectric.Shadows.shadowOf(activity).nextStartedActivity
+        assertEquals(android.provider.AlarmClock.ACTION_SET_ALARM, started.action)
+        assertEquals(19, started.getIntExtra(android.provider.AlarmClock.EXTRA_HOUR, -1))
+        assertEquals(55, started.getIntExtra(android.provider.AlarmClock.EXTRA_MINUTES, -1))
+        assertEquals("Join meeting", started.getStringExtra(android.provider.AlarmClock.EXTRA_MESSAGE))
+        // Further than a day away, or from the background: notification only.
+        assertFalse(Reminders.clockAlarm(activity, ReminderNote(LocalDateTime.of(2026, 11, 14, 9, 0), "Pay rent"), now))
+        assertFalse(Reminders.clockAlarm(app, ReminderNote(LocalDateTime.of(2026, 11, 12, 19, 55), "Join meeting"), now))
+    }
 }
