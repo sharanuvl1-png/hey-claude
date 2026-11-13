@@ -2,21 +2,6 @@
  "date": "2026-11-13",
  "alerts": [
   {
-   "id": "buyzone:TECHM:2026-11-13",
-   "title": "Tech Mahindra is in the buy zone",
-   "text": "Tech Mahindra moved from buy on dip to buy now at ₹1,764.0."
-  },
-  {
-   "id": "buyzone:RELIANCE:2026-11-13",
-   "title": "Reliance Industries is in the buy zone",
-   "text": "Reliance Industries moved from buy on dip to buy now at ₹1,339.7."
-  },
-  {
-   "id": "buyzone:HEROMOTOCO:2026-11-13",
-   "title": "Hero MotoCorp is in the buy zone",
-   "text": "Hero MotoCorp moved from buy on dip to buy now at ₹5,385.0."
-  },
-  {
    "id": "results:EICHERMOT:2026-11-13",
    "title": "Eicher Motors results today",
    "text": "Eicher Motors reports quarterly results today (13 Nov)."
@@ -25,6 +10,11 @@
    "id": "results:GRASIM:2026-11-13",
    "title": "Grasim Industries results today",
    "text": "Grasim Industries reports quarterly results today (13 Nov)."
+  },
+  {
+   "id": "news:AXISBANK:6196f4d0ce",
+   "title": "News: Axis Bank",
+   "text": "Jindal Power secures $470m funding for Botswana power project"
   },
   {
    "id": "news:RELIANCE:b3c04d81ae",
