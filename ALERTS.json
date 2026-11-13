@@ -1,15 +1,35 @@
 {
- "date": "2026-11-12",
+ "date": "2026-11-13",
  "alerts": [
   {
+   "id": "buyzone:TECHM:2026-11-13",
+   "title": "Tech Mahindra is in the buy zone",
+   "text": "Tech Mahindra moved from buy on dip to buy now at ₹1,764.0."
+  },
+  {
+   "id": "buyzone:RELIANCE:2026-11-13",
+   "title": "Reliance Industries is in the buy zone",
+   "text": "Reliance Industries moved from buy on dip to buy now at ₹1,339.7."
+  },
+  {
+   "id": "buyzone:HEROMOTOCO:2026-11-13",
+   "title": "Hero MotoCorp is in the buy zone",
+   "text": "Hero MotoCorp moved from buy on dip to buy now at ₹5,385.0."
+  },
+  {
    "id": "results:EICHERMOT:2026-11-13",
-   "title": "Eicher Motors results tomorrow",
-   "text": "Eicher Motors reports quarterly results tomorrow (13 Nov)."
+   "title": "Eicher Motors results today",
+   "text": "Eicher Motors reports quarterly results today (13 Nov)."
   },
   {
    "id": "results:GRASIM:2026-11-13",
-   "title": "Grasim Industries results tomorrow",
-   "text": "Grasim Industries reports quarterly results tomorrow (13 Nov)."
+   "title": "Grasim Industries results today",
+   "text": "Grasim Industries reports quarterly results today (13 Nov)."
+  },
+  {
+   "id": "news:RELIANCE:b3c04d81ae",
+   "title": "News: Reliance Industries",
+   "text": "Reliance plans $4.6bn investment in Andhra Pradesh coal-to-gas project"
   }
  ]
 }
