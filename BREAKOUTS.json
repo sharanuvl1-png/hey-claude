@@ -1,0 +1,84 @@
+{
+ "date": "2026-11-13",
+ "checked_at": "2026-11-13 23:15 IST",
+ "alerts": [],
+ "near": [
+  {
+   "symbol": "EICHERMOT",
+   "price": 7650.0,
+   "level": 7659.62,
+   "gap_pct": 0.13
+  },
+  {
+   "symbol": "BSE",
+   "price": 3937.7,
+   "level": 3981.69,
+   "gap_pct": 1.1
+  },
+  {
+   "symbol": "PNB",
+   "price": 142.81,
+   "level": 144.74,
+   "gap_pct": 1.33
+  },
+  {
+   "symbol": "BHARTIARTL",
+   "price": 2106.0,
+   "level": 2136.5,
+   "gap_pct": 1.43
+  },
+  {
+   "symbol": "GAIL",
+   "price": 188.0,
+   "level": 190.95,
+   "gap_pct": 1.54
+  },
+  {
+   "symbol": "KOTAKBANK",
+   "price": 488.55,
+   "level": 496.68,
+   "gap_pct": 1.64
+  },
+  {
+   "symbol": "ABB",
+   "price": 7054.5,
+   "level": 7197.79,
+   "gap_pct": 1.99
+  }
+ ],
+ "rules": {
+  "index_csv": "ind_nifty100list.csv",
+  "level": "resistance",
+  "volume_multiple": 1.5,
+  "volume_avg_days": 50,
+  "require_above_ema": [
+   50,
+   200
+  ],
+  "require_ema200_rising": true,
+  "rsi_min": null,
+  "rsi_max": null,
+  "max_below_52w_high_pct": 25,
+  "min_rs_vs_nifty_pct": 0,
+  "require_market_uptrend": true,
+  "min_close_in_range": null,
+  "max_base_depth_pct": null,
+  "base_days": 15,
+  "max_extension_pct": 4.0,
+  "max_risk_pct": 8,
+  "min_turnover_cr": 5,
+  "stop_atr_below_level": 1.0,
+  "extra_symbols": []
+ },
+ "notes": [],
+ "source": "Yahoo Finance; intraday prices can be up to 15 minutes behind NSE.",
+ "mode": "close",
+ "as_of": "13 Nov",
+ "scanned": 99,
+ "market": {
+  "close": 25144.30078125,
+  "ema50": 23618.28055074643,
+  "up": true,
+  "ret3m": 0.028988092754607342
+ }
+}
