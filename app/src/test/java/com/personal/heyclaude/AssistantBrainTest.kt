@@ -55,10 +55,12 @@ class AssistantBrainTest {
         assertTrue(plain, plain.contains("\"tool_use_id\":\"tu_1\"") && plain.contains("Page 1:"))
         assertTrue(plain, plain.contains("\"type\":\"image\"") && plain.contains("AQID"))
         assertTrue(plain, plain.contains("SNIP: d"))
-        val policy = run("/Insurance/Car policy.pdf", unlocked = false)
-        assertFalse(policy, policy.contains("SNIP: d"))
-        assertTrue(policy, policy.contains("Don't add a SNIP line"))
-        assertTrue(run("/Insurance/Car policy.pdf", unlocked = true).contains("SNIP: d"))
+        // Only salary files need the passcode now; a policy gets its snippet straight away.
+        assertTrue(run("/Insurance/Car policy.pdf", unlocked = false).contains("SNIP: d"))
+        val payslip = run("/Work/Payslip Oct 2026.pdf", unlocked = false)
+        assertFalse(payslip, payslip.contains("SNIP: d"))
+        assertTrue(payslip, payslip.contains("Don't add a SNIP line"))
+        assertTrue(run("/Work/Payslip Oct 2026.pdf", unlocked = true).contains("SNIP: d"))
     }
 
     @Test fun aFileClaudeCannotTakeIsSentAgainAsWordsOnly() {
