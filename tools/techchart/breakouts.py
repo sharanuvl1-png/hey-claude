@@ -354,7 +354,8 @@ def main():
         except Exception as e:
             print(f"{s}: {e}", file=sys.stderr)
             continue
-        if r:
+        # Only stocks priced at or under max_price (₹2,000) get alerts or go on the "near" list.
+        if r and r["price"] <= (rules.get("max_price") or float("inf")):
             results.append(r)
 
     prune_charts(args.out, now.date())

@@ -35,6 +35,7 @@ SOURCES = ["https://www.niftyindices.com/IndexConstituent/", "https://archives.n
 MIN_TURNOVER_CR = 5      # skip stocks trading under ₹5 crore a day
 MIN_TECH_SCORE = 3       # at least a "buy on dip" setup
 MAX_RISK = 0.12          # entry-to-stop distance above 12% is too wide for a swing trade
+MAX_PRICE = 2000         # Sharan only wants suggestions priced at ₹2,000 a share or less
 SHORTLIST = 12           # best technical setups per index checked for fundamentals
 PICKS = 5
 
@@ -213,7 +214,7 @@ def main():
                 t = tech_score(frame)
             except Exception:
                 continue
-            if t["turnover"] >= MIN_TURNOVER_CR:
+            if t["turnover"] >= MIN_TURNOVER_CR and t["close"] <= MAX_PRICE:
                 scored.append((s, t))
         groups.append((title, keep, scored, None))
 
@@ -246,7 +247,8 @@ def main():
     results = {}
     lines += ["## Watchlist", "",
               f"Your own stocks plus the strongest {', '.join(f'{k} {t}' for t, _, k in INDICES)} stocks "
-              f"(list from {made.isoformat() if made else 'n/a'}, rebuilt every Monday).", ""]
+              f"(list from {made.isoformat() if made else 'n/a'}, rebuilt every Monday). "
+              f"Suggestions are only stocks closing at ₹{MAX_PRICE:,} or less.", ""]
     # New columns go after Chart so older Mehitha builds, which read columns by position, still work.
     lines += ["Time to T1: the median number of trading days this stock took, in the last 2 years, to rise from a close "
               "by as much as T1 is above the entry, and how often it managed that within 60 trading days. Past behaviour, not a forecast.", "",
@@ -257,6 +259,8 @@ def main():
             symbol, found = tc.resolve_symbol(w)
             r = tc.run(symbol, name or found, args.out)
             results[symbol] = r
+            if group != "Your picks" and r["close"] > MAX_PRICE:
+                continue  # picked last week but now above ₹2,000: leave it out until the list is rebuilt
             lines.append(f"| {group} | {r['name']} | ₹{r['close']:.1f} | {r['rec']} | {r['grade']} | {setup_cells(r)} | "
                          f"{os.path.relpath(r['png'], args.out)} | {extra_cells(r)} |")
         except BaseException as e:  # techchart raises SystemExit on bad or stale data
@@ -292,7 +296,7 @@ def main():
                 verdict_cell, cells = t["rec"], "– | – | –"
             lines.append(f"| {i} | {f['name']} ({s[:-3]}) | ₹{t['close']:.1f} | {verdict_cell} | {cells} | {pct(f['roe'])} | "
                          f"{num(None if f['de'] is None else f['de'] / 100, '{:.2f}')} | {pct(f['eg'])} | {pct(f['rg'])} | {num(f['pe'])} |")
-        lines += ["", f"{len(scored)} liquid stocks scanned; {len(ready)} had a buy setup with risk under {100 * MAX_RISK:.0f}%.", ""]
+        lines += ["", f"{len(scored)} liquid stocks at ₹{MAX_PRICE:,} or less scanned; {len(ready)} had a buy setup with risk under {100 * MAX_RISK:.0f}%.", ""]
 
     os.makedirs(os.path.join(args.out, "daily"), exist_ok=True)
     path = os.path.join(args.out, "daily", f"{today.isoformat()}.md")
