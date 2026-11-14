@@ -94,6 +94,9 @@ class MoreFeaturesTest {
         assertTrue(Passcode.check(app, "13579"))
         assertTrue(Passcode.check(app, "135 79"))
         assertFalse(Passcode.check(app, "13578"))
+        // Typed in a sentence works too.
+        assertTrue(Passcode.check(app, "My passcode is 135 79."))
+        assertFalse(Passcode.check(app, "My passcode is 135 78."))
         val stored = app.getSharedPreferences("passcode", 0).all.values.joinToString()
         assertFalse(stored.contains("13579"))
     }
@@ -183,6 +186,32 @@ class MoreFeaturesTest {
         val cut = Chats.listText(chats, 5, max = 120)
         assertTrue(cut, cut.contains("only the newest 1 fit here") && cut.contains("Amazon"))
         assertTrue(Chats.listText(emptyList(), 5).startsWith("No app messages saved in the last 5 days."))
+    }
+
+    @Test fun workMailAndCalendarReadForClaude() {
+        val mails = OneDriveClient.parseMail("""
+            {"value":[{"id":"AAMk1","subject":"Review deck for Friday","receivedDateTime":"2026-11-12T04:30:00Z","bodyPreview":"Hi Sharan,  please   look at slide 4",
+              "webLink":"https://outlook.office365.com/owa/?ItemID=AAMk1","isRead":false,"importance":"high",
+              "from":{"emailAddress":{"name":"Priya","address":"priya@work.com"}}},
+             {"id":"AAMk2","subject":"Your sign-in code","receivedDateTime":"2026-11-12T05:00:00Z","bodyPreview":"Your verification code is 552901",
+              "isRead":false,"importance":"normal","from":{"emailAddress":{"name":"IT","address":"it@work.com"}}}]}
+        """.trimIndent())
+        val text = OneDriveClient.mailText("", mails)
+        assertTrue(text, text.startsWith("Work Outlook email (unread, inbox) (2):"))
+        assertTrue(text, text.contains("id AAMk1 | 2026-11-12 04:30 UTC | from Priya <priya@work.com> | Review deck for Friday | high importance | unread | Hi Sharan, please look at slide 4"))
+        assertFalse(text, text.contains("552901"))
+        assertTrue(OneDriveClient.mailText("budget", emptyList()).startsWith("No work email matches"))
+        val read = OneDriveClient.readText(OneDriveClient.parseMail("""{"value":[{"id":"AAMk1","subject":"Review","receivedDateTime":"2026-11-12T04:30:00Z",
+            "body":{"contentType":"text","content":"Slide 4 needs numbers.\nOTP 991122 for the portal"},"webLink":"https://outlook.office365.com/x","from":{"emailAddress":{"name":"Priya"}}}]}""").single())
+        assertTrue(read, read.contains("Slide 4 needs numbers.") && read.contains("Open link https://outlook.office365.com/x"))
+        assertFalse(read, read.contains("991122"))
+        val events = OneDriveClient.parseEvents("""
+            {"value":[{"subject":"Standup","start":{"dateTime":"2026-11-13T10:00:00.0000000"},"end":{"dateTime":"2026-11-13T10:30:00.0000000"},
+              "isAllDay":false,"isCancelled":false,"location":{"displayName":"Room 4"},"organizer":{"emailAddress":{"name":"Priya"}}},
+             {"subject":"Old","start":{"dateTime":"2026-11-13T12:00:00"},"end":{"dateTime":"2026-11-13T13:00:00"},"isCancelled":true}]}
+        """.trimIndent())
+        assertEquals("Work Outlook calendar, 2026-11-13 for 1 day (India time):\n2026-11-13 10:00 to 10:30 | Standup | Room 4 | by Priya",
+            OneDriveClient.eventsText(LocalDate.of(2026, 11, 13), 1, events))
     }
 
     @Test fun gmailResultsReadForClaude() {

@@ -32,10 +32,9 @@ object Snips {
     /** Forgets a document's pages, so no snippet can be cut from it. */
     fun drop(id: String) { pages.remove(id) }
 
-    private val PRIVATE = Regex("(?i)pan|aadha?r|passport|licen[cs]e|voter|card|bank|statement|salary|pay ?slip|itr|tax|form ?16|" +
-        "polic|insurance|medical|health|hospital|report|kyc|account|cheque|upi")
+    private val PRIVATE = Regex("(?i)salary|pay ?slip|form ?16|\\bctc\\b|compensation|appraisal|increment|offer ?letter")
 
-    /** True when a file's name suggests confidential details, so its snippets need the passcode first. */
+    /** True when a file's name suggests salary details, so its snippets need the passcode first. */
     fun isPrivate(name: String) = PRIVATE.containsMatchIn(name)
 
     /** One cut-out request from a SNIP line. */

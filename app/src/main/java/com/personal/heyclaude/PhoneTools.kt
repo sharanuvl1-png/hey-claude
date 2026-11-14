@@ -101,6 +101,27 @@ class PhoneTools(private val ctx: Context) : MehithaTools {
 
     override val hasWorkFiles: Boolean get() = OneDriveClient(ctx).isLinked
 
+    override val hasWorkMail: Boolean get() = OneDriveClient(ctx).hasMail
+
+    override fun searchWorkEmail(query: String, days: Int): String {
+        val ms = OneDriveClient(ctx)
+        if (!ms.hasMail) return "Work Outlook isn't linked. Sharan can sign in again under Settings, Phone data, Work Microsoft 365."
+        return OneDriveClient.mailText(query.trim(), ms.mail(query.trim(), days))
+    }
+
+    override fun readWorkEmail(id: String): String {
+        val ms = OneDriveClient(ctx)
+        if (!ms.hasMail) return "Work Outlook isn't linked."
+        return OneDriveClient.readText(ms.readMail(id))
+    }
+
+    override fun workCalendar(date: String, days: Int): String {
+        val ms = OneDriveClient(ctx)
+        if (!ms.hasMail) return "Work Outlook isn't linked."
+        val from = runCatching { java.time.LocalDate.parse(date.trim()) }.getOrNull() ?: PhoneData.today()
+        return OneDriveClient.eventsText(from, days.coerceIn(1, 14), ms.calendar(from, days.coerceIn(1, 14)))
+    }
+
     override fun searchWorkOneDrive(query: String): String {
         val drive = OneDriveClient(ctx)
         if (!drive.isLinked) return "Sharan's work OneDrive isn't linked in Mehitha. Say they can link it in Settings, Phone data, Work OneDrive, or use the Claude app for work files."

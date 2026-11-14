@@ -25,6 +25,8 @@
   "base_days": 15,
   "max_extension_pct": 4.0,
   "max_risk_pct": 8,
+  "max_price": 2000,
+  "_max_price": "Only stocks priced at or under this many rupees a share get alerts; null = any price",
   "min_turnover_cr": 5,
   "stop_atr_below_level": 1.0,
   "extra_symbols": []

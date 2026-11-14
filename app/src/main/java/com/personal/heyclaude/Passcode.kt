@@ -5,8 +5,8 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 
 /**
- * Your Mehitha passcode, needed before Mehitha shares confidential details (card, bank, PAN,
- * Aadhaar, salary, policy numbers...). Only a salted hash is kept on the phone, never the passcode.
+ * Your Mehitha passcode, needed before Mehitha shares salary details (salary, payslips, CTC,
+ * Form 16...). Only a salted hash is kept on the phone, never the passcode.
  */
 object Passcode {
     private const val PREFS = "passcode"
@@ -31,10 +31,12 @@ object Passcode {
         val p = prefs(ctx)
         val salt = p.getString("salt", null) ?: return false
         val want = p.getString("hash", null) ?: return false
-        return MessageDigest.isEqual(hash(salt, normalize(said)).toByteArray(), want.toByteArray())
+        // Typed or said, alone or in a sentence ("my passcode is 247 249"): the whole text, or just its digits.
+        val digits = said.filter { it.isDigit() }
+        return listOf(normalize(said), digits).filter { it.isNotEmpty() }.distinct()
+            .any { MessageDigest.isEqual(hash(salt, it).toByteArray(), want.toByteArray()) }
     }
 
-    /** True when Claude's reply is asking for the passcode. */
     /** True when Claude says the passcode is needed, even in its own words ("please say your passcode"). */
     fun isNeeded(reply: String) = reply.contains(NEEDED) || ASKS.containsMatchIn(reply)
 

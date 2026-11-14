@@ -55,10 +55,12 @@ class AssistantBrainTest {
         assertTrue(plain, plain.contains("\"tool_use_id\":\"tu_1\"") && plain.contains("Page 1:"))
         assertTrue(plain, plain.contains("\"type\":\"image\"") && plain.contains("AQID"))
         assertTrue(plain, plain.contains("SNIP: d"))
-        val policy = run("/Insurance/Car policy.pdf", unlocked = false)
-        assertFalse(policy, policy.contains("SNIP: d"))
-        assertTrue(policy, policy.contains("Don't add a SNIP line"))
-        assertTrue(run("/Insurance/Car policy.pdf", unlocked = true).contains("SNIP: d"))
+        // Only salary files need the passcode now; a policy gets its snippet straight away.
+        assertTrue(run("/Insurance/Car policy.pdf", unlocked = false).contains("SNIP: d"))
+        val payslip = run("/Work/Payslip Oct 2026.pdf", unlocked = false)
+        assertFalse(payslip, payslip.contains("SNIP: d"))
+        assertTrue(payslip, payslip.contains("Don't add a SNIP line"))
+        assertTrue(run("/Work/Payslip Oct 2026.pdf", unlocked = true).contains("SNIP: d"))
     }
 
     @Test fun aFileClaudeCannotTakeIsSentAgainAsWordsOnly() {
@@ -105,6 +107,26 @@ class AssistantBrainTest {
         AssistantBrain("k", FakeTools(), off.url, clock).ask("hi")
         off.stop()
         assertFalse(off.requests[0].contains("\"search_gmail\""))
+    }
+
+    @Test fun readsWorkEmailOnlyWhenLinked() {
+        var asked = ""
+        val linked = object : MehithaTools by FakeTools() {
+            override val hasWorkMail = true
+            override fun searchWorkEmail(query: String, days: Int): String { asked = "$query/$days"; return "Work Outlook email (1): id A | Priya | Review deck" }
+        }
+        val api = FakeApi.ok(
+            msg("tool_use", """{"type":"tool_use","id":"tu_1","name":"search_work_email","input":{"query":""}}"""),
+            text("Priya wants the review deck."),
+        )
+        assertEquals("Priya wants the review deck.", AssistantBrain("k", linked, api.url, clock).ask("any important work emails?"))
+        api.stop()
+        assertEquals("/2", asked)
+        assertTrue(api.requests[0].contains("\"get_work_calendar\"") && api.requests[1].contains("Review deck"))
+        val off = FakeApi.ok(text("ok"))
+        AssistantBrain("k", FakeTools(), off.url, clock).ask("hi")
+        off.stop()
+        assertFalse(off.requests[0].contains("\"search_work_email\""))
     }
 
     @Test fun readsTheCalendarForAnotherDay() {

@@ -36,10 +36,13 @@ class SnipsTest {
         assertTrue(t2 < 0.2 && b2 > 0.6)
     }
 
-    @Test fun confidentialFilesAreSpotted() {
-        assertTrue(Snips.isPrivate("Insurance 6th Aug2025 to 2028 Aug (Digit car policy).pdf"))
-        assertTrue(Snips.isPrivate("PAN card.jpg"))
-        assertTrue(Snips.isPrivate("HDFC bank statement Oct.pdf"))
+    @Test fun onlySalaryFilesNeedThePasscode() {
+        assertTrue(Snips.isPrivate("Payslip Oct 2026.pdf"))
+        assertTrue(Snips.isPrivate("Form16_FY2025-26.pdf"))
+        assertTrue(Snips.isPrivate("Salary slip.jpg"))
+        assertFalse(Snips.isPrivate("Insurance 6th Aug2025 to 2028 Aug (Digit car policy).pdf"))
+        assertFalse(Snips.isPrivate("PAN card.jpg"))
+        assertFalse(Snips.isPrivate("HDFC bank statement Oct.pdf"))
         assertFalse(Snips.isPrivate("Goa trip plan.pdf"))
     }
 

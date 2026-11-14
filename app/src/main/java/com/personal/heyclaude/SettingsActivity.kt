@@ -140,7 +140,7 @@ class SettingsActivity : Activity() {
         gmailRow = Ui.Row(this, "Gmail", "Link") { gmailBox.visibility = View.VISIBLE }
         data.addView(gmailRow.view)
         data.addView(gmailLinkBox().also { gmailBox = it })
-        workRow = Ui.Row(this, "Work OneDrive", "Link") { workBox.visibility = View.VISIBLE }
+        workRow = Ui.Row(this, "Work Microsoft 365", "Link") { workBox.visibility = View.VISIBLE }
         data.addView(workRow.view)
         data.addView(workLinkBox().also { workBox = it })
         smsRow = Ui.Row(this, "Text messages", "Allow") {
@@ -269,7 +269,8 @@ class SettingsActivity : Activity() {
         addView(Ui.text(this@SettingsActivity, "One time, signed in with your work account: at portal.azure.com open App registrations → " +
             "New registration, any name, \"Accounts in this organizational directory only\", Register. Under Authentication turn on " +
             "\"Allow public client flows\" and Save. Copy the Application (client) ID here. If the portal or the sign-in says " +
-            "admin approval is needed, your IT team has to allow it.", 12.5f, Ui.MUTED))
+            "admin approval is needed, your IT team has to allow it. Mehitha asks only to read: files, mail and calendar " +
+            "(Files.Read, Mail.Read, Calendars.Read); it can never send, change or delete anything.", 12.5f, Ui.MUTED))
         addView(Ui.spacer(this@SettingsActivity, 8))
         val id = Ui.field(this@SettingsActivity, "Application (client) ID").apply { setText(work.clientId) }
         addView(id)
@@ -289,7 +290,7 @@ class SettingsActivity : Activity() {
                         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(s.url)))
                     }
                     work.waitForSignIn(s)
-                    runOnUiThread { status.text = ""; toast("Work OneDrive linked. Ask \"find the Acme SOW in my work files\"."); refresh() }
+                    runOnUiThread { status.text = ""; toast("Work Microsoft 365 linked. Ask \"any important work emails today?\""); refresh() }
                 } catch (e: Exception) {
                     runOnUiThread { status.text = "Linking failed: ${e.message?.take(160)}" }
                 }
@@ -351,7 +352,7 @@ class SettingsActivity : Activity() {
     private fun passcodeCard(): LinearLayout {
         val d = { v: Int -> Ui.dp(this, v) }
         val card = Ui.card(this, "Mehitha passcode",
-            "Asked before Mehitha shares card, bank, PAN, Aadhaar, salary, policy or other confidential details. It's stored scrambled on this phone and never shown.")
+            "Asked only before Mehitha shares salary details: salary, payslips, CTC or Form 16. You can type it or say it. It's stored scrambled on this phone and never shown.")
         passStatus = Ui.text(this, "", 12.5f, Ui.MUTED).apply { setPadding(0, d(4), 0, d(8)) }
         card.addView(passStatus)
         val field = Ui.field(this, "New passcode").apply {
@@ -460,9 +461,10 @@ class SettingsActivity : Activity() {
         gmailRow.set(gmail.isLinked, "Linked: Mehitha searches your Gmail for bills, statements and orders (read-only)",
             "Link to let Mehitha search your personal Gmail", required = false)
         if (gmail.isLinked) gmailBox.visibility = View.GONE
-        workRow.set(work.isLinked, "Linked: Mehitha searches your work files for work questions (read-only)",
-            "Optional: let Mehitha find and read documents in your company OneDrive", required = false)
-        if (work.isLinked) workBox.visibility = View.GONE
+        workRow.set(work.hasMail, "Linked: OneDrive, Outlook mail and calendar, for work questions (read-only)",
+            if (work.isLinked) "OneDrive linked. Sign in again to add Outlook mail and calendar"
+            else "Optional: let Mehitha read your work OneDrive, Outlook mail and calendar (read-only)", required = false)
+        if (work.hasMail) workBox.visibility = View.GONE
         calendarRow.set(granted(Manifest.permission.READ_CALENDAR), "Meeting reminders on",
             "Allow for meeting reminders and \"what's on today\". Add your work calendar in the phone's Calendar or Outlook app", required = false)
         smsRow.set(sms, "Syncing (OTPs skipped)", "Allow to search your SMS", required = false)
