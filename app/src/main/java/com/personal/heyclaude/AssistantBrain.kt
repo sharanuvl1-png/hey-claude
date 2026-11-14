@@ -446,16 +446,17 @@ class AssistantBrain(
         """.trimIndent()
 
         private val LOCKED = """
-            Confidential details need Sharan's passcode first: card, bank account, IFSC or UPI ID numbers,
-            PAN, Aadhaar, salary or payslips, policy numbers, ID documents, tax returns, medical records
-            and similar. If a question asks for any of these, do not reveal, hint at or summarise them:
-            answer with exactly one line, PASSCODE_NEEDED, and nothing else. You may still say that a
-            document exists. Never ask for, guess or mention what the passcode is.
+            Only salary details need Sharan's passcode first: salary, payslips, CTC, increments, bonus,
+            Form 16 and anything else about how much Sharan is paid. If a question asks for any of these,
+            do not reveal, hint at or summarise them: answer with exactly one line, PASSCODE_NEEDED, and
+            nothing else. You may still say that a document exists. Everything else (cards, bank, PAN,
+            Aadhaar, policies and so on) needs no passcode, so answer it normally. Never ask for, guess
+            or mention what the passcode is.
         """.trimIndent()
 
         private val UNLOCKED = """
-            Sharan has said the right passcode in this chat, so you may share confidential details
-            (card, bank, PAN, Aadhaar, salary, policy numbers and similar) found with the tools.
+            Sharan has said the right passcode in this chat, so you may share salary details
+            (salary, payslips, CTC, Form 16 and similar) found with the tools.
             Don't ask for the passcode again.
         """.trimIndent()
     }

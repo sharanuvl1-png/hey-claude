@@ -352,7 +352,7 @@ class SettingsActivity : Activity() {
     private fun passcodeCard(): LinearLayout {
         val d = { v: Int -> Ui.dp(this, v) }
         val card = Ui.card(this, "Mehitha passcode",
-            "Asked before Mehitha shares card, bank, PAN, Aadhaar, salary, policy or other confidential details. It's stored scrambled on this phone and never shown.")
+            "Asked only before Mehitha shares salary details: salary, payslips, CTC or Form 16. You can type it or say it. It's stored scrambled on this phone and never shown.")
         passStatus = Ui.text(this, "", 12.5f, Ui.MUTED).apply { setPadding(0, d(4), 0, d(8)) }
         card.addView(passStatus)
         val field = Ui.field(this, "New passcode").apply {

@@ -220,6 +220,7 @@ class HomeChatTest {
         waitFor("the answer") { chat(a).contains("Your PAN card is in Dropbox, number on file.") }
         assertFalse(chat(a).contains("43 21")) // never shown
         assertFalse(api!!.requests[0].contains("said the right passcode"))
+        assertTrue(api!!.requests[0].contains("Only salary details need"))
         assertTrue(api!!.requests[1].contains("said the right passcode"))
         assertFalse(api!!.requests.any { it.contains("4321") })
     }

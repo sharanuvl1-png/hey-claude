@@ -94,6 +94,9 @@ class MoreFeaturesTest {
         assertTrue(Passcode.check(app, "13579"))
         assertTrue(Passcode.check(app, "135 79"))
         assertFalse(Passcode.check(app, "13578"))
+        // Typed in a sentence works too.
+        assertTrue(Passcode.check(app, "My passcode is 135 79."))
+        assertFalse(Passcode.check(app, "My passcode is 135 78."))
         val stored = app.getSharedPreferences("passcode", 0).all.values.joinToString()
         assertFalse(stored.contains("13579"))
     }
