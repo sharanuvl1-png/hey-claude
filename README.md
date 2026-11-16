@@ -24,6 +24,10 @@ Run it from the **Actions → Technical chart → Run workflow** button with a c
 
 A phone-friendly website with two tabs: every Nifty 100 stock, and the top 20 Nifty Midcap 150 stocks picked by the daily scan's own ranking (technical score + fundamentals + 6-month performance). Each stock gets your Technical chart analysis: price and day change, final recommendation (Buy now / Buy on dip / Wait / Avoid) with confidence and grade, entry zone, stop-loss, targets, key levels, patterns, the breakout-rule status from `breakout_rules.json`, the annotated chart and the full written report. Filter by recommendation, search, and sort by best setup, gainers, losers or RSI.
 
+Also on the board: a Smallcap top 20 tab (Nifty Smallcap 250, same ranking), a ★ watchlist (saved on your phone) with alerts when a starred stock's call changes, **What changed** since the last scan, a **Track record** of past calls (5, 10 and 20 trading days later vs the Nifty 50, saved on the `swing-history` branch), a results-date warning, a sector heatmap, a position-size helper and a built-in helper that explains every field. It installs on a phone as an app.
+
+Optional phone notifications for your watchlist: add a `WATCHLIST` secret (comma-separated symbols, e.g. `TCS,RELIANCE`) next to the `NTFY_TOPIC` secret used by the breakout alerts. The board then pushes through ntfy when one of them turns Buy now or breaks out.
+
 - Address: `https://sharanuvl1-png.github.io/hey-claude/`
 - One-time setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 - The **Nifty 100 swing board** action rebuilds it at 11:15 AM, 1:45 PM and 4:20 PM IST on weekdays, or any time from **Actions → Nifty 100 swing board → Run workflow**. Each scan takes about 10 minutes.

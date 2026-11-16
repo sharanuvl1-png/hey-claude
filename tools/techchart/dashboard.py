@@ -53,7 +53,7 @@ def summarise(r):
                    "resistance": zone(lv["resistance"]), "breakout": round(float(lv["breakout"]), 2),
                    "high_52w": round(float(lv["hi52"]), 2)},
         "patterns": r["patterns"], "candles": r["candles"], "divergences": r["divergences"],
-        "closes": r["closes"],
+        "closes": r["closes"], "volume_ratio": round(float(r.get("volume_ratio") or 0), 2),
         "chart": f"charts/{sym}.png", "report": f"reports/{sym}.md",
     }
 
@@ -68,20 +68,53 @@ def breakout_status(c):
 
 
 MIDCAP_CSV = "ind_niftymidcap150list.csv"
+SMALLCAP_CSV = "ind_niftysmallcap250list.csv"
+NIFTY100_CSV = "ind_nifty100list.csv"
 MIDCAP_PICKS = 20
 
 
-def midcap_picks(n=MIDCAP_PICKS):
-    """Top n Nifty Midcap 150 stocks by the daily scan's own ranking (screener.py): technical score
+def industries(csv_name):
+    """{SYMBOL: industry} from NSE's own index list (the Industry column); {} if the list can't be fetched."""
+    import io
+    import urllib.request
+    import pandas as pd
+    import screener as sc
+    for base in sc.SOURCES:
+        try:
+            req = urllib.request.Request(base + csv_name, headers={"User-Agent": "Mozilla/5.0", "Accept": "text/csv,*/*"})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                frame = pd.read_csv(io.StringIO(resp.read().decode("utf-8", "replace")))
+            return {str(r["Symbol"]).strip(): str(r["Industry"]).strip() for _, r in frame.iterrows()
+                    if isinstance(r.get("Industry"), str)}
+        except Exception:
+            continue
+    return {}
+
+
+def results_date(symbol, today):
+    """Next quarterly results date from Yahoo Finance's calendar (can be an estimate), within 45 days; None if unknown."""
+    import yfinance as yf
+    try:
+        cal = yf.Ticker(symbol + ".NS").calendar or {}
+        dates = cal.get("Earnings Date") or [] if isinstance(cal, dict) else []
+        future = sorted(d.date() if isinstance(d, dt.datetime) else d for d in dates if d is not None)
+        future = [d for d in future if isinstance(d, dt.date) and 0 <= (d - today).days <= 45]
+        return future[0].isoformat() if future else None
+    except Exception:
+        return None
+
+
+def midcap_picks(n=MIDCAP_PICKS, csv=MIDCAP_CSV, label="Midcap 150"):
+    """Top n stocks of an index by the daily scan's own ranking (screener.py): technical score
     plus fundamentals (ROE, debt/equity, earnings and revenue growth, margins, P/E) plus 6-month
     performance, among stocks trading at least ₹5 crore a day. Returns ([(symbol, fundamentals, rank score)], notes)."""
     import screener as sc
-    symbols, err = sc.constituents(MIDCAP_CSV)
+    symbols, err = sc.constituents(csv)
     if not symbols:
-        return [], [f"Midcap 150 list unavailable ({(err or '')[:160]}); no midcap picks this run."]
+        return [], [f"{label} list unavailable ({(err or '')[:160]}); no picks this run."]
     prices = sc.download(symbols)
     if len(prices) < 0.6 * len(symbols):
-        return [], [f"Midcap prices came back for only {len(prices)} of {len(symbols)} stocks; no midcap picks this run."]
+        return [], [f"{label} prices came back for only {len(prices)} of {len(symbols)} stocks; no picks this run."]
     scored = []
     for s, frame in prices.items():
         try:
@@ -91,7 +124,7 @@ def midcap_picks(n=MIDCAP_PICKS):
         if t["turnover"] >= sc.MIN_TURNOVER_CR:
             scored.append((s, t))
     best = sc.strongest(scored, n)
-    notes = [] if len(best) >= n else [f"Only {len(best)} midcap stocks had fundamentals data (wanted {n})."]
+    notes = [] if len(best) >= n else [f"Only {len(best)} {label} stocks had fundamentals data (wanted {n})."]
     return [(s, sc._FUND.get(s) or {}, rank) for rank, s, _ in best], notes
 
 
@@ -103,12 +136,14 @@ def fund_summary(f, rank):
             "revenue_growth_pct": r(f.get("rg"), 100), "pe": r(f.get("pe"))}
 
 
-def analyse_all(symbols, out, work, label):
+def analyse_all(symbols, out, work, label, prices=None):
     rows, errors = [], []
     for i, s in enumerate(symbols):
         try:
             r = tc.run(s, s.replace(".NS", ""), work)
             row = summarise(r)
+            if prices is not None:
+                prices[row["symbol"]] = (r["close_dates"], r["closes"])
             shutil.copy(r["png"], os.path.join(out, row["chart"]))
             shutil.copy(r["md"], os.path.join(out, row["report"]))
             rows.append(row)
@@ -121,13 +156,36 @@ def analyse_all(symbols, out, work, label):
     return rows, errors
 
 
+def picks_section(csv, label, out, work, prices, skip):
+    """A ranked picks tab (Midcap or Smallcap): top 20 by the scan's ranking, each run through the chart rules."""
+    sec = {"stocks": [], "errors": [], "notes": []}
+    if skip:
+        return sec
+    try:
+        picks, pnotes = midcap_picks(MIDCAP_PICKS, csv, label)
+    except Exception as e:
+        picks, pnotes = [], [f"{label} picks unavailable this run ({type(e).__name__})."]
+    sec["notes"] = pnotes
+    rows, errs = analyse_all([p[0] for p in picks], out, work, label, prices)
+    info = {p[0].replace(".NS", ""): fund_summary(p[1], p[2]) for p in picks}
+    for row in rows:
+        row["fundamentals"] = info.get(row["symbol"])
+        if row["fundamentals"] and row["fundamentals"].get("name"):
+            row["name"] = row["fundamentals"]["name"]
+    rows.sort(key=lambda r: -(r["fundamentals"] or {}).get("rank_score", 0))
+    sec.update(stocks=rows, errors=errs)
+    return sec
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="site")
     ap.add_argument("--cache", default="", help="last good Nifty 100 list (nifty100.txt from the breakouts branch)")
     ap.add_argument("--rules", default=os.path.join(HERE, "breakout_rules.json"))
     ap.add_argument("--limit", type=int, default=0, help="only the first N stocks (for a quick test)")
-    ap.add_argument("--skip-midcap", action="store_true", help="leave out the Midcap top 20")
+    ap.add_argument("--skip-midcap", action="store_true", help="leave out the Midcap and Smallcap top 20")
+    ap.add_argument("--history", default="", help="history.json from the swing-history branch (read and updated)")
+    ap.add_argument("--alerts", default="", help="write watchlist alerts (for the ntfy push) to this file")
     args = ap.parse_args()
     rules = bo.load_rules(args.rules)
     out = args.out
@@ -145,10 +203,13 @@ def main():
         symbols = symbols[:args.limit]
 
     # Breakout rules need one batch download plus the Nifty 50.
-    checks, market = {}, None
+    checks, market, nifty = {}, None, None
     try:
         frames, _ = bo.download(symbols) if symbols else ({}, {})
-        market = bo.market_of(frames.pop(bo.NIFTY, None))
+        nf = frames.pop(bo.NIFTY, None)
+        market = bo.market_of(nf)
+        if nf is not None and len(nf):
+            nifty = ([ix.date().isoformat() for ix in nf.index], [round(float(v), 2) for v in nf["Close"]])
         live = now.weekday() < 5 and bo.OPEN <= now.time() < bo.CLOSE
         elapsed = (now - now.replace(hour=9, minute=15, second=0, microsecond=0)).total_seconds() / 60
         frac = min(max(elapsed / bo.SESSION_MIN, 0.25), 1.0) if live else 1.0
@@ -161,38 +222,63 @@ def main():
         notes.append(f"Breakout check unavailable this run ({type(e).__name__}).")
 
     work = os.path.join(out, "_work")
-    rows, errors = analyse_all(symbols, out, work, "Nifty 100")
+    prices = {}
+    rows, errors = analyse_all(symbols, out, work, "Nifty 100", prices)
     for row in rows:
         row["breakout"] = breakout_status(checks.get(row["symbol"] + ".NS"))
-
-    midcap = {"stocks": [], "errors": [], "notes": []}
-    if not args.skip_midcap:
-        try:
-            picks, mnotes = midcap_picks()
-        except Exception as e:
-            picks, mnotes = [], [f"Midcap picks unavailable this run ({type(e).__name__})."]
-        midcap["notes"] = mnotes
-        mrows, merrors = analyse_all([p[0] for p in picks], out, work, "Midcap")
-        info = {p[0].replace(".NS", ""): fund_summary(p[1], p[2]) for p in picks}
-        for row in mrows:
-            row["fundamentals"] = info.get(row["symbol"])
-            if row["fundamentals"] and row["fundamentals"].get("name"):
-                row["name"] = row["fundamentals"]["name"]
-        mrows.sort(key=lambda r: -(r["fundamentals"] or {}).get("rank_score", 0))
-        midcap.update(stocks=mrows, errors=merrors)
+    midcap = picks_section(MIDCAP_CSV, "Midcap 150", out, work, prices, args.skip_midcap)
+    smallcap = picks_section(SMALLCAP_CSV, "Smallcap 250", out, work, prices, args.skip_midcap)
     shutil.rmtree(work, ignore_errors=True)
+
+    # Sector (NSE's own industry column) and the next results date for every stock on the board.
+    sectors = {}
+    for csv in (NIFTY100_CSV, MIDCAP_CSV, SMALLCAP_CSV):
+        sectors.update(industries(csv))
+    groups = (("n100", rows), ("mid", midcap["stocks"]), ("small", smallcap["stocks"]))
+    today = now.date()
+    for g, rs in groups:
+        for row in rs:
+            row["group"] = g
+            row["sector"] = sectors.get(row["symbol"])
+            row["results_date"] = results_date(row["symbol"], today)
+            time.sleep(0.1)
+    every = [r for _, rs in groups for r in rs]
+
+    # What changed since the last scan, and how past calls did (needs the history branch).
+    changes, record = None, None
+    if args.history:
+        import history as hi
+        h = hi.load(args.history)
+        changes = hi.changes(h.get("last_scan"), every)
+        hi.record(h, every, now.isoformat(timespec="minutes"))
+        record = hi.track_record(h, prices, nifty)
+        hi.save(h, args.history)
+        if args.alerts:
+            watch = {w.strip().upper() for w in os.environ.get("WATCHLIST", "").replace(";", ",").split(",") if w.strip()}
+            alerts = []
+            for m in changes["moves"]:
+                if m["symbol"] in watch and m["to"] == "BUY NOW":
+                    alerts.append({"id": f"board:{m['symbol']}:{today}:{m['to']}", "title": f"{m['symbol']} turned Buy now",
+                                   "text": f"{m['symbol']} moved from {m['from'].title()} to Buy now on the swing board."})
+            for sym in changes["new_breakouts"]:
+                if sym in watch:
+                    alerts.append({"id": f"board:{sym}:{today}:bo", "title": f"{sym} broke out",
+                                   "text": f"{sym} passed every breakout rule on the swing board."})
+            with open(args.alerts, "w", encoding="utf-8") as f:
+                json.dump(alerts, f)
 
     data = {"generated_at": now.isoformat(timespec="minutes"),
             "source": "Yahoo Finance (NSE). Prices can be about 15 minutes behind.",
             "market": None if market is None else {k: (round(v, 4) if isinstance(v, float) else bool(v)) for k, v in market.items()},
             "rules": {k: rules[k] for k in ("volume_multiple", "require_above_ema", "max_below_52w_high_pct") if k in rules},
-            "stocks": rows, "errors": errors, "notes": notes, "midcap": midcap}
+            "stocks": rows, "errors": errors, "notes": notes, "midcap": midcap, "smallcap": smallcap,
+            "changes": changes, "track_record": record}
     with open(os.path.join(out, "data.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
     if symbols:
         with open(os.path.join(out, "nifty100.txt"), "w", encoding="utf-8") as f:
             f.write("\n".join(symbols) + "\n")
-    print(f"{len(rows)} analysed, {len(errors)} failed; notes: {notes}")
+    print(f"{len(rows)} analysed, {len(errors)} failed; midcap {len(midcap['stocks'])}, smallcap {len(smallcap['stocks'])}; notes: {notes}")
     if not rows:
         sys.exit(1)
 

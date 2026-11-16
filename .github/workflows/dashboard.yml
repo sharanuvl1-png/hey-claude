@@ -13,7 +13,7 @@ on:
       - ".github/workflows/dashboard.yml"
 
 permissions:
-  contents: read
+  contents: write   # saves each scan's calls to the swing-history branch (track record, what changed)
   pages: write
   id-token: write
 
@@ -24,7 +24,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 50
+    env:
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
     steps:
       - uses: actions/checkout@v4
 
@@ -39,10 +41,32 @@ jobs:
         run: |
           # Last good index list from the breakout watch, used if the index site is down.
           git fetch --depth=1 origin breakouts 2>/dev/null && git show origin/breakouts:nifty100.txt > nifty100.txt 2>/dev/null || rm -f nifty100.txt
-          python tools/techchart/dashboard.py --out site --cache nifty100.txt
+          # Past calls, for the track record and "what changed since the last scan".
+          mkdir -p hist
+          git fetch -q --depth=1 origin swing-history 2>/dev/null && git show origin/swing-history:history.json > hist/history.json 2>/dev/null || rm -f hist/history.json
+          python tools/techchart/dashboard.py --out site --cache nifty100.txt --history hist/history.json --alerts alerts.json
+        env:
+          WATCHLIST: ${{ secrets.WATCHLIST }}
 
       - name: Check the data against a fresh download (stops a bad scan from going live)
         run: python tools/techchart/validate.py site/data.json
+
+      - name: Save the calls to the swing-history branch
+        if: github.event_name != 'pull_request'
+        run: |
+          # One commit, replaced each run, so the branch stays small.
+          cd hist
+          git init -q -b swing-history
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add history.json
+          git commit -q -m "Swing board calls $(TZ=Asia/Kolkata date '+%F %H:%M IST')"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" swing-history
+
+      - name: Watchlist alerts to the ntfy app (optional, needs the NTFY_TOPIC and WATCHLIST secrets)
+        if: github.event_name != 'pull_request' && env.NTFY_TOPIC != ''
+        run: |
+          python -c "import json,os,sys; sys.path.insert(0,'tools/techchart'); import breakouts as b; a=json.load(open('alerts.json')) if os.path.exists('alerts.json') else []; print(len(a),'alert(s)'); a and b.ntfy(os.environ['NTFY_TOPIC'], a)"
 
       - uses: actions/upload-pages-artifact@v3
         with:
