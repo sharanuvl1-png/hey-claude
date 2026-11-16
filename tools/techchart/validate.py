@@ -1,6 +1,6 @@
 """Check the swing board's data.json against a fresh, independent price download before it is published.
 
-For every stock (Nifty 100 and Midcap picks) it re-downloads the daily history from Yahoo Finance with a
+For every stock (Nifty 100, Midcap and Smallcap picks) it re-downloads the daily history from Yahoo Finance with a
 different call (Ticker.history, not the batch download the scan used) and checks that:
 
   * the close, previous close and day range match the fresh data (within 0.5%, allowing for live-bar drift)
@@ -8,7 +8,8 @@ different call (Ticker.history, not the batch download the scan used) and checks
   * the 130 closes behind the sparkline end at the reported close
   * the levels are in a sane order (stop < entry zone, targets rising above the entry)
   * every number is a real number (no blanks, NaN or zero prices)
-  * for Midcap picks, the fundamentals match Yahoo's own figures
+  * for Midcap and Smallcap picks, the fundamentals match Yahoo's own figures
+  * the track record's returns are consistent with the prices on the board
 
 Prints a report and exits with an error when anything fails, so a bad scan is never published.
 Usage: python validate.py site/data.json
@@ -92,17 +93,25 @@ def main():
     path = sys.argv[1] if len(sys.argv) > 1 else "site/data.json"
     data = json.load(open(path, encoding="utf-8"))
     today = dt.date.today()
-    stocks = data["stocks"] + (data.get("midcap") or {}).get("stocks", [])
+    picks = (data.get("midcap") or {}).get("stocks", []) + (data.get("smallcap") or {}).get("stocks", [])
+    stocks = data["stocks"] + picks
     probs, checked = [], 0
     for s in stocks:
         p = check_stock(s, today)
-        if s.get("fundamentals") is not None or s in (data.get("midcap") or {}).get("stocks", []):
+        if s.get("fundamentals") is not None or s in picks:
             p += check_fund(s)
         probs += p
         checked += 1
         time.sleep(0.15)
     print(f"VALIDATION: checked {checked} stocks ({len(data['stocks'])} Nifty 100, "
-          f"{len((data.get('midcap') or {}).get('stocks', []))} midcap) against a fresh Yahoo Finance download")
+          f"{len((data.get('midcap') or {}).get('stocks', []))} midcap, {len((data.get('smallcap') or {}).get('stocks', []))} smallcap) "
+          f"against a fresh Yahoo Finance download")
+    board = {s["symbol"]: s["close"] for s in stocks}
+    for c in (data.get("track_record") or {}).get("recent", []):
+        if c.get("now") is not None and c["symbol"] in board and not close_enough(c["now"], board[c["symbol"]], 0.0001):
+            probs.append(f"track record {c['symbol']}: latest {c['now']} vs board {board[c['symbol']]}")
+        if c.get("now") and c.get("since_pct") is not None and abs(100 * (c["now"] / c["close"] - 1) - c["since_pct"]) > 0.02:
+            probs.append(f"track record {c['symbol']}: return {c['since_pct']} doesn't match its prices")
     if data.get("market") and not finite(data["market"].get("close")):
         probs.append("Nifty 50 close is missing")
     for p in probs:

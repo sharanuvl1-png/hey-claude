@@ -177,6 +177,66 @@ input::placeholder { color: var(--muted) }
 .fgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px }
 .links { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; font-weight: 700 }
 
+/* Tabs scroll on phones */
+.tabs { overflow-x: auto; scrollbar-width: none } .tabs::-webkit-scrollbar { display: none }
+/* What changed + alerts */
+.chg-row { display: flex; flex-wrap: wrap; gap: 8px }
+.mv { border: 1px solid var(--line2); background: var(--surface); border-radius: 12px; padding: 7px 11px; font-size: 13px; font-weight: 700; display: inline-flex; gap: 8px; align-items: center; text-align: left }
+.mv small { font-weight: 600; color: var(--muted) }
+.mv.up { border-color: rgba(34, 229, 139, .45); background: rgba(34, 229, 139, .07) } .mv.up b { color: var(--up) }
+.mv.down { border-color: rgba(255, 77, 109, .4); background: rgba(255, 77, 109, .06) } .mv.down b { color: var(--down) }
+.alertbar { display: grid; gap: 8px; padding: 14px; border-radius: 18px; border: 1px solid rgba(251, 191, 36, .45);
+  background: linear-gradient(135deg, rgba(251, 191, 36, .14), var(--surface) 70%) }
+.alertbar .top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 800 }
+.linkbtn { border: 0; background: none; color: var(--brand2); font-weight: 700; padding: 4px 0; font-size: 13px }
+/* Sector heatmap */
+.heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px }
+.ht { border: 1px solid var(--line2); border-radius: 14px; padding: 10px 11px; text-align: left; display: grid; gap: 3px; min-width: 0;
+  background: color-mix(in srgb, var(--hc) var(--hp), var(--surface)) }
+.ht .n { font-size: 12.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.ht .c { font-family: var(--mono); font-weight: 700; font-size: 15px }
+.ht .k { font-size: 11.5px; color: var(--ink2) }
+.ht[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 1px }
+/* Cards: star + results chip */
+.cw { position: relative; min-width: 0; display: grid }
+.cw .card .foot { padding-right: 34px }
+.star { position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line2); background: var(--surface2);
+  font-size: 17px; line-height: 1; color: var(--muted); display: grid; place-items: center; z-index: 1 }
+.star[aria-pressed="true"] { color: var(--gold); border-color: rgba(251, 191, 36, .55); background: rgba(251, 191, 36, .12) }
+.chip.res { color: var(--ink2) } .chip.res.soon { color: var(--wait); border-color: rgba(255, 176, 32, .5); background: rgba(255, 176, 32, .1) }
+.hbtn { border: 1px solid var(--line2); background: var(--surface); border-radius: 999px; height: 40px; padding: 0 14px; font-size: 13px; font-weight: 700; flex: none; display: inline-flex; align-items: center; gap: 6px }
+.hbtn[aria-pressed="true"] { color: var(--gold); border-color: rgba(251, 191, 36, .55) }
+/* Position size */
+.sizer { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px }
+.sizer label { display: grid; gap: 4px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; min-width: 0 }
+.sizer input, .sizer select { width: 100%; font-family: var(--mono) }
+.sizeout { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px }
+/* Track record */
+.tr-table { width: 100%; border-collapse: collapse; font-size: 13.5px }
+.tr-table th, .tr-table td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap }
+.tr-table th:first-child, .tr-table td:first-child { text-align: left }
+.tr-table th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700 }
+.tablewrap { overflow-x: auto }
+.out { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px }
+.out.target { color: var(--up); background: rgba(34, 229, 139, .12) } .out.stopped { color: var(--down); background: rgba(255, 77, 109, .12) } .out.open { color: var(--muted); background: rgba(255, 255, 255, .05) }
+/* Help bot */
+.askfab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 15;
+  border: 0; border-radius: 999px; padding: 12px 18px; font-weight: 800; font-size: 14px; color: #0a0f1d;
+  background: linear-gradient(135deg, var(--brand1), var(--brand2)); box-shadow: 0 10px 30px rgba(124, 92, 255, .45); display: inline-flex; gap: 8px; align-items: center }
+.bot { position: fixed; z-index: 30; right: 0; bottom: 0; width: min(420px, 100%); height: min(640px, 100%); background: var(--bg2); border: 1px solid var(--line2);
+  display: grid; grid-template-rows: auto 1fr auto auto; box-shadow: 0 20px 60px rgba(0, 0, 0, .6); padding-bottom: env(safe-area-inset-bottom, 0px) }
+@media (min-width: 560px) { .bot { right: 16px; bottom: 16px; border-radius: 22px; overflow: hidden } }
+.bot-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); padding-top: max(12px, env(safe-area-inset-top, 0px)) }
+.bot-log { overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; overscroll-behavior: contain }
+.msg { max-width: 88%; padding: 10px 12px; border-radius: 16px; font-size: 14px; white-space: pre-line; overflow-wrap: anywhere }
+.msg.me { align-self: flex-end; background: linear-gradient(135deg, var(--brand1), #5b8cff); color: #fff; border-bottom-right-radius: 6px }
+.msg.ai { align-self: flex-start; background: var(--surface2); border: 1px solid var(--line); border-bottom-left-radius: 6px }
+.msg .go { display: inline-block; margin-top: 6px; color: var(--brand2); font-weight: 700; border: 0; background: none; padding: 0 }
+.bot-sug { display: flex; gap: 6px; overflow-x: auto; padding: 0 14px 8px; scrollbar-width: none }
+.bot-sug button { flex: none; border: 1px solid var(--line2); background: var(--surface); border-radius: 999px; padding: 6px 11px; font-size: 12.5px; font-weight: 600; color: var(--ink2) }
+.bot-in { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 14px 14px; border-top: 1px solid var(--line) }
+.bot-in button { border: 0; border-radius: 12px; padding: 0 16px; font-weight: 800; color: #0a0f1d; background: var(--brand2) }
+
 @media (max-width: 760px) { .stats { grid-template-columns: 1fr 1fr } .stats .mixstat { grid-column: 1 / -1 } }
 @media (max-width: 360px) { .kpis, .trio { grid-template-columns: 1fr 1fr } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important } }
@@ -219,9 +279,18 @@ input::placeholder { color: var(--muted) }
       <div class="tabs" role="tablist" aria-label="Stock list">
         <button role="tab" id="tab-n100" aria-selected="true" data-tab="n100">Nifty 100 <b id="n100Count">–</b></button>
         <button role="tab" id="tab-mid" aria-selected="false" data-tab="mid">Midcap top 20 <b id="midCount">–</b></button>
+        <button role="tab" id="tab-small" aria-selected="false" data-tab="small">Smallcap top 20 <b id="smallCount">–</b></button>
+        <button role="tab" id="tab-watch" aria-selected="false" data-tab="watch">★ Watchlist <b id="watchCount">0</b></button>
+        <button role="tab" id="tab-track" aria-selected="false" data-tab="track">Track record</button>
       </div>
       <div class="tabnote" id="tabnote"></div>
     </div>
+    <section class="alertbar" id="alertBar" hidden></section>
+    <section class="sec" id="chgSec" hidden>
+      <div class="sec-h"><h2>What changed</h2><span class="hint" id="chgHint"></span></div>
+      <div class="chg-row" id="chg"></div>
+    </section>
+    <section class="sec" id="trackSec" hidden></section>
     <section class="sec" id="topSec" hidden>
       <div class="sec-h"><h2 id="topTitle">Best setups right now</h2><span class="hint" id="topHint"></span></div>
       <div class="rail" id="top"></div>
@@ -230,8 +299,12 @@ input::placeholder { color: var(--muted) }
       <div class="sec-h"><h2>Breakouts by your rules</h2><span class="hint" id="boHint"></span></div>
       <div class="tagrow" id="bo"></div>
     </section>
+    <section class="sec" id="heatSec" hidden>
+      <div class="sec-h"><h2>Sectors</h2><span class="hint" id="heatHint">Today's average move · tap a sector to filter</span></div>
+      <div class="heat" id="heat"></div>
+    </section>
   </div>
-  <div class="fbar">
+  <div class="fbar" id="fbar">
     <div class="max gut">
       <div class="seg" id="seg" role="group" aria-label="Filter by recommendation"></div>
       <div class="ctl">
@@ -249,12 +322,21 @@ input::placeholder { color: var(--muted) }
       </div>
     </div>
   </div>
-  <div class="max gut" style="padding-block:18px 44px;display:grid;gap:16px">
+  <div class="max gut" id="gridWrap" style="padding-block:18px 90px;display:grid;gap:16px">
     <div class="grid" id="grid"><div class="empty">Loading the latest scan…</div></div>
     <div class="warn" id="errs" hidden></div>
     <p class="note">Every recommendation, level and chart comes from your Technical chart rules (EMA20/50/200, MACD, RSI, swing structure, patterns, candles) and the breakout rules in breakout_rules.json. Midcap picks use your daily scan's ranking: technical score, fundamentals (ROE, debt/equity, earnings and revenue growth, margins, P/E) and 6-month performance. Prices and fundamentals come from Yahoo Finance and can be about 15 minutes behind NSE. Analysis only, not investment advice. Nothing here places an order. Decisions are yours.</p>
   </div>
 </main>
+
+<button class="askfab" id="askFab" aria-label="Open the board helper">💬 Ask</button>
+<div class="bot" id="bot" role="dialog" aria-label="Board helper" hidden>
+  <div class="bot-h"><div><div style="font-weight:800">Board helper</div><div class="hint">Explains every field, verdict and stock on this board</div></div>
+    <button class="close" id="botClose" aria-label="Close the helper">×</button></div>
+  <div class="bot-log" id="botLog" aria-live="polite"></div>
+  <div class="bot-sug" id="botSug"></div>
+  <form class="bot-in" id="botForm"><input id="botQ" placeholder="Ask, e.g. what is stop-loss? or TCS" autocomplete="off" aria-label="Your question"><button>Ask</button></form>
+</div>
 
 <div class="scrim" id="scrim" hidden>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sTitle"></div>
@@ -287,10 +369,40 @@ const svgEl = (svg, name, a) => { const n = document.createElementNS(NS, name); 
 const vstyle = s => `--vc:${V[s.verdict].c}`;
 const ret = (s, n) => (s.closes && s.closes.length > n ? 100 * (s.close / s.closes[s.closes.length - 1 - n] - 1) : null);
 
-const state = { tab: "n100", filter: null, q: "", sort: "score" };
+const state = { tab: "n100", filter: null, q: "", sort: "score", sector: null };
 let DATA = null;
-const list = () => (state.tab === "mid" ? (DATA.midcap && DATA.midcap.stocks) || [] : DATA.stocks);
-const all = () => DATA.stocks.concat((DATA.midcap && DATA.midcap.stocks) || []);
+// Per-phone conveniences (watchlist, last-seen calls, position-size inputs). Kept only in this browser.
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("sb." + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("sb." + k, JSON.stringify(v)); } catch {} },
+};
+let WATCH = new Set(store.get("watch", []));
+const isStar = sym => WATCH.has(sym);
+function toggleStar(sym) {
+  WATCH.has(sym) ? WATCH.delete(sym) : WATCH.add(sym);
+  store.set("watch", [...WATCH]);
+  const seen = store.get("seen", {});
+  const st = all().find(x => x.symbol === sym);
+  if (WATCH.has(sym) && st) seen[sym] = st.verdict; else delete seen[sym];
+  store.set("seen", seen);
+  document.getElementById("watchCount").textContent = WATCH.size;
+  for (const b of document.querySelectorAll(`[data-star="${CSS.escape(sym)}"]`)) b.setAttribute("aria-pressed", String(WATCH.has(sym)));
+  if (state.tab === "watch") drawTab();
+}
+const GROUP = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20" };
+const sec = k => (DATA[k] && DATA[k].stocks) || [];
+const all = () => DATA.stocks.concat(sec("midcap"), sec("smallcap"));
+const list = () => state.tab === "mid" ? sec("midcap") : state.tab === "small" ? sec("smallcap")
+  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" ? [] : DATA.stocks;
+const daysTo = iso => Math.round((new Date(iso + "T00:00:00+05:30") - new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30")) / 864e5);
+const fdate = iso => new Date(iso + "T00:00:00+05:30").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
+function resultsChip(s) {
+  if (!s.results_date) return null;
+  const d = daysTo(s.results_date);
+  if (d < 0 || d > 14) return null;
+  return el("span", { class: "chip res" + (d <= 7 ? " soon" : ""), title: `Quarterly results ${fdate(s.results_date)} (Yahoo Finance; can be an estimate)`,
+    text: d === 0 ? "⚠ Results today" : d === 1 ? "⚠ Results tomorrow" : `${d <= 7 ? "⚠ " : ""}Results in ${d}d` });
+}
 
 function spark(s) {
   const xs = s.closes || [], W = 300, h = 62, pad = 4;
@@ -345,12 +457,13 @@ function card(s, compact = false) {
     el("div", {}, el("div", { class: "lbl", text: "Entry" }), el("div", { class: "v", style: "color:var(--dip)", text: `${fx(s.entry[0], 0)}–${fx(s.entry[1], 0)}` })),
     el("div", {}, el("div", { class: "lbl", text: "Stop" }), el("div", { class: "v down", text: fx(s.stop, 1) })),
     el("div", {}, el("div", { class: "lbl", text: "Target" }), el("div", { class: "v up", text: fx(s.targets[0], 1) }))));
-  const chips = el("div", { class: "chips" }, el("span", { class: "chip", text: `Grade ${s.grade}` }), el("span", { class: "chip", text: `RSI ${Math.round(s.rsi)}` }),
+  const chips = el("div", { class: "chips" }, resultsChip(s), el("span", { class: "chip", text: `Grade ${s.grade}` }), el("span", { class: "chip", text: `RSI ${Math.round(s.rsi)}` }),
     !compact ? el("span", { class: "chip", text: s.trend }) : null, ...fundChips(f).slice(0, compact ? 1 : 3));
   if (b && b.status === "breakout") chips.append(el("span", { class: "chip bo", text: "⚡ Breakout" }));
   else if (b && b.status === "near") chips.append(el("span", { class: "chip bo", text: `${b.gap_pct}% to breakout` }));
   c.append(el("div", { class: "foot" }, chips, meter(s.confidence)));
-  return c;
+  return el("div", { class: "cw" }, c, el("button", { class: "star", "data-star": s.symbol, "aria-pressed": String(isStar(s.symbol)),
+    "aria-label": `Add ${s.symbol} to your watchlist`, title: "Watchlist", text: "★", onclick: e => { e.stopPropagation(); toggleStar(s.symbol); } }));
 }
 
 function ladder(s) {
@@ -405,6 +518,9 @@ function sheet(s) {
   const m1 = ret(s, 21), m3 = ret(s, 63);
   f("Moves", `1 month ${m1 == null ? "–" : pct(m1)} · 3 months ${m3 == null ? "–" : pct(m3)}`);
   f("Day range", `${inr(s.day_low)} – ${inr(s.day_high)} · prices for ${s.date}`);
+  if (s.volume_ratio) f("Volume", `${fx(s.volume_ratio, 2)}× its 50-day average` + (s.date === new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) ? " (part of the day if the market is open)" : ""));
+  if (s.sector) f("Sector", s.sector);
+  f("Next results", s.results_date ? `${fdate(s.results_date)} (${daysTo(s.results_date)} days) · from Yahoo Finance, can be an estimate` : "No date published yet");
 
   let fundPanel = null;
   if (fu) {
@@ -419,7 +535,10 @@ function sheet(s) {
     el("div", { class: "s-head" }, el("div", { class: "in gut" },
       el("div", { style: "min-width:0" }, el("div", { class: "sym", id: "sTitle", text: s.symbol }),
         el("div", { class: "pxrow" }, el("span", { class: "p num", style: "font-size:18px", text: inr(s.close) }), el("span", { class: "chg num " + dir(s.change_pct), text: `${pct(s.change_pct)} today` }))),
-      el("button", { class: "close", "aria-label": "Close", text: "×", onclick: close }))),
+      el("div", { style: "display:flex;gap:8px;align-items:center" },
+        el("button", { class: "hbtn", "data-star": s.symbol, "aria-pressed": String(isStar(s.symbol)), onclick: () => toggleStar(s.symbol), "aria-label": `Watchlist ${s.symbol}` }, "★ ", "Watch"),
+        navigator.share ? el("button", { class: "hbtn", "aria-label": "Share", onclick: () => navigator.share({ title: `${s.symbol}: ${v.label}`, text: `${s.symbol} ${v.label} · entry ${fx(s.entry[0])}–${fx(s.entry[1])}, stop ${fx(s.stop)}, T1 ${fx(s.targets[0])}`, url: location.href }).catch(() => {}) }, "Share") : null,
+        el("button", { class: "close", "aria-label": "Close", text: "×", onclick: close })))),
     el("div", { class: "s-body gut" },
       el("section", { class: "verdict" },
         el("div", { class: "lbl", style: "position:relative;z-index:1", text: "Final recommendation" }),
@@ -433,11 +552,111 @@ function sheet(s) {
       el("div", { class: "panel" }, el("div", { class: "lbl", text: "Stop → entry → targets" }), ladder(s)),
       el("a", { class: "chartbox", href: s.chart, target: "_blank", rel: "noopener", "aria-label": "Open the chart full size" },
         el("img", { src: s.chart, alt: `${s.symbol} technical chart with EMAs, levels, MACD and RSI` })),
+      sizer(s),
       fundPanel,
       el("div", { class: "panel" }, el("div", { class: "lbl", text: "Analysis details" }), facts),
+      el("button", { class: "hbtn", style: "justify-self:start", onclick: () => openBot(`${s.symbol}`) }, "💬 Explain this stock"),
       el("div", { class: "links" },
         el("a", { href: s.chart, target: "_blank", rel: "noopener", text: "Chart full size ↗" }),
         el("a", { href: s.report, target: "_blank", rel: "noopener", text: "Full written analysis ↗" }))));
+}
+
+function sizer(s) {
+  const saved = store.get("size", { cap: 100000, risk: 1 });
+  const cap = el("input", { type: "number", inputmode: "decimal", min: "0", value: saved.cap, "aria-label": "Capital in rupees" });
+  const risk = el("input", { type: "number", inputmode: "decimal", min: "0.1", step: "0.1", value: saved.risk, "aria-label": "Risk per trade in percent" });
+  const entry = el("input", { type: "number", inputmode: "decimal", step: "0.05", value: (s.verdict === "BUY NOW" ? s.close : s.entry[1]).toFixed(2), "aria-label": "Entry price" });
+  const stop = el("select", { "aria-label": "Stop-loss" }, el("option", { value: s.stop, text: `Conservative ${fx(s.stop)}` }), el("option", { value: s.stop_aggressive, text: `Aggressive ${fx(s.stop_aggressive)}` }));
+  const outp = el("div", { class: "sizeout" });
+  const t = (k, val, cls = "") => el("div", { class: "kpi " + cls }, el("div", { class: "lbl", text: k }), el("div", { class: "val", style: "font-size:15px", text: val }));
+  const calc = () => {
+    const C = +cap.value, r = +risk.value, E = +entry.value, S = +stop.value;
+    store.set("size", { cap: C, risk: r });
+    if (!(C > 0 && r > 0 && E > 0)) return outp.replaceChildren(el("div", { class: "hint", text: "Enter your capital, risk % and entry price." }));
+    if (E <= S) return outp.replaceChildren(el("div", { class: "warn", text: "The entry is at or below the stop-loss, so there is no trade to size." }));
+    const perShare = E - S, byRisk = Math.floor((C * r / 100) / perShare), byCash = Math.floor(C / E), q = Math.min(byRisk, byCash);
+    outp.replaceChildren(t("Quantity", `${q} shares`), t("Money needed", inr(q * E, 0)), t("Loss if stopped", "−" + inr(q * perShare, 0), "sl"),
+      t("Gain at T1", "+" + inr(q * (s.targets[0] - E), 0), "tg"), t("Gain at T2", "+" + inr(q * (s.targets[1] - E), 0), "tg"),
+      el("div", { class: "hint", style: "grid-column:1/-1", text: (byCash < byRisk ? "Capped by your capital, so you risk less than your limit. " : "") + `Risk per share ${inr(perShare)}. Uses your levels; actual fills, charges and gaps will differ.` }));
+  };
+  for (const i of [cap, risk, entry, stop]) i.addEventListener("input", calc);
+  calc();
+  return el("div", { class: "panel" }, el("div", { class: "lbl", text: "Position size · saved only on this phone" }),
+    el("div", { class: "sizer" }, el("label", {}, "Capital ₹", cap), el("label", {}, "Risk %", risk), el("label", {}, "Entry ₹", entry)),
+    el("label", { style: "display:grid;gap:4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em" }, "Stop-loss", stop), outp);
+}
+
+function drawChanges(st) {
+  const box = document.getElementById("chgSec"), c = DATA.changes;
+  const syms = new Set(st.map(s => s.symbol));
+  if (!c || state.tab === "track") { box.hidden = true; return; }
+  const moves = c.moves.filter(m => syms.has(m.symbol)), bos = c.new_breakouts.filter(x => syms.has(x));
+  box.hidden = false;
+  const since = c.since ? new Date(c.since).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", hour: "numeric", minute: "2-digit" }) : null;
+  document.getElementById("chgHint").textContent = since ? `Since the scan on ${since} IST` : "Starts from the next scan";
+  const items = [...bos.map(x => el("button", { class: "mv up", onclick: () => open(x) }, el("b", { text: "⚡ " + x }), el("small", { text: "new breakout" }))),
+    ...moves.map(m => el("button", { class: "mv " + m.dir, onclick: () => open(m.symbol) }, el("b", { text: (m.dir === "up" ? "▲ " : "▼ ") + m.symbol }),
+      el("small", { text: `${V[m.from].label} → ${V[m.to].label}` })))];
+  document.getElementById("chg").replaceChildren(...(items.length ? items : [el("span", { class: "hint", text: since ? "No call changed in this list since then." : "Changes appear here after the next scheduled scan." })]));
+}
+
+function drawAlerts() {
+  const bar = document.getElementById("alertBar"), seen = store.get("seen", {});
+  const hits = all().filter(s => WATCH.has(s.symbol) && seen[s.symbol] && seen[s.symbol] !== s.verdict);
+  const bos = all().filter(s => WATCH.has(s.symbol) && s.breakout && s.breakout.status === "breakout" && (DATA.changes?.new_breakouts || []).includes(s.symbol));
+  if (!hits.length && !bos.length) { bar.hidden = true; return; }
+  bar.hidden = false;
+  bar.replaceChildren(el("div", { class: "top" }, el("span", { text: `🔔 ${hits.length + bos.length} watchlist update${hits.length + bos.length > 1 ? "s" : ""} since your last look` }),
+      el("button", { class: "linkbtn", text: "Mark as seen", onclick: () => { const sn = store.get("seen", {}); for (const s of all()) if (WATCH.has(s.symbol)) sn[s.symbol] = s.verdict; store.set("seen", sn); drawAlerts(); } })),
+    el("div", { class: "chg-row" }, ...bos.map(s => el("button", { class: "mv up", onclick: () => open(s.symbol) }, el("b", { text: "⚡ " + s.symbol }), el("small", { text: "broke out" }))),
+      ...hits.map(s => { const up = V[s.verdict].rank < V[seen[s.symbol]].rank; return el("button", { class: "mv " + (up ? "up" : "down"), onclick: () => open(s.symbol) },
+        el("b", { text: (up ? "▲ " : "▼ ") + s.symbol }), el("small", { text: `${V[seen[s.symbol]].label} → ${V[s.verdict].label}` })); })));
+}
+
+function drawHeat(st) {
+  const box = document.getElementById("heatSec");
+  const by = {};
+  for (const s of st) if (s.sector) (by[s.sector] = by[s.sector] || []).push(s);
+  const rows = Object.entries(by).map(([k, xs]) => ({ k, n: xs.length, avg: xs.reduce((a, s) => a + s.change_pct, 0) / xs.length,
+    buy: xs.filter(s => s.verdict === "BUY NOW" || s.verdict === "BUY ON DIP").length })).sort((a, b) => b.avg - a.avg);
+  box.hidden = rows.length < 2 || state.tab === "track";
+  if (box.hidden) return;
+  const mx = Math.max(0.5, ...rows.map(r => Math.abs(r.avg)));
+  document.getElementById("heat").replaceChildren(...rows.map(r => el("button", { class: "ht", "aria-pressed": String(state.sector === r.k),
+    style: `--hc:${r.avg >= 0 ? "var(--up)" : "var(--down)"};--hp:${Math.round(8 + 32 * Math.abs(r.avg) / mx)}%`,
+    onclick: () => { state.sector = state.sector === r.k ? null : r.k; drawHeat(st); drawGrid(); } },
+    el("span", { class: "n", text: r.k, title: r.k }), el("span", { class: "c " + dir(r.avg), text: pct(r.avg) }),
+    el("span", { class: "k", text: `${r.n} stock${r.n > 1 ? "s" : ""} · ${r.buy} buy` }))));
+}
+
+function drawTrack() {
+  const box = document.getElementById("trackSec"), t = DATA.track_record;
+  box.hidden = state.tab !== "track";
+  if (box.hidden) return;
+  const head = el("div", { class: "sec-h" }, el("h2", { text: "Track record" }),
+    el("span", { class: "hint", text: t && t.since ? `Calls recorded since ${fdate(t.since)} · ${t.days} trading day${t.days === 1 ? "" : "s"}` : "" }));
+  if (!t) return box.replaceChildren(head, el("div", { class: "empty", text: "The track record starts with the next scheduled scan, once calls are being saved." }));
+  const cell = x => (x == null ? "–" : `${x.avg > 0 ? "+" : ""}${x.avg}% · ${x.win}% won · n=${x.n}`);
+  const anyDone = Object.values(t.by_verdict).some(r => r["5"]);
+  const first = new Date(new Date(t.since + "T00:00:00+05:30").getTime() + 8 * 864e5).toISOString().slice(0, 10);
+  const table = el("table", { class: "tr-table" },
+    el("thead", {}, el("tr", {}, ...["Call", "New calls", "After 5 days", "After 10 days", "After 20 days", "vs Nifty (10d)", "T1 first / stop first"].map(h => el("th", { text: h })))),
+    el("tbody", {}, ...ORDER.map(k => { const r = t.by_verdict[k] || {}; const o = r.outcomes;
+      return el("tr", {}, el("td", {}, el("span", { class: "dot", style: `display:inline-block;margin-right:8px;background:${V[k].c};color:${V[k].c}` }), V[k].label),
+        el("td", { class: "num", text: String(r.calls || 0) }), el("td", { class: "num", text: cell(r["5"]) }), el("td", { class: "num", text: cell(r["10"]) }),
+        el("td", { class: "num", text: cell(r["20"]) }), el("td", { class: "num " + dir(r["10"]?.vs_nifty ?? 0), text: r["10"]?.vs_nifty == null ? "–" : `${r["10"].vs_nifty > 0 ? "+" : ""}${r["10"].vs_nifty} pts` }),
+        el("td", { class: "num", text: o ? `${o.target} / ${o.stopped}` : "–" })); })));
+  const recent = (t.recent || []).map(c => { const out = c.r.out || "open";
+    return el("tr", {}, el("td", {}, el("button", { class: "linkbtn", text: c.symbol, onclick: () => open(c.symbol) })), el("td", { text: fdate(c.date) }),
+      el("td", { class: "num", text: fx(c.close) }), el("td", { class: "num", text: c.now == null ? "–" : fx(c.now) }),
+      el("td", { class: "num " + dir(c.since_pct ?? 0), text: c.since_pct == null ? "–" : pct(c.since_pct) }),
+      el("td", {}, el("span", { class: "out " + (out === "neither" ? "open" : out), text: out === "target" ? "Hit T1" : out === "stopped" ? "Stopped" : out === "neither" ? "Neither in 20d" : "Open" }))); });
+  box.replaceChildren(head,
+    el("p", { class: "note", text: "How your rules' calls actually did. A call counts when a stock's verdict changes (so 10 days of the same Buy now is one call). Returns are from the close on the call day to the close 5, 10 and 20 trading days later, next to the Nifty 50 over the same days. \"T1 first / stop first\" uses closing prices only. Nothing is estimated: results appear only once the days have passed." + (anyDone ? "" : ` The first 5-day results show up around ${fdate(first)}.`) }),
+    el("div", { class: "panel" }, el("div", { class: "lbl", text: "By verdict" }), el("div", { class: "tablewrap" }, table)),
+    el("div", { class: "panel" }, el("div", { class: "lbl", text: "Recent Buy now calls" }),
+      recent.length ? el("div", { class: "tablewrap" }, el("table", { class: "tr-table" }, el("thead", {}, el("tr", {}, ...["Stock", "Called", "Price then", "Now", "Since", "Result"].map(h => el("th", { text: h })))), el("tbody", {}, ...recent)))
+        : el("div", { class: "hint", text: "No Buy now calls recorded yet." })));
 }
 
 let lastFocus = null;
@@ -460,7 +679,7 @@ function route() {
 
 function drawGrid() {
   const q = state.q.trim().toUpperCase().replace(/\s+/g, "");
-  const items = list().filter(s => (!state.filter || s.verdict === state.filter) &&
+  const items = list().filter(s => (!state.filter || s.verdict === state.filter) && (!state.sector || s.sector === state.sector) &&
     (!q || s.symbol.includes(q) || (s.name || "").toUpperCase().replace(/\s+/g, "").includes(q)));
   const by = {
     score: (a, b) => b.score - a.score || b.confidence - a.confidence || V[a.verdict].rank - V[b.verdict].rank,
@@ -470,30 +689,37 @@ function drawGrid() {
     m1: (a, b) => (ret(b, 21) ?? -1e9) - (ret(a, 21) ?? -1e9), rsi: (a, b) => b.rsi - a.rsi, az: (a, b) => a.symbol.localeCompare(b.symbol),
   };
   items.sort(by[state.sort]);
-  document.getElementById("grid").replaceChildren(...(items.length ? items.map(s => card(s)) : [el("div", { class: "empty", text: list().length ? "No stock matches this filter." : "No midcap picks in this scan." })]));
+  document.getElementById("grid").replaceChildren(...(items.length ? items.map(s => card(s)) : [el("div", { class: "empty", text: list().length ? "No stock matches this filter." : state.tab === "watch" ? "Your watchlist is empty. Tap ★ on any stock to add it; it's saved on this phone only." : "No picks in this scan." })]));
   for (const b of document.querySelectorAll("#seg button")) b.setAttribute("aria-pressed", String((b.dataset.v || null) === state.filter));
 }
 
 function setFilter(v) { state.filter = state.filter === v ? null : v; drawGrid(); document.querySelector(".fbar").scrollIntoView({ behavior: "smooth" }); }
 
 function drawTab() {
-  const st = list(), mid = state.tab === "mid";
+  if (state.tab === "track") state.filter = null;
+  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track";
+  for (const id of ["fbar", "gridWrap"]) document.getElementById(id).hidden = track;
+  drawTrack(); drawChanges(st); drawHeat(st);
   for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === state.tab));
   document.getElementById("rank").hidden = !mid;
   if (!mid && state.sort === "rank") state.sort = "score";
   if (mid && state.sort === "score" && !state._midSorted) { state.sort = "rank"; state._midSorted = true; }
   document.getElementById("sort").value = state.sort;
+  document.getElementById("rank").textContent = state.tab === "small" ? "Smallcap rank" : "Midcap rank";
+  const idx = state.tab === "small" ? "Nifty Smallcap 250" : "Nifty Midcap 150";
   document.getElementById("tabnote").textContent = mid
-    ? "The 20 strongest Nifty Midcap 150 stocks by your daily scan's ranking (trend + fundamentals + 6-month performance, ₹5 crore+ daily turnover), each run through the same swing-trading chart rules. #1 is the strongest."
-    : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
-  const lbl = mid ? "Midcap 20" : "Nifty 100";
+    ? `The 20 strongest ${idx} stocks by your daily scan's ranking (trend + fundamentals + 6-month performance, ₹5 crore+ daily turnover), each run through the same swing-trading chart rules. #1 is the strongest.`
+    : state.tab === "watch" ? "Stocks you starred, from every list. Saved on this phone only. Changes to their calls show up as alerts at the top."
+    : track ? "" : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
+  const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100" }[state.tab];
   document.getElementById("breadthLbl").textContent = `Breadth today · ${lbl}`;
   document.getElementById("mixLbl").textContent = `Final recommendation mix · ${lbl}`;
-  const up = st.filter(s => s.change_pct > 0).length, dn = st.filter(s => s.change_pct < 0).length, fl = st.length - up - dn, n = st.length || 1;
+  const stx = track ? DATA.stocks : st;
+  const up = stx.filter(s => s.change_pct > 0).length, dn = stx.filter(s => s.change_pct < 0).length, fl = stx.length - up - dn, n = stx.length || 1;
   document.getElementById("adv").replaceChildren(el("span", { class: "up", text: String(up) }), el("span", { style: "color:var(--muted)", text: " / " }), el("span", { class: "down", text: String(dn) }));
   document.getElementById("breadth").replaceChildren(el("i", { style: `width:${100 * up / n}%;background:var(--up)` }), el("i", { style: `width:${100 * fl / n}%;background:var(--line2)` }), el("i", { style: `width:${100 * dn / n}%;background:var(--down)` }));
   document.getElementById("advTxt").textContent = `${up} up, ${dn} down${fl ? `, ${fl} flat` : ""}`;
-  const counts = Object.fromEntries(ORDER.map(k => [k, st.filter(s => s.verdict === k).length]));
+  const counts = Object.fromEntries(ORDER.map(k => [k, stx.filter(s => s.verdict === k).length]));
   document.getElementById("mix").replaceChildren(...ORDER.filter(k => counts[k]).map(k =>
     el("button", { style: `flex:${counts[k]};background:${V[k].c}`, title: `${V[k].label}: ${counts[k]}`, "aria-label": `Show ${V[k].label}`, onclick: () => setFilter(k) })));
   document.getElementById("legend").replaceChildren(...ORDER.map(k =>
@@ -503,13 +729,13 @@ function drawTab() {
     ...ORDER.map(k => el("button", { "data-v": k, "aria-pressed": "false", onclick: () => { state.filter = state.filter === k ? null : k; drawGrid(); } },
       el("span", { class: "dot", style: `background:${V[k].c};color:${V[k].c}` }), V[k].label, el("b", { text: String(counts[k]) }))));
 
-  const top = st.filter(s => s.verdict === "BUY NOW").sort((a, b) => b.score - a.score || b.confidence - a.confidence).slice(0, 10);
+  const top = (track ? [] : st).filter(s => s.verdict === "BUY NOW").sort((a, b) => b.score - a.score || b.confidence - a.confidence).slice(0, 10);
   document.getElementById("topSec").hidden = !top.length;
-  document.getElementById("topTitle").textContent = mid ? "Midcap buy-now setups" : "Best setups right now";
+  document.getElementById("topTitle").textContent = state.tab === "mid" ? "Midcap buy-now setups" : state.tab === "small" ? "Smallcap buy-now setups" : state.tab === "watch" ? "Buy now in your watchlist" : "Best setups right now";
   document.getElementById("topHint").textContent = `${top.length} Buy now, strongest first`;
   document.getElementById("top").replaceChildren(...top.map(s => card(s, true)));
 
-  const bos = st.filter(s => s.breakout && (s.breakout.status === "breakout" || s.breakout.status === "near"))
+  const bos = (track ? [] : st).filter(s => s.breakout && (s.breakout.status === "breakout" || s.breakout.status === "near"))
     .sort((a, b) => (b.breakout.status === "breakout") - (a.breakout.status === "breakout") || a.breakout.gap_pct - b.breakout.gap_pct);
   document.getElementById("boSec").hidden = !bos.length;
   if (bos.length) {
@@ -518,8 +744,9 @@ function drawTab() {
     document.getElementById("bo").replaceChildren(...bos.map(s => el("button", { class: "tag" + (s.breakout.status === "breakout" ? " hot" : ""), onclick: () => open(s.symbol) },
       s.symbol, el("small", { text: s.breakout.status === "breakout" ? "broke out" : `${s.breakout.gap_pct}% away` }))));
   }
-  const errs = mid ? (DATA.midcap.errors || []).map(e => e.symbol) : (DATA.errors || []).map(e => e.symbol);
-  const notes = mid ? DATA.midcap.notes || [] : [];
+  const part = state.tab === "mid" ? DATA.midcap : state.tab === "small" ? DATA.smallcap : null;
+  const errs = part ? (part.errors || []).map(e => e.symbol) : state.tab === "n100" ? (DATA.errors || []).map(e => e.symbol) : [];
+  const notes = part ? part.notes || [] : [];
   const e = document.getElementById("errs");
   e.hidden = !errs.length && !notes.length;
   e.textContent = [...notes, errs.length ? `No usable prices for ${errs.join(", ")}, so they are left out of this scan.` : ""].filter(Boolean).join(" ");
@@ -546,6 +773,8 @@ function render(data) {
   DATA = data;
   data.midcap = data.midcap || { stocks: [], errors: [], notes: ["Midcap picks are not in this scan yet."] };
   data.midcap.stocks.forEach((s, i) => { s.rank = i + 1; });
+  data.smallcap = data.smallcap || { stocks: [], errors: [], notes: ["Smallcap picks start with the next scan."] };
+  data.smallcap.stocks.forEach((s, i) => { s.rank = i + 1; });
   const when = new Date(data.generated_at);
   const date = [...new Set(data.stocks.map(s => s.date))].sort().reverse()[0] || "";
   const ageH = (Date.now() - when.getTime()) / 36e5;
@@ -558,6 +787,10 @@ function render(data) {
     (v ? ` · ${v.problems ? "⚠ " + v.problems + " price mismatch(es)" : "✓ All " + v.checked + " prices re-checked"} against a second download` : "");
   document.getElementById("n100Count").textContent = data.stocks.length;
   document.getElementById("midCount").textContent = data.midcap.stocks.length;
+  document.getElementById("smallCount").textContent = data.smallcap.stocks.length;
+  WATCH = new Set([...WATCH].filter(x => all().some(s => s.symbol === x)).concat([...WATCH].filter(x => !all().some(s => s.symbol === x))));
+  document.getElementById("watchCount").textContent = WATCH.size;
+  drawAlerts();
   document.getElementById("stats").hidden = false;
   if (data.market) {
     const m = data.market;
@@ -570,7 +803,7 @@ function render(data) {
   route();
 }
 
-for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => { state.tab = b.dataset.tab; state.filter = null; drawTab(); });
+for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => { state.tab = b.dataset.tab; state.filter = null; state.sector = null; drawTab(); });
 document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; drawGrid(); });
 document.getElementById("sort").addEventListener("change", e => { state.sort = e.target.value; drawGrid(); });
 document.getElementById("scrim").addEventListener("click", e => { if (e.target.id === "scrim") close(); });
@@ -583,6 +816,117 @@ fetch("data.json", { cache: "no-store" })
     document.getElementById("live").textContent = "No scan";
     document.getElementById("grid").replaceChildren(el("div", { class: "empty", text: `The latest scan could not be loaded (${e.message}). It is rebuilt after each scheduled run.` }));
   });
+
+// ---------- Board helper: answers from this board's own data and a built-in glossary (no AI service, works offline) ----------
+const KB = [
+  { k: "buy now verdict", q: "What does Buy now mean?", a: "Buy now: the trend, momentum and price position all line up with your swing rules today. The price is at or close to the entry zone, so the setup is live. Check the stop-loss and position size before acting. Decisions are yours." },
+  { k: "buy on dip dip", q: "What does Buy on dip mean?", a: "Buy on dip: the stock is in a good trend but has run above the ideal entry. The plan is to wait for a pullback into the blue entry zone instead of chasing the price." },
+  { k: "wait verdict", q: "What does Wait mean?", a: "Wait: mixed signals. Something important is missing (for example the trend or momentum isn't confirmed). The 'Next' line on the stock tells you what would turn it into a buy." },
+  { k: "avoid verdict", q: "What does Avoid mean?", a: "Avoid: the setup fails your rules, usually a downtrend, price below key averages or weak momentum. Not a swing buy right now." },
+  { k: "confidence meter bars", q: "What is confidence?", a: "Confidence (out of 10, the bars on each card) is how many of your chart checks agree with the verdict. Higher means more of the rules line up." },
+  { k: "grade quality trade", q: "What is the grade?", a: "Trade quality grade (A+, A, B, C…) rates the whole setup: trend strength, reward-to-risk and how clean the levels are. A-grade setups are the cleanest." },
+  { k: "score best setup sort", q: "What is 'Best setup' sorting?", a: "'Best setup' sorts by the analysis score behind the verdict (trend + momentum + structure + patterns), then by confidence. The strongest setups come first." },
+  { k: "entry zone blue band", q: "What is the entry zone?", a: "Entry zone: the price range where your rules would buy, usually a pullback to support or the 20-day average. It's the blue band on the sparkline and the ladder." },
+  { k: "stop loss sl conservative aggressive red dashed", q: "What is the stop-loss?", a: "Stop-loss: the price where the trade idea is wrong and you exit to limit the loss. Conservative sits below strong support (safer, wider); aggressive is tighter (smaller loss but more likely to be hit). It's the red dashed line on the sparkline." },
+  { k: "target t1 t2 t3 green", q: "What are T1, T2 and T3?", a: "Targets: T1 is the first resistance (green dashed line on the card), T2 and T3 the next levels up. Many swing traders book part at T1 and trail the stop for the rest." },
+  { k: "reward risk rr ratio", q: "What is reward:risk?", a: "Reward:risk to T1 = (T1 − entry) ÷ (entry − stop). 2 means you aim to make ₹2 for every ₹1 you risk. Your rules prefer at least about 1.5–2." },
+  { k: "rsi momentum overbought oversold", q: "What is RSI?", a: "RSI (14-day) measures momentum from 0 to 100. Above 70 is stretched (overbought), below 30 is washed out (oversold). 50–65 is the healthy zone for a swing buy." },
+  { k: "macd signal momentum", q: "What is MACD?", a: "MACD compares the 12- and 26-day averages. 'Above signal' means momentum is turning up; 'below signal' means it's fading." },
+  { k: "ema average 20 50 200 moving", q: "What are EMA 20, 50 and 200?", a: "Exponential moving averages of the closing price. EMA20 is the short-term trend, EMA50 the medium and EMA200 the long-term. Price above all three, with 20 > 50 > 200, is a strong uptrend." },
+  { k: "trend daily 4h hourly", q: "What does the trend line mean?", a: "Trend is read from the swing highs/lows and EMAs on the daily chart. 4H is the same on the 4-hour chart, a shorter view used to time the entry." },
+  { k: "support resistance strong", q: "What are support and resistance?", a: "Support is a price zone where buyers stepped in before (strong support held several times). Resistance is where sellers stepped in. Entries sit near support; targets sit at resistance." },
+  { k: "breakout level retest", q: "What is the breakout level?", a: "The top of the nearest resistance zone. A close above it on strong volume is a breakout. 'Retest entry' is the zone to buy if price comes back to test the level from above." },
+  { k: "breakout rules volume chip lightning", q: "How are breakouts decided?", a: "A breakout needs all of your rules from breakout_rules.json: close above the level, volume at least 1.5× the 50-day average, price above EMA50 and EMA200, within 25% of the 52-week high, beating the Nifty over 3 months, and the Nifty itself above its 50-day EMA. '⚡ Breakout' means all passed; 'x% to breakout' means it's close." },
+  { k: "vs nifty relative strength rs", q: "What is 'vs Nifty'?", a: "Relative strength: the stock's 3-month return minus the Nifty 50's. Positive means it's beating the market." },
+  { k: "52 week high", q: "Why does the 52-week high matter?", a: "Stocks near their 52-week high have less overhead supply. Your breakout rules only take breakouts within 25% of it." },
+  { k: "pattern patterns candle candles divergence", q: "What are patterns, candles and divergence?", a: "Patterns are chart shapes found by the analysis (e.g. flag, double bottom). Candles are recent candlestick signals (e.g. bullish engulfing). Divergence is when price and RSI disagree, often an early sign of a turn." },
+  { k: "sparkline mini chart card line", q: "What is the small chart on each card?", a: "The last ~6 months of closing prices. Blue band = entry zone, red dashed = stop-loss, green dashed = T1. The colour matches the verdict." },
+  { k: "ladder stop entry targets", q: "What is the ladder?", a: "The ladder in a stock's detail lines up SL (stop), NOW (current price), the blue entry zone, BO (breakout level) and T1–T3, so you can see the trade at a glance." },
+  { k: "volume ratio", q: "What is the volume ratio?", a: "Today's volume ÷ the 50-day average. Above 1.5× shows strong interest. During market hours it's only part of the day, so it reads low." },
+  { k: "roe return equity", q: "What is ROE?", a: "Return on equity: profit as a % of shareholders' money. Above 15% is generally good." },
+  { k: "debt equity de", q: "What is D/E?", a: "Debt to equity: total debt ÷ shareholders' equity. Under 0.5 is low debt, above 1 is high." },
+  { k: "eps earnings growth revenue", q: "What is EPS and revenue growth?", a: "Year-on-year growth in earnings per share and in sales, from Yahoo Finance. Positive and rising is what the midcap/smallcap ranking looks for." },
+  { k: "pe p/e valuation", q: "What is P/E?", a: "Price ÷ earnings per share. How many years of current profit the price pays for. Compare within a sector; very high P/E needs strong growth to justify." },
+  { k: "rank midcap smallcap pick picked chosen ranking", q: "How are Midcap and Smallcap picks chosen?", a: "From the Nifty Midcap 150 and Smallcap 250, stocks trading ₹5 crore+ a day are ranked by your daily scan: technical score + fundamentals (ROE, D/E, growth, margins, P/E) + 6-month performance. The top 20 are run through the same chart rules. #1 is the strongest." },
+  { k: "breadth up down", q: "What is breadth?", a: "How many stocks in the list are up vs down today. More up than down means a broad, healthy market day." },
+  { k: "mix recommendation bar", q: "What is the recommendation mix?", a: "How the list splits across Buy now, Buy on dip, Wait and Avoid. Tap a colour to filter to those stocks." },
+  { k: "nifty 50 ema market filter 3m", q: "What does the Nifty 50 box show?", a: "The Nifty 50 level, whether it's above its 50-day EMA (your market filter: breakouts only count when it is) and its 3-month return." },
+  { k: "track record past results performance accuracy trust", q: "What is the track record?", a: "Every new call is saved and checked 5, 10 and 20 trading days later against the Nifty 50, plus whether T1 or the stop came first (closing prices). It only shows real results once the days have passed." },
+  { k: "what changed moves new", q: "What is 'What changed'?", a: "Stocks whose verdict moved up (▲) or down (▼) since the previous scan, and new breakouts. Tap one to open it." },
+  { k: "watchlist star favourite", q: "How does the watchlist work?", a: "Tap ★ on any card or in a stock's detail. Starred stocks get their own tab and alerts at the top when their call changes. It's saved on this phone only." },
+  { k: "alert alerts notification notify push ntfy phone", q: "How do alerts work?", a: "In the app: a 🔔 bar appears when a starred stock's call changes or it breaks out. For phone notifications even when the app is closed: add your watchlist symbols as a WATCHLIST secret in the repo (comma-separated) and use the ntfy app with your NTFY_TOPIC secret; the board then pushes when one turns Buy now or breaks out." },
+  { k: "results earnings quarterly date warning", q: "Why the results warning?", a: "Quarterly results can gap a stock past your stop overnight. '⚠ Results in Nd' appears when results are 7 days away or less (dates from Yahoo Finance, sometimes estimates). Many swing traders avoid holding through results." },
+  { k: "position size quantity how many shares capital risk calculator", q: "How does the position size helper work?", a: "In a stock's detail, enter your capital and the % you're willing to lose on one trade (1% is common). Quantity = (capital × risk%) ÷ (entry − stop), capped by your capital. It's saved on this phone only and never sent anywhere." },
+  { k: "sector heatmap industry", q: "What is the sector heatmap?", a: "Stocks grouped by NSE's industry. Each tile shows the average move today and how many are Buy now/Buy on dip. Green is up, red is down; tap a tile to filter the list." },
+  { k: "data source delay delayed yahoo live real time", q: "Where does the data come from?", a: "Yahoo Finance (NSE prices), which can be about 15 minutes behind. Every scan is re-checked against a second, separate download before it's published." },
+  { k: "refresh update when scan schedule time", q: "When does the board refresh?", a: "Weekdays around 11:15 AM, 1:45 PM and 4:20 PM IST (after the close). The top of the board shows the last scan time and the next one." },
+  { k: "check validation verified hallucinated wrong", q: "How do I know the numbers are right?", a: "Each scan is compared with a fresh, separate Yahoo download: closes, previous close, day range, dates, levels order and fundamentals. If too many differ, the update is stopped and the last good scan stays up." },
+  { k: "install app home screen offline", q: "How do I install the app?", a: "Android: tap 'Install app' at the top or Chrome menu → Install app. iPhone: Safari → Share → Add to Home Screen. Offline, it shows the last saved scan." },
+  { k: "advice order buy sell trade zerodha broker", q: "Can this place orders?", a: "No. The board is analysis only and never places, changes or cancels an order. Decisions are yours." },
+];
+const SUGG = ["What does Buy on dip mean?", "What is the stop-loss?", "Best setups today", "Breakouts today", "How does position size work?", "What is the track record?", "What is RSI?", "How do alerts work?"];
+
+function explainStock(s) {
+  const v = V[s.verdict], b = s.breakout;
+  const lines = [`${s.symbol}${s.name && s.name !== s.symbol ? " (" + s.name + ")" : ""}: ${v.label.toUpperCase()}, confidence ${s.confidence}/10, grade ${s.grade}.`,
+    `Price ${inr(s.close)} (${pct(s.change_pct)} today). Trend: ${s.trend}. RSI ${s.rsi}, MACD ${s.macd_up ? "above" : "below"} signal.`,
+    `Why: ${s.reasons.join("; ")}.`, `Next: ${s.next}`,
+    `Plan: entry ${fx(s.entry[0])}–${fx(s.entry[1])}, stop ${fx(s.stop)}, T1 ${fx(s.targets[0])} (reward:risk ${s.rr1}).`];
+  if (b && b.status === "breakout") lines.push("⚡ It passed every breakout rule.");
+  else if (b && b.status === "near") lines.push(`${b.gap_pct}% below its breakout level ${fx(b.level)}.`);
+  if (s.results_date) { const d = daysTo(s.results_date); if (d >= 0 && d <= 14) lines.push(`Results on ${fdate(s.results_date)} (${d} days away)${d <= 7 ? ": consider the gap risk." : "."}`); }
+  if (s.fundamentals) { const f = s.fundamentals; lines.push(`Fundamentals: ROE ${f.roe_pct ?? "n/a"}%, D/E ${f.debt_equity ?? "n/a"}, EPS growth ${f.earnings_growth_pct ?? "n/a"}%, P/E ${f.pe ?? "n/a"}.`); }
+  lines.push(`Prices for ${s.date}. Analysis only; decisions are yours.`);
+  return lines.join("\n");
+}
+
+function answer(qRaw) {
+  const q = qRaw.toLowerCase().replace(/[^a-z0-9&%:/\- ]/g, " ");
+  const words = q.replace(/[-/]/g, " ").split(/\s+/).filter(Boolean);
+  if (DATA) {
+    const up = qRaw.toUpperCase();
+    const hit = all().find(s => new RegExp(`(^|[^A-Z0-9&])${s.symbol.replace(/[&-]/g, "\\$&")}([^A-Z0-9&]|$)`).test(up))
+      || all().find(s => s.name && s.name.length > 3 && q.includes(s.name.toLowerCase()));
+    // Symbols that are also everyday words only count when typed in capitals.
+    if (hit && !(["IDEA", "LT", "BEL", "ABB"].includes(hit.symbol) && !qRaw.includes(hit.symbol))) return { text: explainStock(hit), sym: hit.symbol };
+    const pick = (f, t) => { const xs = all().filter(f).sort((a, b) => b.score - a.score).slice(0, 8);
+      return { text: xs.length ? `${t}\n` + xs.map(s => `• ${s.symbol}: ${V[s.verdict].label}, ${inr(s.close)} (${pct(s.change_pct)})`).join("\n") : "None on the board right now." }; };
+    if (/\b(best|top)\b.*\b(setup|setups|stock|stocks|buy|pick|picks)\b|\bbuy now (stocks|list)\b|which.*buy/.test(q)) return pick(s => s.verdict === "BUY NOW", "Buy now, strongest first:");
+    if (/\bbreakouts?\b.*\b(today|now|list|which)\b|\bwhich.*break/.test(q)) return pick(s => s.breakout && (s.breakout.status === "breakout" || s.breakout.status === "near"), "Breakouts and near-breakouts:");
+    if (/\bresults?\b.*\b(soon|week|upcoming|coming|which)\b/.test(q)) return pick(s => s.results_date && daysTo(s.results_date) >= 0 && daysTo(s.results_date) <= 7, "Results within 7 days:");
+    if (/\b(my )?watchlist\b.*\b(show|what|list|status)\b/.test(q)) return pick(s => WATCH.has(s.symbol), "Your watchlist:");
+  }
+  let best = null, bestScore = 0;
+  for (const e of KB) {
+    const keys = e.k.split(" ");
+    let sc = 0;
+    for (const w of words) { if (keys.includes(w)) sc += 2; else if (w.length > 3 && keys.some(k => k.startsWith(w) || w.startsWith(k))) sc += 1; }
+    if (e.q.toLowerCase().replace(/[^a-z0-9 ]/g, "") === q.trim()) sc += 10;
+    if (sc > bestScore) { best = e; bestScore = sc; }
+  }
+  if (best && bestScore >= 2) return { text: best.a };
+  return { text: "I can explain any field on the board (try 'what is RSI', 'entry zone', 'grade'), any stock (type its symbol, e.g. TCS), or list things like 'best setups today', 'breakouts today' or 'results this week'." };
+}
+
+function say(text, who, sym) {
+  const log = document.getElementById("botLog");
+  const m = el("div", { class: "msg " + who, text });
+  if (sym) m.append(el("br"), el("button", { class: "go", text: `Open ${sym} →`, onclick: () => { document.getElementById("bot").hidden = true; open(sym); } }));
+  log.append(m); log.scrollTop = log.scrollHeight;
+}
+function ask(q) { if (!q.trim()) return; say(q, "me"); const r = answer(q); say(r.text, "ai", r.sym); }
+function openBot(q) {
+  const bot = document.getElementById("bot");
+  bot.hidden = false;
+  if (!document.getElementById("botLog").children.length)
+    say("Hi! Ask me what any field means, or type a stock symbol and I'll explain its call. I answer from this board's own data.", "ai");
+  if (q) ask(q);
+  document.getElementById("botQ").focus();
+}
+document.getElementById("botSug").replaceChildren(...SUGG.map(t => el("button", { type: "button", text: t, onclick: () => ask(t) })));
+document.getElementById("askFab").addEventListener("click", () => openBot());
+document.getElementById("botClose").addEventListener("click", () => { document.getElementById("bot").hidden = true; });
+document.getElementById("botForm").addEventListener("submit", e => { e.preventDefault(); const i = document.getElementById("botQ"); ask(i.value); i.value = ""; });
 
 // Installable app: offline copy of the last scan, plus an Install button where the browser offers one.
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
