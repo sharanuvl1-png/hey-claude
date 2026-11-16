@@ -1,25 +1,35 @@
 {
- "date": "2026-11-13",
+ "date": "2026-11-16",
  "alerts": [
   {
-   "id": "results:EICHERMOT:2026-11-13",
-   "title": "Eicher Motors results today",
-   "text": "Eicher Motors reports quarterly results today (13 Nov)."
+   "id": "buyzone:EICHERMOT:2026-11-16",
+   "title": "Eicher Motors is in the buy zone",
+   "text": "Eicher Motors moved from buy on dip to buy now at ₹7,599.0."
   },
   {
-   "id": "results:GRASIM:2026-11-13",
-   "title": "Grasim Industries results today",
-   "text": "Grasim Industries reports quarterly results today (13 Nov)."
+   "id": "buyzone:TRENT:2026-11-16",
+   "title": "Trent is in the buy zone",
+   "text": "Trent moved from buy on dip to buy now at ₹3,203.7."
   },
   {
-   "id": "news:AXISBANK:6196f4d0ce",
-   "title": "News: Axis Bank",
-   "text": "Jindal Power secures $470m funding for Botswana power project"
+   "id": "buyzone:APOLLOHOSP:2026-11-16",
+   "title": "Apollo Hospitals Enterprise is in the buy zone",
+   "text": "Apollo Hospitals Enterprise moved from buy on dip to buy now at ₹8,771.0."
   },
   {
-   "id": "news:RELIANCE:b3c04d81ae",
-   "title": "News: Reliance Industries",
-   "text": "Reliance plans $4.6bn investment in Andhra Pradesh coal-to-gas project"
+   "id": "buyzone:ETERNAL:2026-11-16",
+   "title": "Eternal is in the buy zone",
+   "text": "Eternal moved from buy on dip to buy now at ₹371.1."
+  },
+  {
+   "id": "target:KARURVYSYA:2026-11-16",
+   "title": "The Karur Vysya Bank reached its target",
+   "text": "The Karur Vysya Bank closed at ₹390.2, at or above the target of ₹385.3."
+  },
+  {
+   "id": "buyzone:KARURVYSYA:2026-11-16",
+   "title": "The Karur Vysya Bank is in the buy zone",
+   "text": "The Karur Vysya Bank moved from buy on dip to buy now at ₹390.2."
   }
  ]
 }
