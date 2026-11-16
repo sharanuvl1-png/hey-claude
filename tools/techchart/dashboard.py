@@ -67,12 +67,67 @@ def breakout_status(c):
             "rs_vs_nifty": None if c["rs"] is None else round(c["rs"], 1)}
 
 
+MIDCAP_CSV = "ind_niftymidcap150list.csv"
+MIDCAP_PICKS = 20
+
+
+def midcap_picks(n=MIDCAP_PICKS):
+    """Top n Nifty Midcap 150 stocks by the daily scan's own ranking (screener.py): technical score
+    plus fundamentals (ROE, debt/equity, earnings and revenue growth, margins, P/E) plus 6-month
+    performance, among stocks trading at least ₹5 crore a day. Returns ([(symbol, fundamentals, rank score)], notes)."""
+    import screener as sc
+    symbols, err = sc.constituents(MIDCAP_CSV)
+    if not symbols:
+        return [], [f"Midcap 150 list unavailable ({(err or '')[:160]}); no midcap picks this run."]
+    prices = sc.download(symbols)
+    if len(prices) < 0.6 * len(symbols):
+        return [], [f"Midcap prices came back for only {len(prices)} of {len(symbols)} stocks; no midcap picks this run."]
+    scored = []
+    for s, frame in prices.items():
+        try:
+            t = sc.tech_score(frame)
+        except Exception:
+            continue
+        if t["turnover"] >= sc.MIN_TURNOVER_CR:
+            scored.append((s, t))
+    best = sc.strongest(scored, n)
+    notes = [] if len(best) >= n else [f"Only {len(best)} midcap stocks had fundamentals data (wanted {n})."]
+    return [(s, sc._FUND.get(s) or {}, rank) for rank, s, _ in best], notes
+
+
+def fund_summary(f, rank):
+    def r(v, k=1):
+        return None if v is None else round(float(v) * k, 1)
+    return {"rank_score": rank, "score": f.get("score"), "name": f.get("name"), "roe_pct": r(f.get("roe"), 100),
+            "debt_equity": r(None if f.get("de") is None else f["de"] / 100, 1), "earnings_growth_pct": r(f.get("eg"), 100),
+            "revenue_growth_pct": r(f.get("rg"), 100), "pe": r(f.get("pe"))}
+
+
+def analyse_all(symbols, out, work, label):
+    rows, errors = [], []
+    for i, s in enumerate(symbols):
+        try:
+            r = tc.run(s, s.replace(".NS", ""), work)
+            row = summarise(r)
+            shutil.copy(r["png"], os.path.join(out, row["chart"]))
+            shutil.copy(r["md"], os.path.join(out, row["report"]))
+            rows.append(row)
+            print(f"[{label} {i + 1}/{len(symbols)}] {row['symbol']}: {row['close']} ({row['change_pct']:+.2f}%) {row['verdict']}")
+        except SystemExit as e:
+            errors.append({"symbol": s.replace(".NS", ""), "error": str(e)})
+        except Exception as e:  # one bad stock must not stop the rest
+            errors.append({"symbol": s.replace(".NS", ""), "error": f"{type(e).__name__}: {e}"})
+        time.sleep(0.2)  # be gentle with Yahoo
+    return rows, errors
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="site")
     ap.add_argument("--cache", default="", help="last good Nifty 100 list (nifty100.txt from the breakouts branch)")
     ap.add_argument("--rules", default=os.path.join(HERE, "breakout_rules.json"))
     ap.add_argument("--limit", type=int, default=0, help="only the first N stocks (for a quick test)")
+    ap.add_argument("--skip-midcap", action="store_true", help="leave out the Midcap top 20")
     args = ap.parse_args()
     rules = bo.load_rules(args.rules)
     out = args.out
@@ -104,29 +159,33 @@ def main():
     except Exception as e:
         notes.append(f"Breakout check unavailable this run ({type(e).__name__}).")
 
-    rows, errors = [], []
     work = os.path.join(out, "_work")
-    for i, s in enumerate(symbols):
+    rows, errors = analyse_all(symbols, out, work, "Nifty 100")
+    for row in rows:
+        row["breakout"] = breakout_status(checks.get(row["symbol"] + ".NS"))
+
+    midcap = {"stocks": [], "errors": [], "notes": []}
+    if not args.skip_midcap:
         try:
-            r = tc.run(s, s.replace(".NS", ""), work)
-            row = summarise(r)
-            row["breakout"] = breakout_status(checks.get(s))
-            shutil.copy(r["png"], os.path.join(out, row["chart"]))
-            shutil.copy(r["md"], os.path.join(out, row["report"]))
-            rows.append(row)
-            print(f"[{i + 1}/{len(symbols)}] {row['symbol']}: {row['close']} ({row['change_pct']:+.2f}%) {row['verdict']}")
-        except SystemExit as e:
-            errors.append({"symbol": s.replace(".NS", ""), "error": str(e)})
-        except Exception as e:  # one bad stock must not stop the rest
-            errors.append({"symbol": s.replace(".NS", ""), "error": f"{type(e).__name__}: {e}"})
-        time.sleep(0.2)  # be gentle with Yahoo
+            picks, mnotes = midcap_picks()
+        except Exception as e:
+            picks, mnotes = [], [f"Midcap picks unavailable this run ({type(e).__name__})."]
+        midcap["notes"] = mnotes
+        mrows, merrors = analyse_all([p[0] for p in picks], out, work, "Midcap")
+        info = {p[0].replace(".NS", ""): fund_summary(p[1], p[2]) for p in picks}
+        for row in mrows:
+            row["fundamentals"] = info.get(row["symbol"])
+            if row["fundamentals"] and row["fundamentals"].get("name"):
+                row["name"] = row["fundamentals"]["name"]
+        mrows.sort(key=lambda r: -(r["fundamentals"] or {}).get("rank_score", 0))
+        midcap.update(stocks=mrows, errors=merrors)
     shutil.rmtree(work, ignore_errors=True)
 
     data = {"generated_at": now.isoformat(timespec="minutes"),
             "source": "Yahoo Finance (NSE). Prices can be about 15 minutes behind.",
             "market": None if market is None else {k: (round(v, 4) if isinstance(v, float) else bool(v)) for k, v in market.items()},
             "rules": {k: rules[k] for k in ("volume_multiple", "require_above_ema", "max_below_52w_high_pct") if k in rules},
-            "stocks": rows, "errors": errors, "notes": notes}
+            "stocks": rows, "errors": errors, "notes": notes, "midcap": midcap}
     with open(os.path.join(out, "data.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
     if symbols:
