@@ -6,6 +6,11 @@ on:
     - cron: "15 8 * * 1-5"    # 13:45 IST
     - cron: "50 10 * * 1-5"   # 16:20 IST, after the NSE close
   workflow_dispatch:
+  # Pull requests that change the board run a real scan as a check, without publishing.
+  pull_request:
+    paths:
+      - "tools/techchart/**"
+      - ".github/workflows/dashboard.yml"
 
 permissions:
   contents: read
@@ -41,6 +46,7 @@ jobs:
           path: site
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
