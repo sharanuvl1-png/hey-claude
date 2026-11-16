@@ -176,7 +176,7 @@ input::placeholder { color: var(--muted) }
     <div class="brand">
       <div class="logo">
         <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#0a0f1d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 3 8-9"/><path d="M15 6h5v5"/></svg></div>
-        <div><h1>Swing <em>Board</em></h1><div class="sub" id="asof">Loading the latest scan…</div></div>
+        <div><h1>Swing <em>Board</em></h1><div class="sub" id="asof">Loading the latest scan…</div><div class="sub" id="refresh" style="opacity:.75;font-size:.85em;margin-top:2px"></div></div>
       </div>
       <span class="live" id="live">Loading</span>
     </div>
@@ -514,6 +514,22 @@ function drawTab() {
   drawGrid();
 }
 
+function nextRefresh() {
+  // Scheduled scans (IST minutes after midnight), Monday to Friday; GitHub can start them a few minutes late.
+  const slots = [675, 825, 980];
+  const ist = new Date(Date.now() + 330 * 6e4);
+  for (let d = 0; d < 8; d++) {
+    const day = new Date(ist.getTime() + d * 864e5), wd = day.getUTCDay();
+    if (wd === 0 || wd === 6) continue;
+    const mins = ist.getUTCHours() * 60 + ist.getUTCMinutes();
+    const slot = slots.find(m => d > 0 || m > mins);
+    if (slot === undefined) continue;
+    const label = `${((Math.floor(slot / 60) + 11) % 12) + 1}:${String(slot % 60).padStart(2, "0")} ${slot >= 720 ? "PM" : "AM"}`;
+    return d === 0 ? `today ${label}` : d === 1 ? `tomorrow ${label}` : `${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][wd]} ${label}`;
+  }
+  return "next weekday";
+}
+
 function render(data) {
   DATA = data;
   data.midcap = data.midcap || { stocks: [], errors: [], notes: ["Midcap picks are not in this scan yet."] };
@@ -525,6 +541,9 @@ function render(data) {
   live.textContent = ageH < 4 ? "Fresh scan" : "Last scan";
   live.classList.toggle("stale", !(ageH < 4));
   document.getElementById("asof").textContent = `Scanned ${isNaN(when) ? data.generated_at : when.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} IST · prices for ${date}`;
+  const v = data.validation;
+  document.getElementById("refresh").textContent = `Auto-refreshes weekdays around 11:15 AM, 1:45 PM and 4:20 PM IST · next ${nextRefresh()}` +
+    (v ? ` · ${v.problems ? "⚠ " + v.problems + " price mismatch(es)" : "✓ All " + v.checked + " prices re-checked"} against a second download` : "");
   document.getElementById("n100Count").textContent = data.stocks.length;
   document.getElementById("midCount").textContent = data.midcap.stocks.length;
   document.getElementById("stats").hidden = false;

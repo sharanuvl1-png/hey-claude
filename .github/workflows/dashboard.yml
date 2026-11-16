@@ -41,6 +41,9 @@ jobs:
           git fetch --depth=1 origin breakouts 2>/dev/null && git show origin/breakouts:nifty100.txt > nifty100.txt 2>/dev/null || rm -f nifty100.txt
           python tools/techchart/dashboard.py --out site --cache nifty100.txt
 
+      - name: Check the data against a fresh download (stops a bad scan from going live)
+        run: python tools/techchart/validate.py site/data.json
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
