@@ -133,7 +133,8 @@ def main():
     out = args.out
     for sub in ("charts", "reports"):
         os.makedirs(os.path.join(out, sub), exist_ok=True)
-    shutil.copy(os.path.join(HERE, "site", "index.html"), os.path.join(out, "index.html"))
+    # The page plus its app files (manifest, offline worker, icons) so it installs on a phone.
+    shutil.copytree(os.path.join(HERE, "site"), out, dirs_exist_ok=True)
     now = dt.datetime.now(bo.IST)
     notes = []
 

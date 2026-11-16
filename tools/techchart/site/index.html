@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#070b16">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Swing Board">
 <title>Swing Board · Nifty 100 & Midcap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,6 +61,11 @@ h1 em { font-style: normal; background: linear-gradient(90deg, var(--brand2), va
 .live { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px;
   background: rgba(34, 229, 139, .1); color: var(--buy); border: 1px solid rgba(34, 229, 139, .35) }
 .live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor }
+.install { font: 700 12px var(--sans); padding: 6px 12px; border-radius: 999px; cursor: pointer; color: #070b16; border: 0;
+  background: linear-gradient(135deg, var(--brand1), var(--brand2)); margin-left: 8px }
+.offline-tag { display: none; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; margin-left: 8px;
+  color: var(--wait); background: rgba(255, 176, 32, .1); border: 1px solid rgba(255, 176, 32, .35) }
+body.offline .offline-tag { display: inline-flex }
 .live.stale { background: rgba(255, 176, 32, .1); color: var(--wait); border-color: rgba(255, 176, 32, .35) }
 .stats { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 12px }
 .stat { position: relative; overflow: hidden; border-radius: 20px; padding: 16px; min-width: 0; display: grid; gap: 8px; align-content: start;
@@ -178,7 +190,7 @@ input::placeholder { color: var(--muted) }
         <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#0a0f1d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 3 8-9"/><path d="M15 6h5v5"/></svg></div>
         <div><h1>Swing <em>Board</em></h1><div class="sub" id="asof">Loading the latest scan…</div><div class="sub" id="refresh" style="opacity:.75;font-size:.85em;margin-top:2px"></div></div>
       </div>
-      <span class="live" id="live">Loading</span>
+      <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px 0"><span class="live" id="live">Loading</span><button class="install" id="installBtn" hidden>Install app</button><span class="offline-tag">Offline · last saved scan</span></div>
     </div>
     <div class="stats" id="stats" hidden>
       <div class="stat n50">
@@ -571,6 +583,21 @@ fetch("data.json", { cache: "no-store" })
     document.getElementById("live").textContent = "No scan";
     document.getElementById("grid").replaceChildren(el("div", { class: "empty", text: `The latest scan could not be loaded (${e.message}). It is rebuilt after each scheduled run.` }));
   });
+
+// Installable app: offline copy of the last scan, plus an Install button where the browser offers one.
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+let installPrompt = null;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault(); installPrompt = e;
+  const b = document.getElementById("installBtn"); if (b) b.hidden = false;
+});
+document.getElementById("installBtn")?.addEventListener("click", async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt(); await installPrompt.userChoice.catch(() => {});
+  installPrompt = null; document.getElementById("installBtn").hidden = true;
+});
+window.addEventListener("offline", () => document.body.classList.add("offline"));
+window.addEventListener("online", () => document.body.classList.remove("offline"));
 </script>
 </body>
 </html>
