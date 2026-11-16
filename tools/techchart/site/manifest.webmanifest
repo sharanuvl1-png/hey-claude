@@ -1,0 +1,16 @@
+{
+  "name": "Swing Board · Nifty 100 & Midcap",
+  "short_name": "Swing Board",
+  "description": "Swing-trade verdicts, levels and charts for Nifty 100 and the Midcap top 20. Analysis only.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070b16",
+  "theme_color": "#070b16",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
