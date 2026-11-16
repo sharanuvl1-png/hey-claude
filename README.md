@@ -20,19 +20,14 @@ A small personal Android AI assistant. Open the app and chat with Mehitha: type,
 
 Run it from the **Actions → Technical chart → Run workflow** button with a company name (for example `PC Jeweller`). The chart and report are saved to the `charts` branch under `<SYMBOL>/<date>.png` and `.md`. Everything is rules-based and educational, not investment advice.
 
-## My holdings check
+## Nifty 100 swing board (website)
 
-`tools/techchart/portfolio.py` runs the Technical chart analysis on every stock you hold and turns its verdict into a holder's call, using the same entry zone, stop-loss and targets:
+A phone-friendly website with your Technical chart analysis for every Nifty 100 stock: price and day change, final recommendation (Buy now / Buy on dip / Wait / Avoid) with confidence and grade, entry zone, stop-loss, targets, key levels, patterns, the breakout-rule status from `breakout_rules.json`, the annotated chart and the full written report. Filter by recommendation, search, and sort by best setup, gainers, losers or RSI.
 
-| Technical chart verdict | Holder's call |
-|---|---|
-| BUY NOW | Hold / add (price is in the entry zone) |
-| BUY ON DIP | Hold, add only in the entry zone |
-| WAIT | Hold, don't add; add only on a close above the breakout level |
-| AVOID | Review / exit on a daily close below the stop-loss |
-| any, with price already below the stop-loss | Stop hit: exit / review |
-
-Setup: add the repository secret `PORTFOLIO` with your stock symbols, comma-separated (for example `HDFCBANK, TCS, PCJEWELLER`). Put only names there, never quantities or buy prices: this repository is public. The **My holdings check** action runs hourly from 10:15 AM to 3:15 PM IST on weekdays and at 4:20 PM after the close, or any time from **Actions → My holdings check → Run workflow**. It writes `LATEST.json`, a chart and a report per stock to the `portfolio` branch. Prices come from Yahoo Finance and can be about 15 minutes behind NSE. Analysis only: nothing here places, changes or cancels an order.
+- Address: `https://sharanuvl1-png.github.io/hey-claude/`
+- One-time setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+- The **Nifty 100 swing board** action rebuilds it at 11:15 AM, 1:45 PM and 4:20 PM IST on weekdays, or any time from **Actions → Nifty 100 swing board → Run workflow**. Each scan takes about 10 minutes.
+- Code: `tools/techchart/dashboard.py` (analysis) and `tools/techchart/site/index.html` (page). Prices come from Yahoo Finance and can be about 15 minutes behind NSE. Analysis only: nothing here places an order.
 
 ## Nifty 100 breakout alerts
 

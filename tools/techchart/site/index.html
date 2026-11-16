@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Nifty 100 Swing Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: market strip, verdict filters, then a dense tap-to-open list of stocks. */
+:root {
+  --bg: #f3f4f7; --surface: #ffffff; --ink: #141a26; --muted: #5d6677; --line: #dde1e8;
+  --accent: #2448b8; --up: #127a43; --up-bg: #e3f4ea; --down: #c0322b; --down-bg: #fbe6e4;
+  --amber: #9a6200; --amber-bg: #fbf0d9; --orange: #b4500f; --orange-bg: #fde9dc;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0e121a; --surface: #171c27; --ink: #e8ebf2; --muted: #98a1b3; --line: #2a3142;
+  --accent: #8aa6ff; --up: #4cc985; --up-bg: #133325; --down: #ff7a70; --down-bg: #3a1a19;
+  --amber: #f2b955; --amber-bg: #3a2d12; --orange: #ff9a5c; --orange-bg: #3b2213; color-scheme: dark } }
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.45;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px) }
+img { max-width: 100%; height: auto; display: block }
+[hidden] { display: none !important }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 16px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 14px }
+.wrap > * { min-width: 0 }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums }
+h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em }
+h2 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600 }
+.sub { color: var(--muted); font-size: 13px }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px }
+.mkt { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; font-size: 14px }
+.mkt b { font-size: 17px }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+button { font: inherit; cursor: pointer; color: inherit }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600 }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink) }
+.chip:focus-visible, .row:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.tools { display: grid; grid-template-columns: 1fr auto; gap: 8px }
+input, select { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-width: 0 }
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; white-space: nowrap }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor }
+.v-BUYNOW { color: var(--up); background: var(--up-bg) }
+.v-BUYONDIP { color: var(--amber); background: var(--amber-bg) }
+.v-WAIT { color: var(--orange); background: var(--orange-bg) }
+.v-AVOID { color: var(--down); background: var(--down-bg) }
+.up { color: var(--up) } .down { color: var(--down) }
+.list { display: grid; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden }
+.item + .item { border-top: 1px solid var(--line) }
+.row { width: 100%; background: none; border: 0; text-align: left; padding: 11px 14px; display: grid;
+  grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center }
+.row .sym { font-weight: 700; font-size: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+.row .meta { font-size: 12px; color: var(--muted) }
+.row .px { text-align: right; font-size: 14px; font-weight: 600 }
+.row .chg { text-align: right; font-size: 12.5px; font-weight: 500 }
+.bo { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent) }
+.detail { padding: 4px 14px 16px; display: grid; gap: 12px }
+.next { font-size: 14.5px; font-weight: 500; margin: 0 }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-size: 13px }
+.grid3 div { background: var(--bg); border-radius: 8px; padding: 6px 8px; min-width: 0; overflow-wrap: anywhere }
+.k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted) }
+.ladder { width: 100%; height: 54px; display: block }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; margin: 0 }
+.facts dt { color: var(--muted) } .facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere }
+.chart { border-radius: 8px; border: 1px solid var(--line); background: #fff }
+.links { display: flex; gap: 16px; font-size: 13px; flex-wrap: wrap }
+a { color: var(--accent) }
+.note { font-size: 12.5px; color: var(--muted) }
+.empty { padding: 18px; color: var(--muted) }
+.warn { font-size: 13px; color: var(--down) }
+@media (max-width: 380px) { .grid3 { grid-template-columns: 1fr 1fr } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Nifty 100 Swing Board</h1>
+    <div class="sub" id="asof">Loading the latest scan…</div>
+  </header>
+
+  <section class="panel" id="market" hidden>
+    <h2>Market</h2>
+    <div class="mkt" id="mkt"></div>
+  </section>
+
+  <section class="panel" id="boPanel" hidden>
+    <h2>Breakouts by your rules</h2>
+    <div class="chips" id="boList"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Final recommendation</h2>
+    <div class="chips" id="filters" role="group" aria-label="Filter by recommendation"></div>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Find a stock" aria-label="Find a stock" autocomplete="off">
+      <select id="sort" aria-label="Sort">
+        <option value="score">Best setup</option>
+        <option value="chg">Top gainers</option>
+        <option value="chgd">Top losers</option>
+        <option value="rsi">Highest RSI</option>
+        <option value="az">A to Z</option>
+      </select>
+    </div>
+  </section>
+
+  <div class="list" id="list"><div class="empty">Loading…</div></div>
+  <div class="warn" id="errs" hidden></div>
+
+  <p class="note">Every verdict, level and chart comes from your Technical chart rules (EMA20/50/200, MACD, RSI, swing structure, patterns, candles) and the breakout rules in breakout_rules.json, applied to Yahoo Finance prices that can be about 15 minutes behind NSE. This is analysis only, not investment advice, and nothing here places an order. Decisions are yours.</p>
+</div>
+
+<script>
+const VERDICTS = [["BUY NOW", "Buy now"], ["BUY ON DIP", "Buy on dip"], ["WAIT", "Wait"], ["AVOID", "Avoid"]];
+const vcls = v => "v-" + v.replace(/\s/g, "");
+const inr = (v, d = 2) => "₹" + Number(v).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = v => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "%";
+const dir = v => (v > 0 ? "up" : v < 0 ? "down" : "");
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) k === "class" ? (n.className = v) : k === "text" ? (n.textContent = v) : n.setAttribute(k, v);
+  for (const c of kids) if (c != null) n.append(c);
+  return n;
+};
+const state = { filter: null, q: "", sort: "score", open: null };
+let DATA = null;
+
+function ladder(s) {
+  const pts = [
+    { v: s.stop, label: "SL", c: "var(--down)" },
+    { v: s.close, label: "Now", c: "var(--ink)", main: true },
+    { v: s.levels.breakout, label: "BO", c: "var(--amber)" },
+    { v: s.targets[0], label: "T1", c: "var(--up)" },
+    { v: s.targets[1], label: "T2", c: "var(--up)" },
+    { v: s.entry[0] }, { v: s.entry[1] },
+  ];
+  const lo = Math.min(...pts.map(p => p.v)), hi = Math.max(...pts.map(p => p.v));
+  const W = 320, pad = 16, x = v => pad + (W - 2 * pad) * (hi === lo ? 0.5 : (v - lo) / (hi - lo));
+  const ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} 54`); svg.setAttribute("class", "ladder"); svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", `Stop ${inr(s.stop)}, price ${inr(s.close)}, entry zone ${inr(s.entry[0])} to ${inr(s.entry[1])}, target 1 ${inr(s.targets[0])}`);
+  const add = (name, a) => { const n = document.createElementNS(ns, name); for (const k in a) n.setAttribute(k, a[k]); svg.append(n); return n; };
+  add("line", { x1: pad, x2: W - pad, y1: 27, y2: 27, stroke: "var(--line)", "stroke-width": 4, "stroke-linecap": "round" });
+  add("rect", { x: x(s.entry[0]), y: 23, width: Math.max(2, x(s.entry[1]) - x(s.entry[0])), height: 8, rx: 3, fill: "var(--up)", opacity: 0.35 });
+  for (const p of pts) {
+    if (!p.label) continue;
+    add("circle", { cx: x(p.v), cy: 27, r: p.main ? 6 : 4, fill: p.c, stroke: "var(--surface)", "stroke-width": 2 });
+    const t = add("text", { x: x(p.v), y: p.main ? 12 : 48, "text-anchor": "middle", fill: p.c, "font-size": 10.5, "font-family": "IBM Plex Mono, monospace", "font-weight": 600 });
+    t.textContent = p.label;
+  }
+  return svg;
+}
+
+function detail(s) {
+  const d = el("div", { class: "detail" });
+  d.append(el("p", { class: "next", text: s.next }));
+  d.append(ladder(s));
+  d.append(el("div", { class: "grid3 num" },
+    el("div", {}, el("div", { class: "k", text: "Entry zone" }), el("div", { text: `${s.entry[0].toFixed(1)}–${s.entry[1].toFixed(1)}` })),
+    el("div", {}, el("div", { class: "k", text: "Stop-loss" }), el("div", { text: s.stop.toFixed(1) })),
+    el("div", {}, el("div", { class: "k", text: "Targets" }), el("div", { text: s.targets.map(t => t.toFixed(0)).join(" / ") }))));
+  const f = el("dl", { class: "facts" });
+  const add = (k, v) => f.append(el("dt", { text: k }), el("dd", { text: v }));
+  add("Verdict", `${s.verdict} · confidence ${s.confidence}/10 · grade ${s.grade}`);
+  add("Why", s.reasons.join("; "));
+  add("Trend", `Daily ${s.trend.toLowerCase()} · 4H ${String(s.h4_trend).toLowerCase()}`);
+  add("Momentum", `RSI ${s.rsi} · MACD ${s.macd_up ? "above" : "below"} signal`);
+  add("EMAs", `20: ${s.ema["20"]} · 50: ${s.ema["50"]} · 200: ${s.ema["200"]}`);
+  add("Support", `${s.levels.support[0]}–${s.levels.support[1]} (strong ${s.levels.strong_support[0]}–${s.levels.strong_support[1]})`);
+  add("Resistance", `${s.levels.resistance[0]}–${s.levels.resistance[1]} · breakout above ${s.levels.breakout} · 52-week high ${s.levels.high_52w}`);
+  add("Breakout entry", `${s.breakout_entry[0]}–${s.breakout_entry[1]}`);
+  add("Stops", `conservative ${s.stop} · aggressive ${s.stop_aggressive} · reward:risk to T1 ${s.rr1}`);
+  if (s.patterns.length) add("Patterns", s.patterns.join(", "));
+  if (s.candles.length) add("Candles", s.candles.join(", "));
+  if (s.divergences.length) add("Divergence", s.divergences.join(", "));
+  const b = s.breakout;
+  if (b) add("Breakout rules", b.status === "breakout" ? `Broke out above ${b.level} on ${b.vol_ratio}× volume, all rules passed`
+    : b.status === "near" ? `${b.gap_pct}% below the breakout level ${b.level}`
+    : b.status === "crossed" ? `Crossed ${b.level} but failed: ${b.failed.join(", ")}`
+    : `Level ${b.level}` + (b.failed.length ? ` · not met: ${b.failed.join(", ")}` : ""));
+  add("Day", `${inr(s.day_low)} – ${inr(s.day_high)} · prices for ${s.date}`);
+  d.append(f);
+  const img = el("img", { class: "chart", alt: `${s.symbol} technical chart`, src: s.chart, loading: "lazy" });
+  d.append(el("a", { href: s.chart, target: "_blank", rel: "noopener" }, img));
+  d.append(el("div", { class: "links" },
+    el("a", { href: s.report, target: "_blank", rel: "noopener", text: "Full written analysis" }),
+    el("a", { href: s.chart, target: "_blank", rel: "noopener", text: "Open chart full size" })));
+  return d;
+}
+
+function row(s) {
+  const item = el("div", { class: "item" });
+  const btn = el("button", { class: "row", "aria-expanded": String(state.open === s.symbol) },
+    el("div", { class: "sym" }, s.symbol, el("span", { class: "pill " + vcls(s.verdict), text: s.verdict }),
+      s.breakout && s.breakout.status === "breakout" ? el("span", { class: "bo", text: "Breakout" }) :
+      s.breakout && s.breakout.status === "near" ? el("span", { class: "bo", text: "Near breakout" }) : null),
+    el("div", { class: "px num", text: inr(s.close) }),
+    el("div", { class: "meta", text: `Conf ${s.confidence}/10 · ${s.grade} · RSI ${Math.round(s.rsi)} · ${s.trend}` }),
+    el("div", { class: "chg num " + dir(s.change_pct), text: pct(s.change_pct) }));
+  btn.addEventListener("click", () => { state.open = state.open === s.symbol ? null : s.symbol; draw(); });
+  item.append(btn);
+  if (state.open === s.symbol) item.append(detail(s));
+  return item;
+}
+
+function draw() {
+  const q = state.q.trim().toUpperCase();
+  let list = DATA.stocks.filter(s => (!state.filter || s.verdict === state.filter) && (!q || s.symbol.includes(q)));
+  const by = { score: (a, b) => b.score - a.score || b.confidence - a.confidence, chg: (a, b) => b.change_pct - a.change_pct,
+    chgd: (a, b) => a.change_pct - b.change_pct, rsi: (a, b) => b.rsi - a.rsi, az: (a, b) => a.symbol.localeCompare(b.symbol) };
+  list.sort(by[state.sort]);
+  const box = document.getElementById("list");
+  box.replaceChildren(...(list.length ? list.map(row) : [el("div", { class: "empty", text: "No stock matches." })]));
+  for (const c of document.querySelectorAll("#filters .chip")) c.setAttribute("aria-pressed", String(c.dataset.v === (state.filter || "")));
+}
+
+function render(data) {
+  DATA = data;
+  const when = new Date(data.generated_at);
+  const dates = [...new Set(data.stocks.map(s => s.date))].sort().reverse();
+  document.getElementById("asof").textContent =
+    `Scanned ${isNaN(when) ? data.generated_at : when.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} IST · prices for ${dates[0] || "–"} · ${data.stocks.length} stocks`;
+  if (data.market) {
+    const m = data.market;
+    document.getElementById("market").hidden = false;
+    document.getElementById("mkt").replaceChildren(
+      el("span", {}, "Nifty 50 ", el("b", { class: "num", text: m.close.toLocaleString("en-IN", { maximumFractionDigits: 0 }) })),
+      el("span", { class: m.up ? "up" : "down", text: m.up ? "Above its 50-day EMA (uptrend)" : "Below its 50-day EMA (no breakout alerts)" }),
+      el("span", { class: "num " + dir(m.ret3m), text: `3 months ${pct(100 * m.ret3m)}` }));
+  }
+  const bos = data.stocks.filter(s => s.breakout && (s.breakout.status === "breakout" || s.breakout.status === "near"));
+  if (bos.length) {
+    document.getElementById("boPanel").hidden = false;
+    document.getElementById("boList").replaceChildren(...bos
+      .sort((a, b) => (a.breakout.status === "breakout" ? -1 : 0) - (b.breakout.status === "breakout" ? -1 : 0) || a.breakout.gap_pct - b.breakout.gap_pct)
+      .map(s => {
+        const c = el("button", { class: "chip", text: s.breakout.status === "breakout" ? `${s.symbol} · broke out` : `${s.symbol} · ${s.breakout.gap_pct}% away` });
+        c.addEventListener("click", () => { state.filter = null; state.q = ""; document.getElementById("q").value = ""; state.open = s.symbol; draw();
+          document.getElementById("list").scrollIntoView({ behavior: "smooth" }); });
+        return c;
+      }));
+  }
+  const counts = Object.fromEntries(VERDICTS.map(([v]) => [v, data.stocks.filter(s => s.verdict === v).length]));
+  const fl = document.getElementById("filters");
+  const chip = (v, label) => {
+    const c = el("button", { class: "chip" + (v ? " " + vcls(v) : ""), "data-v": v, "aria-pressed": "false", text: label });
+    c.addEventListener("click", () => { state.filter = state.filter === v || !v ? null : v; draw(); });
+    return c;
+  };
+  fl.replaceChildren(chip("", `All ${data.stocks.length}`), ...VERDICTS.map(([v, l]) => chip(v, `${l} ${counts[v]}`)));
+  if (data.errors && data.errors.length) {
+    const e = document.getElementById("errs"); e.hidden = false;
+    e.textContent = `No usable prices for ${data.errors.length} stock(s), so they are left out: ` + data.errors.map(x => x.symbol).join(", ");
+  }
+  draw();
+}
+
+document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; draw(); });
+document.getElementById("sort").addEventListener("change", e => { state.sort = e.target.value; draw(); });
+fetch("data.json", { cache: "no-store" })
+  .then(r => (r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status))))
+  .then(render)
+  .catch(e => {
+    document.getElementById("asof").textContent = "No scan available";
+    document.getElementById("list").replaceChildren(el("div", { class: "empty", text: `The latest scan could not be loaded (${e.message}). It is rebuilt after each scheduled run.` }));
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+name: Nifty 100 swing board
+
+on:
+  schedule:
+    - cron: "45 5 * * 1-5"    # 11:15 IST
+    - cron: "15 8 * * 1-5"    # 13:45 IST
+    - cron: "50 10 * * 1-5"   # 16:20 IST, after the NSE close
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: swing-board
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install libraries
+        run: pip install -q yfinance matplotlib pandas numpy
+
+      - name: Analyse every Nifty 100 stock
+        run: |
+          # Last good index list from the breakout watch, used if the index site is down.
+          git fetch --depth=1 origin breakouts 2>/dev/null && git show origin/breakouts:nifty100.txt > nifty100.txt 2>/dev/null || rm -f nifty100.txt
+          python tools/techchart/dashboard.py --out site --cache nifty100.txt
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
