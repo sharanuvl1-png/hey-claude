@@ -20,6 +20,20 @@ A small personal Android AI assistant. Open the app and chat with Mehitha: type,
 
 Run it from the **Actions → Technical chart → Run workflow** button with a company name (for example `PC Jeweller`). The chart and report are saved to the `charts` branch under `<SYMBOL>/<date>.png` and `.md`. Everything is rules-based and educational, not investment advice.
 
+## My holdings check
+
+`tools/techchart/portfolio.py` runs the Technical chart analysis on every stock you hold and turns its verdict into a holder's call, using the same entry zone, stop-loss and targets:
+
+| Technical chart verdict | Holder's call |
+|---|---|
+| BUY NOW | Hold / add (price is in the entry zone) |
+| BUY ON DIP | Hold, add only in the entry zone |
+| WAIT | Hold, don't add; add only on a close above the breakout level |
+| AVOID | Review / exit on a daily close below the stop-loss |
+| any, with price already below the stop-loss | Stop hit: exit / review |
+
+Setup: add the repository secret `PORTFOLIO` with your stock symbols, comma-separated (for example `HDFCBANK, TCS, PCJEWELLER`). Put only names there, never quantities or buy prices: this repository is public. The **My holdings check** action runs hourly from 10:15 AM to 3:15 PM IST on weekdays and at 4:20 PM after the close, or any time from **Actions → My holdings check → Run workflow**. It writes `LATEST.json`, a chart and a report per stock to the `portfolio` branch. Prices come from Yahoo Finance and can be about 15 minutes behind NSE. Analysis only: nothing here places, changes or cancels an order.
+
 ## Nifty 100 breakout alerts
 
 `tools/techchart/breakouts.py` watches all Nifty 100 stocks and alerts when one breaks out by the rules in `tools/techchart/breakout_rules.json`. Default: price crosses above its nearest resistance (the "Breakout level" on the charts) on volume at least 1.5x the 50-day average, above the 50 and 200-day EMAs with the 200-day EMA rising, RSI 50–80, within 25% of the 52-week high, closing in the top half of the day's range and beating the Nifty 50 over 3 months. Edit that file to change or switch off any rule.

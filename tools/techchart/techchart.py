@@ -723,7 +723,11 @@ def run(symbol, name, out):
     render(png, name, symbol, d, h4t, lv, setup, pats, divs, cands, rec, conf, grade)
     with open(md, "w", encoding="utf-8") as f:
         f.write(report(name, symbol, d, h4, lv, setup, pats, divs, cands, rec, conf, grade, reasons, nxt, f"{stamp}.png"))
-    return {"symbol": symbol, "name": name, "date": stamp, "close": float(d["df"]["Close"].iloc[-1]),
+    last_bar = d["df"].iloc[-1]
+    return {"symbol": symbol, "name": name, "date": stamp, "close": float(last_bar["Close"]),
+            "prev_close": float(d["df"]["Close"].iloc[-2]), "day_high": float(last_bar["High"]),
+            "day_low": float(last_bar["Low"]), "ema20": float(last_bar["EMA20"]),
+            "ema50": float(last_bar["EMA50"]), "ema200": float(last_bar["EMA200"]),
             "rec": rec, "conf": conf, "grade": grade, "score": score, "reasons": reasons, "next": nxt,
             "setup": setup, "png": png, "md": md,
             "trend": d["trend"][0], "h4_trend": h4t, "levels": lv, "rsi": float(d["df"]["RSI"].iloc[-1]),
