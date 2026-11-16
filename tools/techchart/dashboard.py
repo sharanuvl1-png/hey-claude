@@ -53,6 +53,7 @@ def summarise(r):
                    "resistance": zone(lv["resistance"]), "breakout": round(float(lv["breakout"]), 2),
                    "high_52w": round(float(lv["hi52"]), 2)},
         "patterns": r["patterns"], "candles": r["candles"], "divergences": r["divergences"],
+        "closes": r["closes"],
         "chart": f"charts/{sym}.png", "report": f"reports/{sym}.md",
     }
 
