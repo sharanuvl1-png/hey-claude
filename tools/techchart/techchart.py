@@ -728,6 +728,7 @@ def run(symbol, name, out):
             "prev_close": float(d["df"]["Close"].iloc[-2]), "day_high": float(last_bar["High"]),
             "day_low": float(last_bar["Low"]), "ema20": float(last_bar["EMA20"]),
             "ema50": float(last_bar["EMA50"]), "ema200": float(last_bar["EMA200"]),
+            "closes": [round(float(v), 2) for v in d["df"]["Close"].iloc[-130:]],
             "rec": rec, "conf": conf, "grade": grade, "score": score, "reasons": reasons, "next": nxt,
             "setup": setup, "png": png, "md": md,
             "trend": d["trend"][0], "h4_trend": h4t, "levels": lv, "rsi": float(d["df"]["RSI"].iloc[-1]),

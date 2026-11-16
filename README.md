@@ -22,7 +22,7 @@ Run it from the **Actions → Technical chart → Run workflow** button with a c
 
 ## Nifty 100 swing board (website)
 
-A phone-friendly website with your Technical chart analysis for every Nifty 100 stock: price and day change, final recommendation (Buy now / Buy on dip / Wait / Avoid) with confidence and grade, entry zone, stop-loss, targets, key levels, patterns, the breakout-rule status from `breakout_rules.json`, the annotated chart and the full written report. Filter by recommendation, search, and sort by best setup, gainers, losers or RSI.
+A phone-friendly website with two tabs: every Nifty 100 stock, and the top 20 Nifty Midcap 150 stocks picked by the daily scan's own ranking (technical score + fundamentals + 6-month performance). Each stock gets your Technical chart analysis: price and day change, final recommendation (Buy now / Buy on dip / Wait / Avoid) with confidence and grade, entry zone, stop-loss, targets, key levels, patterns, the breakout-rule status from `breakout_rules.json`, the annotated chart and the full written report. Filter by recommendation, search, and sort by best setup, gainers, losers or RSI.
 
 - Address: `https://sharanuvl1-png.github.io/hey-claude/`
 - One-time setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
