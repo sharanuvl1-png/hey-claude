@@ -9,6 +9,7 @@ on:
       - ".github/workflows/scan.yml"
       - ".github/workflows/breakouts.yml"
       - ".github/workflows/backtest.yml"
+      - ".github/workflows/dashboard.yml"
   # Pull requests get the tests and the APKs (as a workflow artifact) but no release.
   pull_request:
     paths-ignore:

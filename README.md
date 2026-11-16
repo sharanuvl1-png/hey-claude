@@ -20,6 +20,15 @@ A small personal Android AI assistant. Open the app and chat with Mehitha: type,
 
 Run it from the **Actions → Technical chart → Run workflow** button with a company name (for example `PC Jeweller`). The chart and report are saved to the `charts` branch under `<SYMBOL>/<date>.png` and `.md`. Everything is rules-based and educational, not investment advice.
 
+## Nifty 100 swing board (website)
+
+A phone-friendly website with your Technical chart analysis for every Nifty 100 stock: price and day change, final recommendation (Buy now / Buy on dip / Wait / Avoid) with confidence and grade, entry zone, stop-loss, targets, key levels, patterns, the breakout-rule status from `breakout_rules.json`, the annotated chart and the full written report. Filter by recommendation, search, and sort by best setup, gainers, losers or RSI.
+
+- Address: `https://sharanuvl1-png.github.io/hey-claude/`
+- One-time setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+- The **Nifty 100 swing board** action rebuilds it at 11:15 AM, 1:45 PM and 4:20 PM IST on weekdays, or any time from **Actions → Nifty 100 swing board → Run workflow**. Each scan takes about 10 minutes.
+- Code: `tools/techchart/dashboard.py` (analysis) and `tools/techchart/site/index.html` (page). Prices come from Yahoo Finance and can be about 15 minutes behind NSE. Analysis only: nothing here places an order.
+
 ## Nifty 100 breakout alerts
 
 `tools/techchart/breakouts.py` watches all Nifty 100 stocks and alerts when one breaks out by the rules in `tools/techchart/breakout_rules.json`. Default: price crosses above its nearest resistance (the "Breakout level" on the charts) on volume at least 1.5x the 50-day average, above the 50 and 200-day EMAs with the 200-day EMA rising, RSI 50–80, within 25% of the 52-week high, closing in the top half of the day's range and beating the Nifty 50 over 3 months. Edit that file to change or switch off any rule.
