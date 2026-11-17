@@ -10,6 +10,7 @@ on:
   pull_request:
     paths:
       - "tools/techchart/**"
+      - "travel/**"
       - ".github/workflows/dashboard.yml"
 
 permissions:
@@ -67,6 +68,9 @@ jobs:
         if: github.event_name != 'pull_request' && env.NTFY_TOPIC != ''
         run: |
           python -c "import json,os,sys; sys.path.insert(0,'tools/techchart'); import breakouts as b; a=json.load(open('alerts.json')) if os.path.exists('alerts.json') else []; print(len(a),'alert(s)'); a and b.ntfy(os.environ['NTFY_TOPIC'], a)"
+
+      - name: Add the Ghumakkad travel site at /travel/
+        run: cp -r travel site/travel
 
       - uses: actions/upload-pages-artifact@v3
         with:

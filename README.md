@@ -33,6 +33,14 @@ Optional phone notifications for your watchlist: add a `WATCHLIST` secret (comma
 - The **Nifty 100 swing board** action rebuilds it at 11:15 AM, 1:45 PM and 4:20 PM IST on weekdays, or any time from **Actions → Nifty 100 swing board → Run workflow**. Each scan takes about 10 minutes.
 - Code: `tools/techchart/dashboard.py` (analysis) and `tools/techchart/site/index.html` (page). Prices come from Yahoo Finance and can be about 15 minutes behind NSE. Analysis only: nothing here places an order.
 
+## Ghumakkad travel site
+
+A phone-first travel website at `https://sharanuvl1-png.github.io/hey-claude/travel/`. Search any place to get, in one page: an embedded Google Map with routes from your base, must-see places (ranked by Wikipedia readership over the last 30 days), offbeat spots (quiet Wikipedia sights plus viewpoints, waterfalls, caves, ruins and peaks mapped on OpenStreetMap with no Wikipedia page), which area to stay in (where stays cluster closest to the top sights), stay picks from the Wikivoyage guide and star-rated OpenStreetMap hotels, a 7-day forecast and a trip planner that orders your stops and opens the route in Google Maps.
+
+- All data is fetched live in the browser from free sources with no API keys: Wikivoyage, Wikipedia, OpenStreetMap (Overpass, Nominatim, Photon), Open-Meteo and Google Maps embeds.
+- It only links out to Google Maps, Booking.com, Airbnb and Hostelworld for live prices. It never books or pays for anything.
+- Code: `travel/index.html`. It's published with the swing board, so changes go live on the board's next run (or **Actions → Nifty 100 swing board → Run workflow**).
+
 ## Nifty 100 breakout alerts
 
 `tools/techchart/breakouts.py` watches all Nifty 100 stocks and alerts when one breaks out by the rules in `tools/techchart/breakout_rules.json`. Default: price crosses above its nearest resistance (the "Breakout level" on the charts) on volume at least 1.5x the 50-day average, above the 50 and 200-day EMAs with the 200-day EMA rising, RSI 50–80, within 25% of the 52-week high, closing in the top half of the day's range and beating the Nifty 50 over 3 months. Edit that file to change or switch off any rule.
