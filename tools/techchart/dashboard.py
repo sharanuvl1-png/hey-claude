@@ -178,7 +178,7 @@ def picks_section(csv, label, out, work, prices, skip, extra=0, extra_out=None):
     _add_fund(rows, picks)
     sec.update(stocks=rows, errors=errs)
     if extra_out is not None:
-        rows2, errs2 = analyse_all([p[0] for p in more], out, work, f"{label} ranks {MIDCAP_PICKS + 1}+", None)
+        rows2, errs2 = analyse_all([p[0] for p in more], out, work, f"{label} ranks {MIDCAP_PICKS + 1}+", prices)
         _add_fund(rows2, more)
         extra_out.update(stocks=rows2, errors=errs2, notes=[] if len(more) >= extra or not picks else
                          [f"Only {len(more)} more {label} stocks had fundamentals data after the top {MIDCAP_PICKS} (wanted {extra})."])
@@ -270,13 +270,16 @@ def main():
         time.sleep(0.1)
 
     # What changed since the last scan, and how past calls did (needs the history branch).
-    changes, record = None, None
+    changes, record, sr_record = None, None, None
     if args.history:
         import history as hi
         h = hi.load(args.history)
         changes = hi.changes(h.get("last_scan"), every)
         hi.record(h, every, now.isoformat(timespec="minutes"))
         record = hi.track_record(h, prices, nifty)
+        # Support & Resistance tab: its own signals and track record (Nifty 100 + Midcap top 30).
+        hi.sr_record(h, rows + midcap["stocks"] + sr_midcap_more["stocks"])
+        sr_record = hi.sr_track_record(h, prices, nifty)
         hi.save(h, args.history)
         if args.alerts:
             watch = {w.strip().upper() for w in os.environ.get("WATCHLIST", "").replace(";", ",").split(",") if w.strip()}
@@ -297,7 +300,8 @@ def main():
             "market": None if market is None else {k: (round(v, 4) if isinstance(v, float) else bool(v)) for k, v in market.items()},
             "rules": {k: rules[k] for k in ("volume_multiple", "require_above_ema", "max_below_52w_high_pct") if k in rules},
             "stocks": rows, "errors": errors, "notes": notes, "midcap": midcap, "smallcap": smallcap,
-            "sr_midcap_more": sr_midcap_more, "changes": changes, "track_record": record}
+            "sr_midcap_more": sr_midcap_more, "changes": changes, "track_record": record,
+            "sr_track_record": sr_record}
     with open(os.path.join(out, "data.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
     if symbols:
