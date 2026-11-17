@@ -8,7 +8,8 @@ different call (Ticker.history, not the batch download the scan used) and checks
   * the 130 closes behind the sparkline end at the reported close
   * the levels are in a sane order (stop < entry zone, targets rising above the entry)
   * every number is a real number (no blanks, NaN or zero prices)
-  * for Midcap and Smallcap picks, the fundamentals match Yahoo's own figures
+  * the support zone starts below the close and the resistance zone ends above it (the Support & Resistance tab)
+  * for Midcap and Smallcap picks (and Midcap ranks 21-30 on the S/R tab), the fundamentals match Yahoo's own figures
   * the track record's returns are consistent with the prices on the board
 
 Prints a report and exits with an error when anything fails, so a bad scan is never published.
@@ -42,6 +43,11 @@ def check_stock(s, today):
         probs.append(f"{sym}: stop {s['stop']} is not below the entry zone {s['entry']}")
     if not (s["targets"][0] < s["targets"][1] < s["targets"][2]) or s["targets"][0] <= s["entry"][0]:
         probs.append(f"{sym}: targets {s['targets']} are not rising above the entry")
+    lv = s.get("levels") or {}
+    sup, res = lv.get("support") or [], lv.get("resistance") or []
+    if not (len(sup) == 2 and len(res) == 2 and finite(*sup, *res) and sup[0] < sup[1] and res[0] < res[1]
+            and sup[0] < s["close"] < res[1]):
+        probs.append(f"{sym}: support {sup} / resistance {res} are not either side of the close {s['close']}")
     closes = s.get("closes") or []
     if closes and not close_enough(closes[-1], s["close"], 0.0001):
         probs.append(f"{sym}: sparkline ends at {closes[-1]}, close is {s['close']}")
@@ -93,7 +99,8 @@ def main():
     path = sys.argv[1] if len(sys.argv) > 1 else "site/data.json"
     data = json.load(open(path, encoding="utf-8"))
     today = dt.date.today()
-    picks = (data.get("midcap") or {}).get("stocks", []) + (data.get("smallcap") or {}).get("stocks", [])
+    more = (data.get("sr_midcap_more") or {}).get("stocks", [])
+    picks = (data.get("midcap") or {}).get("stocks", []) + (data.get("smallcap") or {}).get("stocks", []) + more
     stocks = data["stocks"] + picks
     probs, checked = [], 0
     for s in stocks:
@@ -104,7 +111,7 @@ def main():
         checked += 1
         time.sleep(0.15)
     print(f"VALIDATION: checked {checked} stocks ({len(data['stocks'])} Nifty 100, "
-          f"{len((data.get('midcap') or {}).get('stocks', []))} midcap, {len((data.get('smallcap') or {}).get('stocks', []))} smallcap) "
+          f"{len((data.get('midcap') or {}).get('stocks', []))} midcap, {len((data.get('smallcap') or {}).get('stocks', []))} smallcap, {len(more)} midcap ranks 21-30 for S/R) "
           f"against a fresh Yahoo Finance download")
     board = {s["symbol"]: s["close"] for s in stocks}
     for c in (data.get("track_record") or {}).get("recent", []):

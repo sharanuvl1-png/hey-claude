@@ -156,10 +156,12 @@ def perf_points(ret6m):
     return 2 if ret6m >= 0.20 else 1 if ret6m > 0 else -1 if ret6m < -0.10 else 0
 
 
-def strongest(scored, n):
+def strongest(scored, n, pool_size=None):
     """The n stocks with the best mix of trend, fundamentals and 6-month performance.
-    Stocks whose fundamentals can't be fetched are left out rather than guessed."""
-    pool = sorted(scored, key=lambda x: -(x[1]["score"] + perf_points(x[1]["ret6m"])))[:max(40, 3 * n)]
+    Stocks whose fundamentals can't be fetched are left out rather than guessed.
+    pool_size (optional) fixes how many technical leaders are considered, so asking for a few
+    extra names never changes the order of the first ones."""
+    pool = sorted(scored, key=lambda x: -(x[1]["score"] + perf_points(x[1]["ret6m"])))[:pool_size or max(40, 3 * n)]
     ranked = []
     for s, t in pool:
         f = fundamentals(s)

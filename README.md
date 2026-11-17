@@ -26,6 +26,8 @@ A phone-friendly website with two tabs: every Nifty 100 stock, and the top 20 Ni
 
 Also on the board: a Smallcap top 20 tab (Nifty Smallcap 250, same ranking), a ★ watchlist (saved on your phone) with alerts when a starred stock's call changes, **What changed** since the last scan, a **Track record** of past calls (5, 10 and 20 trading days later vs the Nifty 50, saved on the `swing-history` branch), a results-date warning, a sector heatmap, a position-size helper and a built-in helper that explains every field. It installs on a phone as an app.
 
+The **Support & Resistance** tab puts the Nifty 100 and the Nifty Midcap 150's top 30 (the Midcap tab's 20 plus ranks 21 to 30) in one table judged only by the support & resistance rule: Breakout (close above the 20-day high close on 1.5× volume, or the breakout rules passed), Buy at support (within 2% of support, trend not down, reward-to-risk 1.5× or better), At support · careful, Near resistance (within 2%) and Mid-range. Stop is the bottom of the support zone and the target the bottom of the resistance zone, both from the scan's own levels.
+
 Optional phone notifications for your watchlist: add a `WATCHLIST` secret (comma-separated symbols, e.g. `TCS,RELIANCE`) next to the `NTFY_TOPIC` secret used by the breakout alerts. The board then pushes through ntfy when one of them turns Buy now or breaks out.
 
 - Address: `https://sharanuvl1-png.github.io/hey-claude/`
