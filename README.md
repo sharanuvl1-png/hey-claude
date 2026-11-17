@@ -35,11 +35,7 @@ Optional phone notifications for your watchlist: add a `WATCHLIST` secret (comma
 
 ## Ghumakkad travel site
 
-A phone-first travel website at `https://sharanuvl1-png.github.io/hey-claude/travel/`. Search any place to get, in one page: an embedded Google Map with routes from your base, must-see places (ranked by Wikipedia readership over the last 30 days), offbeat spots (quiet Wikipedia sights plus viewpoints, waterfalls, caves, ruins and peaks mapped on OpenStreetMap with no Wikipedia page), which area to stay in (where stays cluster closest to the top sights), stay picks from the Wikivoyage guide and star-rated OpenStreetMap hotels, a 7-day forecast and a trip planner that orders your stops and opens the route in Google Maps.
-
-- All data is fetched live in the browser from free sources with no API keys: Wikivoyage, Wikipedia, OpenStreetMap (Overpass, Nominatim, Photon), Open-Meteo and Google Maps embeds.
-- It only links out to Google Maps, Booking.com, Airbnb and Hostelworld for live prices. It never books or pays for anything.
-- Code: `travel/index.html`. It's published with the swing board, so changes go live on the board's next run (or **Actions → Nifty 100 swing board → Run workflow**).
+Moved to its own repository, [ghumakkad](https://github.com/sharanuvl1-png/ghumakkad), at `https://sharanuvl1-png.github.io/ghumakkad/`, so it installs as its own phone app. `travel/index.html` here only redirects the old address.
 
 ## Nifty 100 breakout alerts
 
