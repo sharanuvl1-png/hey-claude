@@ -69,7 +69,7 @@ jobs:
         run: |
           python -c "import json,os,sys; sys.path.insert(0,'tools/techchart'); import breakouts as b; a=json.load(open('alerts.json')) if os.path.exists('alerts.json') else []; print(len(a),'alert(s)'); a and b.ntfy(os.environ['NTFY_TOPIC'], a)"
 
-      - name: Add the Ghumakkad travel site at /travel/
+      - name: Keep the old /travel/ link working (Ghumakkad moved to its own repo)
         run: cp -r travel site/travel
 
       - uses: actions/upload-pages-artifact@v3
