@@ -114,7 +114,7 @@ def main():
           f"{len((data.get('midcap') or {}).get('stocks', []))} midcap, {len((data.get('smallcap') or {}).get('stocks', []))} smallcap, {len(more)} midcap ranks 21-30 for S/R) "
           f"against a fresh Yahoo Finance download")
     board = {s["symbol"]: s["close"] for s in stocks}
-    for c in (data.get("track_record") or {}).get("recent", []):
+    for c in (data.get("track_record") or {}).get("recent", []) + (data.get("sr_track_record") or {}).get("recent", []):
         if c.get("now") is not None and c["symbol"] in board and not close_enough(c["now"], board[c["symbol"]], 0.0001):
             probs.append(f"track record {c['symbol']}: latest {c['now']} vs board {board[c['symbol']]}")
         if c.get("now") and c.get("since_pct") is not None and abs(100 * (c["now"] / c["close"] - 1) - c["since_pct"]) > 0.02:

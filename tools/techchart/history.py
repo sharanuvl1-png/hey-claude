@@ -156,3 +156,111 @@ def track_record(h, prices, nifty):
                                       "now": now, "since_pct": None if now is None else round(100 * (now / c["c"] - 1), 2),
                                       "r": c.get("r") or {}})
     return summary
+
+
+# ---------------------------------------------------------------------------------------------
+# Support & Resistance tab: its own track record, kept apart from the verdict calls above.
+# Stored in history.json as "sr_calls": {"YYYY-MM-DD": {SYM: {"k": signal, "c": close, "sl": stop,
+# "t1": target, "g": group, "r": {...same result fields as above}}}}
+
+SR_SIGNALS = ("bo", "buy", "care", "res", "mid")
+SR_NEAR, SR_RR, SR_VOL = 2.0, 1.5, 1.5
+
+
+def sr_signal(row):
+    """The S/R tab's rule (same as srSignal in site/index.html), from the scan's own levels and closes.
+    Returns (signal, stop, target)."""
+    sl, sh = row["levels"]["support"]
+    rl = row["levels"]["resistance"][0]
+    c, xs = row["close"], row.get("closes") or []
+    to_s = max(0.0, 100 * (c - sh) / c)
+    to_r = max(0.0, 100 * (rl - c) / c)
+    risk = c - sl
+    rr = (rl - c) / risk if risk > 0 and rl > c else None
+    prior = max(xs[-21:-1]) if len(xs) > 21 else None
+    vol_bo = prior is not None and c > prior and (row.get("volume_ratio") or 0) >= SR_VOL
+    rule_bo = (row.get("breakout") or {}).get("status") == "breakout"
+    if vol_bo or rule_bo:
+        k = "bo"
+    elif to_s <= SR_NEAR and row.get("trend") != "Downtrend" and rr is not None and rr >= SR_RR:
+        k = "buy"
+    elif to_s <= SR_NEAR:
+        k = "care"
+    elif to_r <= SR_NEAR:
+        k = "res"
+    else:
+        k = "mid"
+    return k, sl, rl
+
+
+def sr_record(h, rows):
+    """Store today's S/R signal for every stock on the S/R tab (the last scan of a day replaces earlier ones)."""
+    calls = h.setdefault("sr_calls", {})
+    for r in rows:
+        k, sl, t1 = sr_signal(r)
+        day = calls.setdefault(r["date"], {})
+        old = day.get(r["symbol"]) or {}
+        day[r["symbol"]] = {"k": k, "c": r["close"], "sl": sl, "t1": t1, "g": r.get("group"),
+                            **({"r": old["r"]} if old.get("r") and old.get("k") == k else {})}
+    cutoff = (dt.date.today() - dt.timedelta(days=KEEP_DAYS)).isoformat()
+    for d in [d for d in calls if d < cutoff]:
+        del calls[d]
+
+
+def sr_track_record(h, prices, nifty):
+    """How each new S/R signal did 5, 10 and 20 trading days later (closing prices), next to the Nifty 50.
+    A new signal is a stock's signal changing from its previous recorded day. Nothing is estimated."""
+    calls_by_day = h.get("sr_calls") or {}
+    if not calls_by_day:
+        return None
+    series = {s: _series(*v) for s, v in prices.items()}
+    nser = _series(*nifty) if nifty else None
+    last, calls = {}, []
+    for d in sorted(calls_by_day):
+        for sym, c in calls_by_day[d].items():
+            if last.get(sym) != c["k"]:
+                calls.append((d, sym, c))
+            last[sym] = c["k"]
+    for d, sym, c in calls:
+        s = series.get(sym)
+        if not s:
+            continue
+        r = dict(c.get("r") or {})
+        for n in HORIZONS:
+            if str(n) not in r:
+                fwd = _forward(s, d, n)
+                if fwd is not None:
+                    r[str(n)] = round(100 * (fwd / c["c"] - 1), 2)
+                    if nser:
+                        a, b = _forward(nser, d, 0), _forward(nser, d, n)
+                        if a and b:
+                            r["n" + str(n)] = round(100 * (b / a - 1), 2)
+        if "out" not in r and c["t1"] > c["c"] > c["sl"]:
+            o = _outcome(s, d, c["sl"], c["t1"])
+            if o:
+                r["out"] = o
+        if r:
+            c["r"] = r
+
+    summary = {"since": min(calls_by_day), "days": len(calls_by_day), "by_signal": {}, "recent": []}
+    for k in SR_SIGNALS:
+        mine = [c for _, _, c in calls if c["k"] == k]
+        row = {"calls": len(mine)}
+        for n in HORIZONS:
+            done = [c["r"][str(n)] for c in mine if str(n) in (c.get("r") or {})]
+            vs = [c["r"][str(n)] - c["r"]["n" + str(n)] for c in mine if str(n) in (c.get("r") or {}) and "n" + str(n) in c["r"]]
+            row[str(n)] = None if not done else {"n": len(done), "avg": round(sum(done) / len(done), 2),
+                                                 "win": round(100 * sum(x > 0 for x in done) / len(done)),
+                                                 "vs_nifty": round(sum(vs) / len(vs), 2) if vs else None}
+        outs = [c["r"]["out"] for c in mine if "out" in (c.get("r") or {})]
+        row["outcomes"] = None if not outs else {o: outs.count(o) for o in ("target", "stopped", "neither")}
+        summary["by_signal"][k] = row
+    for d, sym, c in sorted(calls, key=lambda x: x[0], reverse=True):
+        if c["k"] in ("buy", "bo") and len(summary["recent"]) < 40:
+            s = series.get(sym)
+            now = s["closes"][-1] if s else None
+            summary["recent"].append({"date": d, "symbol": sym, "signal": c["k"], "group": c["g"], "close": c["c"],
+                                      "stop": c["sl"], "t1": c["t1"], "now": now,
+                                      "since_pct": None if now is None else round(100 * (now / c["c"] - 1), 2),
+                                      "r": c.get("r") or {}})
+    return summary

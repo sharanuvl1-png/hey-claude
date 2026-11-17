@@ -229,6 +229,12 @@ input::placeholder { color: var(--muted) }
 .sr-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px }
 .sr-rules div { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; font-size: 12.5px; color: var(--ink2) }
 .sr-rules b { display: block; font-size: 13px; color: var(--sc); margin-bottom: 3px }
+#srSec, #srSec > * { min-width: 0; max-width: 100% }
+.sr-track { display: block } .sr-track > * + * { margin-top: 10px }
+.sr-track summary { cursor: pointer; list-style: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px }
+.sr-track summary::-webkit-details-marker { display: none }
+.sr-track summary::before { content: "▸"; color: var(--muted); margin-right: 6px; transition: transform .15s }
+.sr-track[open] summary::before { transform: rotate(90deg) }
 .sr-ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
 .sr-ctl input { flex: 1 1 160px; min-width: 0 }
 /* Help bot */
@@ -702,6 +708,38 @@ function srSignal(s) {
   else { k = "mid"; why = `${fx(toS, 1)}% above support, ${fx(toR, 1)}% below resistance`; }
   return { k, why, toS, toR, stop, target, rr, prior };
 }
+// Track record of the S/R signals (saved each scan on the swing-history branch, scored from closing prices).
+function srTrack() {
+  const t = DATA.sr_track_record;
+  const wrap = el("details", { class: "panel sr-track" }, el("summary", {}, el("span", { class: "lbl", text: "Track record of these signals" }),
+    el("span", { class: "hint", text: t && t.since ? ` · since ${fdate(t.since)}, ${t.days} trading day${t.days === 1 ? "" : "s"}` : "" })));
+  try { if (store.get("srTrackOpen", false)) wrap.open = true; } catch {}
+  wrap.addEventListener("toggle", () => store.set("srTrackOpen", wrap.open));
+  if (!t) { wrap.append(el("div", { class: "hint", text: "Starts with the next scheduled scan: from then on every signal is saved and scored 5, 10 and 20 trading days later." })); return wrap; }
+  const cell = x => (x == null ? "–" : `${x.avg > 0 ? "+" : ""}${x.avg}% · ${x.win}% up · n=${x.n}`);
+  const anyDone = Object.values(t.by_signal).some(r => r["5"]);
+  const first = new Date(new Date(t.since + "T00:00:00+05:30").getTime() + 8 * 864e5).toISOString().slice(0, 10);
+  const table = el("table", { class: "tr-table" },
+    el("thead", {}, el("tr", {}, ...["Signal", "New signals", "After 5 days", "After 10 days", "After 20 days", "vs Nifty (10d)", "Target first / stop first"].map(h => el("th", { text: h })))),
+    el("tbody", {}, ...Object.entries(SRS).map(([k, sg]) => { const r = t.by_signal[k] || {}; const o = r.outcomes;
+      return el("tr", {}, el("td", {}, el("span", { class: "sig", style: `--sc:${sg.c}`, text: sg.label })),
+        el("td", { class: "num", text: String(r.calls || 0) }), el("td", { class: "num", text: cell(r["5"]) }), el("td", { class: "num", text: cell(r["10"]) }),
+        el("td", { class: "num", text: cell(r["20"]) }), el("td", { class: "num " + dir(r["10"]?.vs_nifty ?? 0), text: r["10"]?.vs_nifty == null ? "–" : `${r["10"].vs_nifty > 0 ? "+" : ""}${r["10"].vs_nifty} pts` }),
+        el("td", { class: "num", text: o && k !== "res" && k !== "mid" ? `${o.target} / ${o.stopped}` : "–" })); })));
+  const recent = (t.recent || []).map(c => { const out = c.r.out || "open";
+    return el("tr", {}, el("td", {}, el("button", { class: "linkbtn", text: c.symbol, onclick: () => open(c.symbol) })),
+      el("td", {}, el("span", { class: "sig", style: `--sc:${SRS[c.signal].c}`, text: SRS[c.signal].label })), el("td", { text: fdate(c.date) }),
+      el("td", { class: "num", text: fx(c.close) }), el("td", { class: "num", text: c.now == null ? "–" : fx(c.now) }),
+      el("td", { class: "num " + dir(c.since_pct ?? 0), text: c.since_pct == null ? "–" : pct(c.since_pct) }),
+      el("td", {}, el("span", { class: "out " + (out === "neither" ? "open" : out), text: out === "target" ? "Hit target" : out === "stopped" ? "Stopped" : out === "neither" ? "Neither in 20d" : "Open" }))); });
+  wrap.append(
+    el("p", { class: "note", text: "Is the support & resistance rule working? A signal counts when a stock's S/R signal changes (so a week of the same \"Buy at support\" is one signal). Returns run from the close on the signal day to the close 5, 10 and 20 trading days later, next to the Nifty 50 over the same days. For Breakout and Buy at support you want the returns positive and above the Nifty; for Near resistance the rule works when returns are weak or negative. \"Target first / stop first\" uses closing prices: did the price reach the resistance target before closing at or below the support stop. Results appear only once the days have passed; nothing is estimated." + (anyDone ? "" : ` The first 5-day results show up around ${fdate(first)}.`) }),
+    el("div", { class: "tablewrap" }, table),
+    el("div", { class: "lbl", style: "margin-top:6px", text: "Recent Breakout and Buy at support signals" }),
+    recent.length ? el("div", { class: "tablewrap" }, el("table", { class: "tr-table" }, el("thead", {}, el("tr", {}, ...["Stock", "Signal", "Date", "Price then", "Now", "Since", "Result"].map(h => el("th", { text: h })))), el("tbody", {}, ...recent)))
+      : el("div", { class: "hint", text: "None recorded yet." }));
+  return wrap;
+}
 const srDate = () => [...new Set(srList().map(s => s.date))].sort().reverse()[0] || "the latest session";
 function drawSR() {
   const box = document.getElementById("srSec");
@@ -754,6 +792,7 @@ function drawSR() {
   box.replaceChildren(head,
     el("p", { class: "note", text: "Only the support & resistance rule here, nothing else from the scan's verdict. Support and resistance zones are where price turned before (swing lows and highs over the last year, grouped and padded by a quarter of a day's average range). Stop = bottom of the support zone. Target = bottom of the resistance zone. Reward : risk = (target − price) ÷ (price − stop). \"Tests\" is how many swing lows / highs form each zone: more tests means a stronger level, \"–\" means no clear level, so the scan drew one from the average range." }),
     rules,
+    srTrack(),
     el("div", { class: "panel" }, el("div", { class: "sr-ctl" }, grps, search), sigs,
       shown.length ? el("div", { class: "tablewrap" }, table) : el("div", { class: "empty", text: "No stock matches this filter." })),
     more ? null : el("p", { class: "note", text: "Midcap ranks 21–30 are added from the next scheduled scan; until then this table has the Midcap top 20." }),
