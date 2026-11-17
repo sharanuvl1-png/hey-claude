@@ -1,40 +1,4 @@
 {
  "date": "2026-11-17",
- "alerts": [
-  {
-   "id": "buyzone:ULTRACEMCO:2026-11-17",
-   "title": "UltraTech Cement is in the buy zone",
-   "text": "UltraTech Cement moved from buy on dip to buy now at ₹12,290.0."
-  },
-  {
-   "id": "buyzone:LODHA:2026-11-17",
-   "title": "Lodha Developers is in the buy zone",
-   "text": "Lodha Developers moved from buy on dip to buy now at ₹1,203.1."
-  },
-  {
-   "id": "buyzone:APLAPOLLO:2026-11-17",
-   "title": "APL Apollo Tubes is in the buy zone",
-   "text": "APL Apollo Tubes moved from buy on dip to buy now at ₹2,188.5."
-  },
-  {
-   "id": "buyzone:NAVINFLUOR:2026-11-17",
-   "title": "Navin Fluorine International is in the buy zone",
-   "text": "Navin Fluorine International moved from buy on dip to buy now at ₹9,815.0."
-  },
-  {
-   "id": "target:KARURVYSYA:2026-11-17",
-   "title": "The Karur Vysya Bank reached its target",
-   "text": "The Karur Vysya Bank closed at ₹393.5, at or above the target of ₹385.3."
-  },
-  {
-   "id": "buyzone:KARURVYSYA:2026-11-17",
-   "title": "The Karur Vysya Bank is in the buy zone",
-   "text": "The Karur Vysya Bank moved from buy on dip to buy now at ₹393.5."
-  },
-  {
-   "id": "buyzone:KFINTECH:2026-11-17",
-   "title": "KFin Technologies is in the buy zone",
-   "text": "KFin Technologies moved from buy on dip to buy now at ₹965.0."
-  }
- ]
+ "alerts": []
 }
