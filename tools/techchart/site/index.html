@@ -219,6 +219,18 @@ input::placeholder { color: var(--muted) }
 .tablewrap { overflow-x: auto }
 .out { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px }
 .out.target { color: var(--up); background: rgba(34, 229, 139, .12) } .out.stopped { color: var(--down); background: rgba(255, 77, 109, .12) } .out.open { color: var(--muted); background: rgba(255, 255, 255, .05) }
+/* Support & Resistance tab */
+.sr-table td:first-child, .sr-table th:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1 }
+.sr-table tbody tr { cursor: pointer }
+.sr-table tbody tr:hover td { background: rgba(255, 255, 255, .03) }
+.sr-table tbody tr:hover td:first-child { background: var(--surface) }
+.sr-sym { font-weight: 800; font-size: 14px } .sr-grp { font-size: 11px; color: var(--muted); font-weight: 600 }
+.sig { font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 999px; color: var(--sc); border: 1px solid color-mix(in srgb, var(--sc) 45%, transparent); background: color-mix(in srgb, var(--sc) 10%, transparent) }
+.sr-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px }
+.sr-rules div { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; font-size: 12.5px; color: var(--ink2) }
+.sr-rules b { display: block; font-size: 13px; color: var(--sc); margin-bottom: 3px }
+.sr-ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.sr-ctl input { flex: 1 1 160px; min-width: 0 }
 /* Help bot */
 .askfab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 15;
   border: 0; border-radius: 999px; padding: 12px 18px; font-weight: 800; font-size: 14px; color: #0a0f1d;
@@ -282,6 +294,7 @@ input::placeholder { color: var(--muted) }
         <button role="tab" id="tab-small" aria-selected="false" data-tab="small">Smallcap top 20 <b id="smallCount">–</b></button>
         <button role="tab" id="tab-watch" aria-selected="false" data-tab="watch">★ Watchlist <b id="watchCount">0</b></button>
         <button role="tab" id="tab-track" aria-selected="false" data-tab="track">Track record</button>
+        <button role="tab" id="tab-sr" aria-selected="false" data-tab="sr">Support &amp; Resistance <b id="srCount">–</b></button>
       </div>
       <div class="tabnote" id="tabnote"></div>
     </div>
@@ -291,6 +304,7 @@ input::placeholder { color: var(--muted) }
       <div class="chg-row" id="chg"></div>
     </section>
     <section class="sec" id="trackSec" hidden></section>
+    <section class="sec" id="srSec" hidden></section>
     <section class="sec" id="topSec" hidden>
       <div class="sec-h"><h2 id="topTitle">Best setups right now</h2><span class="hint" id="topHint"></span></div>
       <div class="rail" id="top"></div>
@@ -382,7 +396,7 @@ function toggleStar(sym) {
   WATCH.has(sym) ? WATCH.delete(sym) : WATCH.add(sym);
   store.set("watch", [...WATCH]);
   const seen = store.get("seen", {});
-  const st = all().find(x => x.symbol === sym);
+  const st = everyone().find(x => x.symbol === sym);
   if (WATCH.has(sym) && st) seen[sym] = st.verdict; else delete seen[sym];
   store.set("seen", seen);
   document.getElementById("watchCount").textContent = WATCH.size;
@@ -392,8 +406,11 @@ function toggleStar(sym) {
 const GROUP = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20" };
 const sec = k => (DATA[k] && DATA[k].stocks) || [];
 const all = () => DATA.stocks.concat(sec("midcap"), sec("smallcap"));
+// Support & Resistance tab: Nifty 100 plus the Midcap top 30 (the Midcap tab's 20 and ranks 21-30, which are only on this tab).
+const srList = () => DATA.stocks.concat(sec("midcap"), sec("sr_midcap_more"));
+const everyone = () => all().concat(sec("sr_midcap_more"));
 const list = () => state.tab === "mid" ? sec("midcap") : state.tab === "small" ? sec("smallcap")
-  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" ? [] : DATA.stocks;
+  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
 const daysTo = iso => Math.round((new Date(iso + "T00:00:00+05:30") - new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30")) / 864e5);
 const fdate = iso => new Date(iso + "T00:00:00+05:30").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 function resultsChip(s) {
@@ -504,6 +521,7 @@ function sheet(s) {
   f("EMAs", `20: ${fx(s.ema["20"])} · 50: ${fx(s.ema["50"])} · 200: ${fx(s.ema["200"])}`);
   f("Support", `${fx(s.levels.support[0])}–${fx(s.levels.support[1])}  (strong ${fx(s.levels.strong_support[0])}–${fx(s.levels.strong_support[1])})`);
   f("Resistance", `${fx(s.levels.resistance[0])}–${fx(s.levels.resistance[1])}`);
+  if (srList().includes(s)) { const g = srSignal(s); f("S/R signal", `${SRS[g.k].label}: ${g.why}`); }
   f("Breakout level", `${fx(s.levels.breakout)} · retest entry ${fx(s.breakout_entry[0])}–${fx(s.breakout_entry[1])}`);
   f("52-week high", fx(s.levels.high_52w));
   f("Stops", `Conservative ${fx(s.stop)} · aggressive ${fx(s.stop_aggressive)}`);
@@ -659,12 +677,96 @@ function drawTrack() {
         : el("div", { class: "hint", text: "No Buy now calls recorded yet." })));
 }
 
+// The support & resistance rule, on its own: buy near a floor that held, take profit near a ceiling, or buy a
+// breakout above a ceiling on strong volume. Every number comes from the scan's own levels and closing prices.
+const SRS = {
+  bo: { label: "Breakout", c: "var(--brand2)", rank: 0, rule: "Closed above its highest close of the last 20 sessions on 1.5× normal volume or more (or passed your breakout rules). The old ceiling should now act as a floor: the textbook entry is a pullback that holds it." },
+  buy: { label: "Buy at support", c: "var(--up)", rank: 1, rule: "Within 2% of a support zone, trend not down, and at least 1.5× more room up to resistance than down to the stop. Stop just under the support zone, target the resistance zone." },
+  care: { label: "At support · careful", c: "var(--wait)", rank: 2, rule: "Near support, but the trend is down (floors break more often in a downtrend) or resistance is too close for a good reward-to-risk. Wait for a bounce to show first." },
+  res: { label: "Near resistance", c: "var(--down)", rank: 3, rule: "Within 2% of a resistance zone. Not a place to buy: take profit if you hold it, or wait for a breakout with volume." },
+  mid: { label: "Mid-range", c: "var(--muted)", rank: 4, rule: "Between the floor and the ceiling. The rule says wait for price to reach one of them." },
+};
+const SR_NEAR = 2, SR_RR = 1.5, SR_VOL = 1.5;
+function srSignal(s) {
+  const [sl, sh] = s.levels.support, [rl] = s.levels.resistance, c = s.close, xs = s.closes || [];
+  const toS = Math.max(0, 100 * (c - sh) / c), toR = Math.max(0, 100 * (rl - c) / c);
+  const stop = sl, target = rl, risk = c - stop, rr = risk > 0 && target > c ? (target - c) / risk : null;
+  const prior = xs.length > 21 ? Math.max(...xs.slice(-21, -1)) : null;
+  const volBo = prior != null && c > prior && (s.volume_ratio || 0) >= SR_VOL;
+  const ruleBo = s.breakout && s.breakout.status === "breakout";
+  let k, why;
+  if (volBo || ruleBo) { k = "bo"; why = volBo ? `Closed above the 20-day high close of ${fx(prior)} on ${fx(s.volume_ratio, 1)}× volume` : "Passed every breakout rule"; }
+  else if (toS <= SR_NEAR && s.trend !== "Downtrend" && rr != null && rr >= SR_RR) { k = "buy"; why = toS === 0 ? "Price is inside the support zone" : `${fx(toS, 1)}% above support`; }
+  else if (toS <= SR_NEAR) { k = "care"; why = s.trend === "Downtrend" ? "Near support, but in a downtrend" : `Near support, but only ${rr == null ? "no" : fx(rr, 1) + "×"} reward-to-risk up to resistance`; }
+  else if (toR <= SR_NEAR) { k = "res"; why = toR === 0 ? "Price is inside the resistance zone" : `${fx(toR, 1)}% below resistance`; }
+  else { k = "mid"; why = `${fx(toS, 1)}% above support, ${fx(toR, 1)}% below resistance`; }
+  return { k, why, toS, toR, stop, target, rr, prior };
+}
+const srDate = () => [...new Set(srList().map(s => s.date))].sort().reverse()[0] || "the latest session";
+function drawSR() {
+  const box = document.getElementById("srSec");
+  box.hidden = state.tab !== "sr";
+  if (box.hidden) return;
+  const rows = srList().map(s => ({ s, g: srSignal(s) }));
+  const grp = state.srGrp || "all", sig = state.srSig || null, q = (state.srQ || "").trim().toUpperCase().replace(/\s+/g, "");
+  const inGrp = r => grp === "all" || r.s.group === grp || (grp === "mid" && !r.s.group && r.s.rank);
+  const shown = rows.filter(r => inGrp(r) && (!sig || r.g.k === sig) &&
+    (!q || r.s.symbol.includes(q) || (r.s.name || "").toUpperCase().replace(/\s+/g, "").includes(q)));
+  const within = { bo: (a, b) => (b.s.volume_ratio || 0) - (a.s.volume_ratio || 0), buy: (a, b) => (b.g.rr || 0) - (a.g.rr || 0),
+    care: (a, b) => a.g.toS - b.g.toS, res: (a, b) => a.g.toR - b.g.toR, mid: (a, b) => Math.min(a.g.toS, a.g.toR) - Math.min(b.g.toS, b.g.toR) };
+  shown.sort((a, b) => SRS[a.g.k].rank - SRS[b.g.k].rank || within[a.g.k](a, b));
+  const counts = Object.fromEntries(Object.keys(SRS).map(k => [k, rows.filter(r => inGrp(r) && r.g.k === k).length]));
+  const nMid = rows.filter(r => r.s.group === "mid" || (!r.s.group && r.s.rank)).length, more = sec("sr_midcap_more").length;
+  const head = el("div", { class: "sec-h" }, el("h2", { text: "Support & Resistance" }),
+    el("span", { class: "hint", text: `${DATA.stocks.length} Nifty 100 + ${nMid} Midcap · tap a row for the full chart` }));
+  const rules = el("div", { class: "sr-rules" }, ...Object.values(SRS).map(r => el("div", { style: `--sc:${r.c}` }, el("b", { text: r.label }), r.rule)));
+  const chip = (label, n, on, fn, c) => el("button", { "aria-pressed": String(on), onclick: fn },
+    c ? el("span", { class: "dot", style: `background:${c};color:${c}` }) : null, label, n == null ? null : el("b", { text: String(n) }));
+  const sigs = el("div", { class: "seg", role: "group", "aria-label": "Filter by support and resistance signal" },
+    chip("All", rows.filter(inGrp).length, !sig, () => { state.srSig = null; drawSR(); }),
+    ...Object.entries(SRS).map(([k, r]) => chip(r.label, counts[k], sig === k, () => { state.srSig = sig === k ? null : k; drawSR(); }, r.c)));
+  const grps = el("div", { class: "seg", role: "group", "aria-label": "Filter by index" },
+    ...[["all", "Both"], ["n100", "Nifty 100"], ["mid", "Midcap top 30"]].map(([k, l]) => chip(l, null, grp === k, () => { state.srGrp = k; drawSR(); })));
+  const search = el("input", { type: "search", placeholder: "Search a stock", "aria-label": "Search the support and resistance table", autocomplete: "off" });
+  search.value = state.srQ || "";
+  search.addEventListener("input", () => { state.srQ = search.value; clearTimeout(drawSR.t); drawSR.t = setTimeout(() => {
+    drawSR(); const i = document.querySelector("#srSec input[type=search]"); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 250); });
+  const touches = (s, k) => (s.levels.touches && s.levels.touches[k] ? `${s.levels.touches[k]}×` : "–");
+  const zoneTxt = z => `${fx(z[0])}–${fx(z[1])}`;
+  const tbody = el("tbody", {}, ...shown.map(({ s, g }) => el("tr", { tabindex: "0", title: g.why, onclick: () => open(s.symbol), onkeydown: e => { if (e.key === "Enter") open(s.symbol); } },
+    el("td", {}, el("div", { class: "sr-sym", text: s.symbol }), el("div", { class: "sr-grp", text: s.group === "n100" || !s.rank ? "Nifty 100" : `Midcap #${s.rank}` })),
+    el("td", { style: "text-align:left" }, el("span", { class: "sig", style: `--sc:${SRS[g.k].c}`, text: SRS[g.k].label }), el("div", { class: "sr-grp", style: "margin-top:4px", text: g.why })),
+    el("td", { class: "num", text: fx(s.close) }),
+    el("td", { class: "num " + dir(s.change_pct), text: pct(s.change_pct) }),
+    el("td", { class: "num", style: "color:var(--up)", text: zoneTxt(s.levels.support) }),
+    el("td", { class: "num", text: g.toS === 0 ? "in zone" : fx(g.toS, 1) + "%" }),
+    el("td", { class: "num", style: "color:var(--down)", text: zoneTxt(s.levels.resistance) }),
+    el("td", { class: "num", text: g.toR === 0 ? "in zone" : fx(g.toR, 1) + "%" }),
+    el("td", { class: "num down", text: fx(g.stop) }),
+    el("td", { class: "num up", text: g.target > s.close ? fx(g.target) : "–" }),
+    el("td", { class: "num", text: g.rr == null ? "–" : fx(g.rr, 1) + "×" }),
+    el("td", { class: "num", text: `${touches(s, "support")} / ${touches(s, "resistance")}` }),
+    el("td", { class: "num", text: s.volume_ratio ? fx(s.volume_ratio, 1) + "×" : "–" }),
+    el("td", { style: "text-align:left", text: s.trend }))));
+  const table = el("table", { class: "tr-table sr-table" },
+    el("thead", {}, el("tr", {}, ...["Stock", "S/R signal", "Price", "Today", "Support zone", "To support", "Resistance zone", "To resistance", "Stop", "Target", "Reward : risk", "Tests (S / R)", "Volume", "Trend"]
+      .map((h, i) => el("th", { text: h, style: i === 1 || i === 13 ? "text-align:left" : "" })))), tbody);
+  box.replaceChildren(head,
+    el("p", { class: "note", text: "Only the support & resistance rule here, nothing else from the scan's verdict. Support and resistance zones are where price turned before (swing lows and highs over the last year, grouped and padded by a quarter of a day's average range). Stop = bottom of the support zone. Target = bottom of the resistance zone. Reward : risk = (target − price) ÷ (price − stop). \"Tests\" is how many swing lows / highs form each zone: more tests means a stronger level, \"–\" means no clear level, so the scan drew one from the average range." }),
+    rules,
+    el("div", { class: "panel" }, el("div", { class: "sr-ctl" }, grps, search), sigs,
+      shown.length ? el("div", { class: "tablewrap" }, table) : el("div", { class: "empty", text: "No stock matches this filter." })),
+    more ? null : el("p", { class: "note", text: "Midcap ranks 21–30 are added from the next scheduled scan; until then this table has the Midcap top 20." }),
+    ...((DATA.sr_midcap_more || {}).notes || []).map(n => el("p", { class: "note", text: n })),
+    el("p", { class: "note", text: `Prices are Yahoo Finance closes for ${srDate()} and can be about 15 minutes behind NSE during market hours. Analysis only, not investment advice. Nothing here places an order. Decisions are yours.` }));
+}
+
 let lastFocus = null;
 function open(sym) { if (location.hash !== "#" + sym) location.hash = sym; else route(); }
 function close() { if (location.hash) history.back(); else route(); }
 function route() {
   const sym = decodeURIComponent(location.hash.slice(1));
-  const s = DATA && all().find(x => x.symbol === sym);
+  const s = DATA && everyone().find(x => x.symbol === sym);
   const scrim = document.getElementById("scrim");
   if (s) {
     lastFocus = lastFocus || document.activeElement;
@@ -697,9 +799,9 @@ function setFilter(v) { state.filter = state.filter === v ? null : v; drawGrid()
 
 function drawTab() {
   if (state.tab === "track") state.filter = null;
-  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track";
-  for (const id of ["fbar", "gridWrap"]) document.getElementById(id).hidden = track;
-  drawTrack(); drawChanges(st); drawHeat(st);
+  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr";
+  for (const id of ["fbar", "gridWrap"]) document.getElementById(id).hidden = track || srTab;
+  drawTrack(); drawSR(); drawChanges(st); drawHeat(srTab ? [] : st);
   for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === state.tab));
   document.getElementById("rank").hidden = !mid;
   if (!mid && state.sort === "rank") state.sort = "score";
@@ -710,8 +812,8 @@ function drawTab() {
   document.getElementById("tabnote").textContent = mid
     ? `The 20 strongest ${idx} stocks by your daily scan's ranking (trend + fundamentals + 6-month performance, ₹5 crore+ daily turnover), each run through the same swing-trading chart rules. #1 is the strongest.`
     : state.tab === "watch" ? "Stocks you starred, from every list. Saved on this phone only. Changes to their calls show up as alerts at the top."
-    : track ? "" : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
-  const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100" }[state.tab];
+    : track ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
+  const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100", sr: "Nifty 100 + Midcap 30" }[state.tab];
   document.getElementById("breadthLbl").textContent = `Breadth today · ${lbl}`;
   document.getElementById("mixLbl").textContent = `Final recommendation mix · ${lbl}`;
   const stx = track ? DATA.stocks : st;
@@ -729,13 +831,13 @@ function drawTab() {
     ...ORDER.map(k => el("button", { "data-v": k, "aria-pressed": "false", onclick: () => { state.filter = state.filter === k ? null : k; drawGrid(); } },
       el("span", { class: "dot", style: `background:${V[k].c};color:${V[k].c}` }), V[k].label, el("b", { text: String(counts[k]) }))));
 
-  const top = (track ? [] : st).filter(s => s.verdict === "BUY NOW").sort((a, b) => b.score - a.score || b.confidence - a.confidence).slice(0, 10);
+  const top = (track || srTab ? [] : st).filter(s => s.verdict === "BUY NOW").sort((a, b) => b.score - a.score || b.confidence - a.confidence).slice(0, 10);
   document.getElementById("topSec").hidden = !top.length;
   document.getElementById("topTitle").textContent = state.tab === "mid" ? "Midcap buy-now setups" : state.tab === "small" ? "Smallcap buy-now setups" : state.tab === "watch" ? "Buy now in your watchlist" : "Best setups right now";
   document.getElementById("topHint").textContent = `${top.length} Buy now, strongest first`;
   document.getElementById("top").replaceChildren(...top.map(s => card(s, true)));
 
-  const bos = (track ? [] : st).filter(s => s.breakout && (s.breakout.status === "breakout" || s.breakout.status === "near"))
+  const bos = (track || srTab ? [] : st).filter(s => s.breakout && (s.breakout.status === "breakout" || s.breakout.status === "near"))
     .sort((a, b) => (b.breakout.status === "breakout") - (a.breakout.status === "breakout") || a.breakout.gap_pct - b.breakout.gap_pct);
   document.getElementById("boSec").hidden = !bos.length;
   if (bos.length) {
@@ -775,6 +877,7 @@ function render(data) {
   data.midcap.stocks.forEach((s, i) => { s.rank = i + 1; });
   data.smallcap = data.smallcap || { stocks: [], errors: [], notes: ["Smallcap picks start with the next scan."] };
   data.smallcap.stocks.forEach((s, i) => { s.rank = i + 1; });
+  if (data.sr_midcap_more) data.sr_midcap_more.stocks.forEach((s, i) => { s.rank = data.midcap.stocks.length + i + 1; });
   const when = new Date(data.generated_at);
   const date = [...new Set(data.stocks.map(s => s.date))].sort().reverse()[0] || "";
   const ageH = (Date.now() - when.getTime()) / 36e5;
@@ -788,6 +891,7 @@ function render(data) {
   document.getElementById("n100Count").textContent = data.stocks.length;
   document.getElementById("midCount").textContent = data.midcap.stocks.length;
   document.getElementById("smallCount").textContent = data.smallcap.stocks.length;
+  document.getElementById("srCount").textContent = srList().length;
   WATCH = new Set([...WATCH].filter(x => all().some(s => s.symbol === x)).concat([...WATCH].filter(x => !all().some(s => s.symbol === x))));
   document.getElementById("watchCount").textContent = WATCH.size;
   drawAlerts();
@@ -863,6 +967,7 @@ const KB = [
   { k: "check validation verified hallucinated wrong", q: "How do I know the numbers are right?", a: "Each scan is compared with a fresh, separate Yahoo download: closes, previous close, day range, dates, levels order and fundamentals. If too many differ, the update is stopped and the last good scan stays up." },
   { k: "install app home screen offline", q: "How do I install the app?", a: "Android: tap 'Install app' at the top or Chrome menu → Install app. iPhone: Safari → Share → Add to Home Screen. Offline, it shows the last saved scan." },
   { k: "advice order buy sell trade zerodha broker", q: "Can this place orders?", a: "No. The board is analysis only and never places, changes or cancels an order. Decisions are yours." },
+  { k: "support resistance tab table sr s/r signal signals bounce floor ceiling", q: "What is the Support & Resistance tab?", a: "The Support & Resistance tab puts the Nifty 100 and the Midcap top 30 in one table, judged only by the support & resistance rule. Breakout: closed above its 20-day high close on 1.5× volume. Buy at support: within 2% of support, trend not down, reward-to-risk 1.5× or better. At support · careful: near support but in a downtrend or too little room. Near resistance: within 2% of the ceiling, take profit or wait. Mid-range: wait. Stop is the bottom of the support zone, target the bottom of the resistance zone. Tap a row for the full chart." },
 ];
 const SUGG = ["What does Buy on dip mean?", "What is the stop-loss?", "Best setups today", "Breakouts today", "How does position size work?", "What is the track record?", "What is RSI?", "How do alerts work?"];
 
@@ -894,6 +999,10 @@ function answer(qRaw) {
     if (/\b(best|top)\b.*\b(setup|setups|stock|stocks|buy|pick|picks)\b|\bbuy now (stocks|list)\b|which.*buy/.test(q)) return pick(s => s.verdict === "BUY NOW", "Buy now, strongest first:");
     if (/\bbreakouts?\b.*\b(today|now|list|which)\b|\bwhich.*break/.test(q)) return pick(s => s.breakout && (s.breakout.status === "breakout" || s.breakout.status === "near"), "Breakouts and near-breakouts:");
     if (/\bresults?\b.*\b(soon|week|upcoming|coming|which)\b/.test(q)) return pick(s => s.results_date && daysTo(s.results_date) >= 0 && daysTo(s.results_date) <= 7, "Results within 7 days:");
+    if (/\b(at|near|on) support\b|\bbounce\b|\bnear resistance\b|\bs\/?r (list|signals?|table)\b/.test(q)) {
+      const want = /resistance/.test(q) ? "res" : "buy", xs = srList().filter(s => srSignal(s).k === want).slice(0, 10);
+      return { text: xs.length ? `${SRS[want].label} (Support & Resistance tab):\n` + xs.map(s => `• ${s.symbol}: ${inr(s.close)}, ${srSignal(s).why}`).join("\n") : `No stock is "${SRS[want].label}" right now.` };
+    }
     if (/\b(my )?watchlist\b.*\b(show|what|list|status)\b/.test(q)) return pick(s => WATCH.has(s.symbol), "Your watchlist:");
   }
   let best = null, bestScore = 0;

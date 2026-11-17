@@ -51,7 +51,10 @@ def summarise(r):
         "targets": [float(t) for t in s["targets"]], "rr1": round(float(s["rr1"]), 2),
         "levels": {"strong_support": zone(lv["strong"]), "support": zone(lv["immediate"]),
                    "resistance": zone(lv["resistance"]), "breakout": round(float(lv["breakout"]), 2),
-                   "high_52w": round(float(lv["hi52"]), 2)},
+                   "high_52w": round(float(lv["hi52"]), 2),
+                   # how many swing lows / highs make up each zone (0 = no real touches; a fallback zone from ATR)
+                   "touches": {"support": int(lv["immediate"][2]), "strong_support": int(lv["strong"][2]),
+                               "resistance": int(lv["resistance"][2])}},
         "patterns": r["patterns"], "candles": r["candles"], "divergences": r["divergences"],
         "closes": r["closes"], "volume_ratio": round(float(r.get("volume_ratio") or 0), 2),
         "chart": f"charts/{sym}.png", "report": f"reports/{sym}.md",
@@ -71,6 +74,7 @@ MIDCAP_CSV = "ind_niftymidcap150list.csv"
 SMALLCAP_CSV = "ind_niftysmallcap250list.csv"
 NIFTY100_CSV = "ind_nifty100list.csv"
 MIDCAP_PICKS = 20
+SR_MIDCAP = 30   # the Support & Resistance tab covers the Midcap top 30 (the Midcap tab's 20, plus ranks 21-30)
 
 
 def industries(csv_name):
@@ -104,10 +108,11 @@ def results_date(symbol, today):
         return None
 
 
-def midcap_picks(n=MIDCAP_PICKS, csv=MIDCAP_CSV, label="Midcap 150"):
+def midcap_picks(n=MIDCAP_PICKS, csv=MIDCAP_CSV, label="Midcap 150", extra=0):
     """Top n stocks of an index by the daily scan's own ranking (screener.py): technical score
     plus fundamentals (ROE, debt/equity, earnings and revenue growth, margins, P/E) plus 6-month
-    performance, among stocks trading at least ₹5 crore a day. Returns ([(symbol, fundamentals, rank score)], notes)."""
+    performance, among stocks trading at least ₹5 crore a day. Returns ([(symbol, fundamentals, rank score)], notes).
+    extra > 0 also returns the next `extra` names in rank order after the first n (the first n are unchanged)."""
     import screener as sc
     symbols, err = sc.constituents(csv)
     if not symbols:
@@ -123,7 +128,7 @@ def midcap_picks(n=MIDCAP_PICKS, csv=MIDCAP_CSV, label="Midcap 150"):
             continue
         if t["turnover"] >= sc.MIN_TURNOVER_CR:
             scored.append((s, t))
-    best = sc.strongest(scored, n)
+    best = sc.strongest(scored, n + extra, pool_size=max(40, 3 * n))
     notes = [] if len(best) >= n else [f"Only {len(best)} {label} stocks had fundamentals data (wanted {n})."]
     return [(s, sc._FUND.get(s) or {}, rank) for rank, s, _ in best], notes
 
@@ -156,25 +161,37 @@ def analyse_all(symbols, out, work, label, prices=None):
     return rows, errors
 
 
-def picks_section(csv, label, out, work, prices, skip):
-    """A ranked picks tab (Midcap or Smallcap): top 20 by the scan's ranking, each run through the chart rules."""
+def picks_section(csv, label, out, work, prices, skip, extra=0, extra_out=None):
+    """A ranked picks tab (Midcap or Smallcap): top 20 by the scan's ranking, each run through the chart rules.
+    With extra > 0 the next `extra` names (ranks 21, 22, ...) are analysed too and put in extra_out
+    (a dict like the section itself); the top 20 are exactly the same as without it."""
     sec = {"stocks": [], "errors": [], "notes": []}
     if skip:
         return sec
     try:
-        picks, pnotes = midcap_picks(MIDCAP_PICKS, csv, label)
+        picks, pnotes = midcap_picks(MIDCAP_PICKS, csv, label, extra)
     except Exception as e:
         picks, pnotes = [], [f"{label} picks unavailable this run ({type(e).__name__})."]
+    picks, more = picks[:MIDCAP_PICKS], picks[MIDCAP_PICKS:]
     sec["notes"] = pnotes
     rows, errs = analyse_all([p[0] for p in picks], out, work, label, prices)
+    _add_fund(rows, picks)
+    sec.update(stocks=rows, errors=errs)
+    if extra_out is not None:
+        rows2, errs2 = analyse_all([p[0] for p in more], out, work, f"{label} ranks {MIDCAP_PICKS + 1}+", None)
+        _add_fund(rows2, more)
+        extra_out.update(stocks=rows2, errors=errs2, notes=[] if len(more) >= extra or not picks else
+                         [f"Only {len(more)} more {label} stocks had fundamentals data after the top {MIDCAP_PICKS} (wanted {extra})."])
+    return sec
+
+
+def _add_fund(rows, picks):
     info = {p[0].replace(".NS", ""): fund_summary(p[1], p[2]) for p in picks}
     for row in rows:
         row["fundamentals"] = info.get(row["symbol"])
         if row["fundamentals"] and row["fundamentals"].get("name"):
             row["name"] = row["fundamentals"]["name"]
     rows.sort(key=lambda r: -(r["fundamentals"] or {}).get("rank_score", 0))
-    sec.update(stocks=rows, errors=errs)
-    return sec
 
 
 def main():
@@ -226,7 +243,10 @@ def main():
     rows, errors = analyse_all(symbols, out, work, "Nifty 100", prices)
     for row in rows:
         row["breakout"] = breakout_status(checks.get(row["symbol"] + ".NS"))
-    midcap = picks_section(MIDCAP_CSV, "Midcap 150", out, work, prices, args.skip_midcap)
+    # Midcap ranks 21-30 are only for the Support & Resistance tab; the Midcap top 20 tab is unchanged.
+    sr_midcap_more = {"stocks": [], "errors": [], "notes": []}
+    midcap = picks_section(MIDCAP_CSV, "Midcap 150", out, work, prices, args.skip_midcap,
+                           extra=SR_MIDCAP - MIDCAP_PICKS, extra_out=sr_midcap_more)
     smallcap = picks_section(SMALLCAP_CSV, "Smallcap 250", out, work, prices, args.skip_midcap)
     shutil.rmtree(work, ignore_errors=True)
 
@@ -243,6 +263,11 @@ def main():
             row["results_date"] = results_date(row["symbol"], today)
             time.sleep(0.1)
     every = [r for _, rs in groups for r in rs]
+    for row in sr_midcap_more["stocks"]:   # not part of the history or track record, which follow the tabs above
+        row["group"] = "mid"
+        row["sector"] = sectors.get(row["symbol"])
+        row["results_date"] = results_date(row["symbol"], today)
+        time.sleep(0.1)
 
     # What changed since the last scan, and how past calls did (needs the history branch).
     changes, record = None, None
@@ -272,13 +297,13 @@ def main():
             "market": None if market is None else {k: (round(v, 4) if isinstance(v, float) else bool(v)) for k, v in market.items()},
             "rules": {k: rules[k] for k in ("volume_multiple", "require_above_ema", "max_below_52w_high_pct") if k in rules},
             "stocks": rows, "errors": errors, "notes": notes, "midcap": midcap, "smallcap": smallcap,
-            "changes": changes, "track_record": record}
+            "sr_midcap_more": sr_midcap_more, "changes": changes, "track_record": record}
     with open(os.path.join(out, "data.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
     if symbols:
         with open(os.path.join(out, "nifty100.txt"), "w", encoding="utf-8") as f:
             f.write("\n".join(symbols) + "\n")
-    print(f"{len(rows)} analysed, {len(errors)} failed; midcap {len(midcap['stocks'])}, smallcap {len(smallcap['stocks'])}; notes: {notes}")
+    print(f"{len(rows)} analysed, {len(errors)} failed; midcap {len(midcap['stocks'])} (+{len(sr_midcap_more['stocks'])} for S/R), smallcap {len(smallcap['stocks'])}; notes: {notes}")
     if not rows:
         sys.exit(1)
 
