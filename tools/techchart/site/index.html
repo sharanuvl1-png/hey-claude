@@ -574,17 +574,20 @@ function sheet(s) {
         kpi("Entry zone", `${fx(s.entry[0])}–${fx(s.entry[1])}`, "en"), kpi("Stop-loss", fx(s.stop), "sl"), kpi("Target 1", fx(s.targets[0]), "tg"),
         kpi("Target 2", fx(s.targets[1]), "tg"), kpi("Target 3", fx(s.targets[2]), "tg"), kpi("RSI (14)", String(s.rsi))),
       el("div", { class: "panel" }, el("div", { class: "lbl", text: "Stop → entry → targets" }), ladder(s)),
-      el("a", { class: "chartbox", href: s.chart, target: "_blank", rel: "noopener", "aria-label": "Open the chart full size" },
-        el("img", { src: s.chart, alt: `${s.symbol} technical chart with EMAs, levels, MACD and RSI` })),
+      el("a", { class: "chartbox", href: fresh(s.chart), target: "_blank", rel: "noopener", "aria-label": "Open the chart full size" },
+        el("img", { src: fresh(s.chart), alt: `${s.symbol} technical chart with EMAs, levels, MACD and RSI` })),
       sizer(s),
       fundPanel,
       el("div", { class: "panel" }, el("div", { class: "lbl", text: "Analysis details" }), facts),
       el("button", { class: "hbtn", style: "justify-self:start", onclick: () => openBot(`${s.symbol}`) }, "💬 Explain this stock"),
       el("div", { class: "links" },
-        el("a", { href: s.chart, target: "_blank", rel: "noopener", text: "Chart full size ↗" }),
-        el("a", { href: s.report, target: "_blank", rel: "noopener", text: "Full written analysis ↗" }))));
+        el("a", { href: fresh(s.chart), target: "_blank", rel: "noopener", text: "Chart full size ↗" }),
+        el("a", { href: fresh(s.report), target: "_blank", rel: "noopener", text: "Full written analysis ↗" }))));
 }
 
+// Charts and reports are rewritten under the same name every scan: tag them with the scan time so a phone
+// never shows a copy from an older scan next to today's numbers.
+const fresh = u => `${u}?v=${encodeURIComponent((DATA && DATA.generated_at) || "")}`;
 function sizer(s) {
   const saved = store.get("size", { cap: 100000, risk: 1 });
   const cap = el("input", { type: "number", inputmode: "decimal", min: "0", value: saved.cap, "aria-label": "Capital in rupees" });
@@ -600,8 +603,8 @@ function sizer(s) {
     if (E <= S) return outp.replaceChildren(el("div", { class: "warn", text: "The entry is at or below the stop-loss, so there is no trade to size." }));
     const perShare = E - S, byRisk = Math.floor((C * r / 100) / perShare), byCash = Math.floor(C / E), q = Math.min(byRisk, byCash);
     outp.replaceChildren(t("Quantity", `${q} shares`), t("Money needed", inr(q * E, 0)), t("Loss if stopped", "−" + inr(q * perShare, 0), "sl"),
-      t("Gain at T1", "+" + inr(q * (s.targets[0] - E), 0), "tg"), t("Gain at T2", "+" + inr(q * (s.targets[1] - E), 0), "tg"),
-      el("div", { class: "hint", style: "grid-column:1/-1", text: (byCash < byRisk ? "Capped by your capital, so you risk less than your limit. " : "") + `Risk per share ${inr(perShare)}. Uses your levels; actual fills, charges and gaps will differ.` }));
+      t(`Gain at T1 ${inr(s.targets[0])}`, "+" + inr(q * (s.targets[0] - E), 0), "tg"), t(`Gain at T2 ${inr(s.targets[1])}`, "+" + inr(q * (s.targets[1] - E), 0), "tg"),
+      el("div", { class: "hint", style: "grid-column:1/-1", text: (byCash < byRisk ? "Capped by your capital, so you risk less than your limit. " : "") + `Risk per share ${inr(perShare)} (entry − stop). Quantity = (capital × risk %) ÷ risk per share, so the loss at the stop stays within ${inr(C * r / 100, 0)}. Uses your levels; actual fills, charges and gaps will differ.` }));
   };
   for (const i of [cap, risk, entry, stop]) i.addEventListener("input", calc);
   calc();
