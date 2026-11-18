@@ -1,7 +1,7 @@
 // Swing Board offline support. The page and data.json always try the network first, so you see the
 // newest scan when online; the last copy is shown only when there is no connection.
 // Charts and reports are cached as you open them.
-const CACHE = "swing-board-v4";
+const CACHE = "swing-board-v5";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
