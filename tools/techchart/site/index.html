@@ -915,7 +915,8 @@ function drawTab() {
 
 // ---- My portfolio: holdings live only in this phone's storage (sb.pf). Nothing personal is in this site or its repo.
 const PFC = { stocks: ["Stocks", "#0ea5e9"], funds: ["Mutual funds", "#10b981"], bonds: ["Bonds", "#6366f1"], gold: ["Gold bond", "#f59e0b"] };
-function pfLoad() { const p = store.get("pf", null); return p && Array.isArray(p.stocks) ? p : null; }
+let PF_SITE = null; // holdings published with the site (pf.json); a file loaded on the phone takes priority
+function pfLoad() { const p = store.get("pf", null); return p && Array.isArray(p.stocks) ? p : PF_SITE; }
 function pfImport(text, msg) {
   let p; try { p = JSON.parse(text); } catch { msg.textContent = "That isn't a holdings file I can read."; return; }
   if (!p || !Array.isArray(p.stocks)) { msg.textContent = "That file has no holdings in it."; return; }
@@ -935,10 +936,10 @@ function drawPF() {
   const box = document.getElementById("pfSec");
   box.hidden = state.tab !== "pf";
   if (box.hidden) return;
-  const head = el("div", { class: "sec-h" }, el("h2", { text: "My portfolio" }), el("span", { class: "hint", text: "Saved only on this phone" }));
+  const head = el("div", { class: "sec-h" }, el("h2", { text: "My portfolio" }), el("span", { class: "hint", text: store.get("pf", null) ? "Loaded on this phone" : "From your statement" }));
   const p = pfLoad();
   if (!p) return box.replaceChildren(head, el("div", { class: "panel" },
-    el("p", { class: "hint", style: "margin-top:0", text: "Load the holdings file Mehitha made from your CDSL statement. It stays in this phone's browser and is never uploaded, so the public board shows nothing of yours. Stocks the board scans get today's price and its call." }),
+    el("p", { class: "hint", style: "margin-top:0", text: "Loading your holdings… If nothing appears, load a holdings file (.json) here. Stocks the board scans get today's price and its call." }),
     pfPicker()));
   const board = new Map(everyone().map(s => [s.symbol, s]));
   const st = p.stocks.map(h => { const b = board.get(h.sym); const now = b ? b.close : h.now || h.cas_price;
@@ -982,8 +983,8 @@ function drawPF() {
       el("td", { class: "num", text: b.coupon != null ? b.coupon.toFixed(2) + "%" : "–" }), el("td", { class: "num", text: b.maturity ? fdate(b.maturity) + " " + b.maturity.slice(0, 4) : "–" }),
       el("td", { class: "num", text: inr(b.value, 0) }), el("td", { class: "num " + (b.value / T > 0.05 && !b.gold ? "down" : ""), text: (100 * b.value / T).toFixed(1) + "%" })));
   const tbl = (hs, rows) => el("div", { class: "tablewrap" }, el("table", { class: "tr-table" }, th(hs), el("tbody", {}, ...rows)));
-  const replace = el("details", {}, el("summary", { class: "hint", style: "cursor:pointer", text: "Load a newer statement or remove from this phone" }),
-    pfPicker(), el("button", { class: "pf-btn", style: "margin-top:8px", text: "Remove my holdings from this phone", onclick: () => { try { localStorage.removeItem("sb.pf"); } catch {} drawPF(); } }));
+  const replace = el("details", {}, el("summary", { class: "hint", style: "cursor:pointer", text: "Load a different holdings file on this phone" }),
+    pfPicker(), el("button", { class: "pf-btn", style: "margin-top:8px", text: "Clear the file loaded on this phone", onclick: () => { try { localStorage.removeItem("sb.pf"); } catch {} drawPF(); } }));
   box.replaceChildren(head,
     el("div", { class: "panel" }, kpis, el("div", { class: "lbl", style: "margin-top:12px", text: "What it's made of" }), mix, leg),
     el("div", { class: "panel" }, el("div", { class: "lbl", text: "Worth a look" }), el("ol", { class: "pf-tips" }, ...tips.map(t => el("li", { text: t })))),
@@ -1044,6 +1045,8 @@ function render(data) {
   }
   drawTab();
   route();
+  if (!PF_SITE) fetch(`pf.json?v=${encodeURIComponent(data.generated_at || "")}`, { cache: "no-store" }).then(r => (r.ok ? r.json() : null))
+    .then(p => { if (p && Array.isArray(p.stocks)) { for (const k of ["funds", "bonds", "gold"]) p[k] = p[k] || []; PF_SITE = p; drawPF(); } }).catch(() => {});
 }
 
 for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => { state.tab = b.dataset.tab; state.filter = null; state.sector = null; drawTab(); });
