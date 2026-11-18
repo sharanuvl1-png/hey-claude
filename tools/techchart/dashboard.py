@@ -56,7 +56,6 @@ def summarise(r):
                    "touches": {"support": int(lv["immediate"][2]), "strong_support": int(lv["strong"][2]),
                                "resistance": int(lv["resistance"][2])}},
         "patterns": r["patterns"], "candles": r["candles"], "divergences": r["divergences"],
-        "bars": r.get("bars"),
         "closes": r["closes"], "volume_ratio": round(float(r.get("volume_ratio") or 0), 2),
         "chart": f"charts/{sym}.png", "report": f"reports/{sym}.md",
     }
@@ -152,6 +151,10 @@ def analyse_all(symbols, out, work, label, prices=None):
                 prices[row["symbol"]] = (r["close_dates"], r["closes"])
             shutil.copy(r["png"], os.path.join(out, row["chart"]))
             shutil.copy(r["md"], os.path.join(out, row["report"]))
+            if r.get("bars"):
+                os.makedirs(os.path.join(out, "bars"), exist_ok=True)
+                with open(os.path.join(out, "bars", f"{row['symbol']}.json"), "w") as f:
+                    json.dump(r["bars"], f, separators=(",", ":"))
             rows.append(row)
             print(f"[{label} {i + 1}/{len(symbols)}] {row['symbol']}: {row['close']} ({row['change_pct']:+.2f}%) {row['verdict']}")
         except SystemExit as e:
