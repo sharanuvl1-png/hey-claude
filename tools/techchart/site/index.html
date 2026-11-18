@@ -255,6 +255,11 @@ input::placeholder { color: var(--muted) }
 .pf-name small { display: block; color: var(--muted); font-size: 11px }
 .pf-ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
 .pf-ctl textarea { width: 100%; min-height: 90px; font: 12px var(--mono); background: var(--surface); color: var(--ink); border: 1px solid var(--line2); border-radius: 12px; padding: 8px }
+.pp-row { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-top: 8px; display: grid; gap: 4px }
+.pp-row header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap }
+.pp-row header b { font-size: 15px } .pp-row .hint { font-size: 12px }
+.pp-st { font: 700 11px var(--mono); padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor }
+.pp-act { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px } .pp-act .pf-btn { padding: 6px 12px; font-size: 12px }
 .pf-btn { border: 1px solid var(--line2); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer }
 .sr-track { display: block } .sr-track > * + * { margin-top: 10px }
 .sr-track summary { cursor: pointer; list-style: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px }
@@ -328,6 +333,7 @@ input::placeholder { color: var(--muted) }
         <button role="tab" id="tab-track" aria-selected="false" data-tab="track">Track record</button>
         <button role="tab" id="tab-sr" aria-selected="false" data-tab="sr">Support &amp; Resistance <b id="srCount">–</b></button>
         <button role="tab" id="tab-pf" aria-selected="false" data-tab="pf">My portfolio</button>
+        <button role="tab" id="tab-paper" aria-selected="false" data-tab="paper">Paper trades <b id="paperCount">0</b></button>
       </div>
       <div class="tabnote" id="tabnote"></div>
     </div>
@@ -339,6 +345,7 @@ input::placeholder { color: var(--muted) }
     <section class="sec" id="trackSec" hidden></section>
     <section class="sec" id="srSec" hidden></section>
     <section class="sec" id="pfSec" hidden></section>
+    <section class="sec" id="paperSec" hidden></section>
     <section class="sec" id="topSec" hidden>
       <div class="sec-h"><h2 id="topTitle">Best setups right now</h2><span class="hint" id="topHint"></span></div>
       <div class="rail" id="top"></div>
@@ -444,7 +451,7 @@ const all = () => DATA.stocks.concat(sec("midcap"), sec("smallcap"));
 const srList = () => DATA.stocks.concat(sec("midcap"), sec("sr_midcap_more"));
 const everyone = () => all().concat(sec("sr_midcap_more"), sec("portfolio"));
 const list = () => state.tab === "mid" ? sec("midcap") : state.tab === "small" ? sec("smallcap")
-  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" || state.tab === "pf" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
+  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" || state.tab === "pf" || state.tab === "paper" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
 const daysTo = iso => Math.round((new Date(iso + "T00:00:00+05:30") - new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30")) / 864e5);
 const fdate = iso => new Date(iso + "T00:00:00+05:30").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 function resultsChip(s) {
@@ -809,6 +816,7 @@ function sheet(s) {
       state.tab === "sr" ? el("div", { class: "lbl", text: "Full technical chart" }) : null,
       el("a", { class: "chartbox", href: fresh(s.chart), target: "_blank", rel: "noopener", "aria-label": "Open the chart full size" },
         el("img", { src: fresh(s.chart), alt: `${s.symbol} technical chart with EMAs, levels, MACD and RSI` })),
+      paperBtn(s),
       sizer(s),
       fundPanel,
       el("div", { class: "panel" }, el("div", { class: "lbl", text: "Analysis details" }), facts),
@@ -849,7 +857,7 @@ function sizer(s) {
 function drawChanges(st) {
   const box = document.getElementById("chgSec"), c = DATA.changes;
   const syms = new Set(st.map(s => s.symbol));
-  if (!c || state.tab === "track" || state.tab === "pf") { box.hidden = true; return; }
+  if (!c || state.tab === "track" || state.tab === "pf" || state.tab === "paper") { box.hidden = true; return; }
   const moves = c.moves.filter(m => syms.has(m.symbol)), bos = c.new_breakouts.filter(x => syms.has(x));
   box.hidden = false;
   const since = c.since ? new Date(c.since).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", hour: "numeric", minute: "2-digit" }) : null;
@@ -1074,9 +1082,9 @@ function setFilter(v) { state.filter = state.filter === v ? null : v; drawGrid()
 
 function drawTab() {
   if (state.tab === "track") state.filter = null;
-  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr" || state.tab === "pf";
+  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr" || state.tab === "pf" || state.tab === "paper";
   for (const id of ["fbar", "gridWrap"]) document.getElementById(id).hidden = track || srTab;
-  drawTrack(); drawSR(); drawPF(); drawChanges(st); drawHeat(srTab ? [] : st);
+  drawTrack(); drawSR(); drawPF(); drawPaper(); drawChanges(st); drawHeat(srTab ? [] : st);
   for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === state.tab));
   document.getElementById("rank").hidden = !mid;
   if (!mid && state.sort === "rank") state.sort = "score";
@@ -1087,11 +1095,11 @@ function drawTab() {
   document.getElementById("tabnote").textContent = mid
     ? `The 20 strongest ${idx} stocks by your daily scan's ranking (trend + fundamentals + 6-month performance, ₹5 crore+ daily turnover), each run through the same swing-trading chart rules. #1 is the strongest.`
     : state.tab === "watch" ? "Stocks you starred, from every list. Saved on this phone only. Changes to their calls show up as alerts at the top."
-    : track || state.tab === "pf" ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
+    : track || state.tab === "pf" || state.tab === "paper" ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
   const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100", sr: "Nifty 100 + Midcap 30", pf: "Nifty 100" }[state.tab];
   document.getElementById("breadthLbl").textContent = `Breadth today · ${lbl}`;
   document.getElementById("mixLbl").textContent = `Final recommendation mix · ${lbl}`;
-  const stx = track || state.tab === "pf" ? DATA.stocks : st;
+  const stx = track || state.tab === "pf" || state.tab === "paper" ? DATA.stocks : st;
   const up = stx.filter(s => s.change_pct > 0).length, dn = stx.filter(s => s.change_pct < 0).length, fl = stx.length - up - dn, n = stx.length || 1;
   document.getElementById("adv").replaceChildren(el("span", { class: "up", text: String(up) }), el("span", { style: "color:var(--muted)", text: " / " }), el("span", { class: "down", text: String(dn) }));
   document.getElementById("breadth").replaceChildren(el("i", { style: `width:${100 * up / n}%;background:var(--up)` }), el("i", { style: `width:${100 * fl / n}%;background:var(--line2)` }), el("i", { style: `width:${100 * dn / n}%;background:var(--down)` }));
@@ -1149,6 +1157,74 @@ function pfPicker() {
   const ta = el("textarea", { placeholder: "…or paste the holdings file's text here" });
   return el("div", { class: "pf-ctl" }, file, ta, el("button", { class: "pf-btn", text: "Load pasted text", onclick: () => pfImport(ta.value, msg) }), msg);
 }
+// Paper trades: pretend buys saved on this phone only (sb.paper), judged on each scan's closing price.
+function paperPlan(s) {
+  if (state.tab === "sr" && s.levels && s.levels.support) {
+    const g = srSignal(s), L = s.levels;
+    if (g.k === "bo") return { stop: +(L.resistance[0] * 0.99).toFixed(2), target: +(L.resistance[1] + (L.resistance[1] - L.support[1])).toFixed(2), rule: "S/R breakout" };
+    return { stop: g.stop, target: g.target, rule: "Support & resistance" };
+  }
+  return { stop: s.stop, target: s.targets[0], rule: "Swing rules (T1)" };
+}
+const paperAll = () => store.get("paper", []);
+function paperSave(list) { store.set("paper", list); const c = document.getElementById("paperCount"); if (c) c.textContent = list.filter(t => !t.exit).length; }
+function paperBtn(s) {
+  const plan = paperPlan(s), size = store.get("size", { cap: 100000, risk: 1 });
+  const risk = s.close - plan.stop, ok = risk > 0 && plan.target > s.close;
+  const qty = ok ? Math.max(1, Math.min(Math.floor(size.cap * size.risk / 100 / risk), Math.floor(size.cap / s.close))) : 0;
+  const open = paperAll().find(t => t.sym === s.symbol && !t.exit);
+  const msg = el("div", { class: "hint", style: "margin-top:6px" });
+  const btn = el("button", { class: "pf-btn", text: open ? "Already in your paper trades" : `Paper buy ${qty} at ${inr(s.close)}`, disabled: open || !ok ? "" : null,
+    onclick: () => { const L = paperAll(); L.push({ id: Date.now(), sym: s.symbol, date: s.date, entry: s.close, stop: plan.stop, target: plan.target, qty, rule: plan.rule, call: V[s.verdict].label });
+      paperSave(L); btn.textContent = "Added to Paper trades"; btn.disabled = true; msg.textContent = "Saved on this phone. Open the Paper trades tab to follow it."; } });
+  return el("div", { class: "panel" }, el("div", { class: "lbl", text: "Practise with pretend money" }),
+    el("p", { class: "hint", style: "margin:0 0 8px", text: ok ? `${plan.rule}: stop ${fx(plan.stop)}, target ${fx(plan.target)}. ${qty} shares risks about ${inr(qty * risk, 0)} (${size.risk}% of ${inr(size.cap, 0)}, set in Position size below). No real order is placed.`
+      : "No paper trade here: the price is not between the stop and the target right now." }), btn, msg);
+}
+function paperEval(t, now) {
+  if (t.exit) return t;
+  if (now == null) return t;
+  if (now.close <= t.stop) return { ...t, exit: t.stop, exitDate: now.date, how: "Stop hit" };
+  if (now.close >= t.target) return { ...t, exit: t.target, exitDate: now.date, how: "Target hit" };
+  return t;
+}
+function drawPaper() {
+  const box = document.getElementById("paperSec");
+  box.hidden = state.tab !== "paper";
+  const board = new Map(everyone().map(x => [x.symbol, x]));
+  let L = paperAll(); const L2 = L.map(t => paperEval(t, board.get(t.sym)));
+  if (JSON.stringify(L2) !== JSON.stringify(L)) { L = L2; paperSave(L); } else paperSave(L);
+  if (box.hidden) return;
+  const head = el("div", { class: "sec-h" }, el("h2", { text: "Paper trades" }), el("span", { class: "hint", text: "Pretend money · saved on this phone only" }));
+  if (!L.length) return box.replaceChildren(head, el("div", { class: "panel" }, el("p", { class: "hint", style: "margin:0", text:
+    "No paper trades yet. Open any stock and tap Paper buy. It records today's price, the stop and the target, and each scan checks whether the stop or the target was reached first (on closing prices). Try it for 4 to 6 weeks before risking real money." })));
+  const R = t => (t.entry - t.stop) * t.qty;
+  const rows = L.slice().sort((a, b) => (!!a.exit - !!b.exit) || b.id - a.id).map(t => {
+    const b = board.get(t.sym), px = t.exit != null ? t.exit : b ? b.close : t.entry, pl = (px - t.entry) * t.qty, r = R(t) > 0 ? pl / R(t) : 0;
+    const st = t.exit != null ? t.how : "Open", col = t.exit == null ? "var(--ink2)" : pl >= 0 ? "var(--up)" : "var(--down)";
+    const upd = f => { paperSave(paperAll().map(x => x.id === t.id ? f(x) : x).filter(Boolean)); drawPaper(); };
+    return el("div", { class: "pp-row" },
+      el("header", {}, el("b", {}, b ? el("a", { href: "#" + t.sym, text: t.sym }) : t.sym), el("span", { class: "pp-st", style: `color:${col}`, text: st })),
+      el("div", { class: "num " + dir(pl), style: "font-weight:700", text: `${pl >= 0 ? "+" : "−"}${inr(Math.abs(pl), 0)} · ${pct(100 * (px / t.entry - 1))} · ${r >= 0 ? "+" : ""}${r.toFixed(1)}R` }),
+      el("div", { class: "hint", text: `${t.qty} sh bought ${fdate(t.date)} at ${inr(t.entry)} · stop ${fx(t.stop)} · target ${fx(t.target)} · ${t.exit != null ? `closed ${fdate(t.exitDate)} at ${inr(t.exit)}` : `now ${inr(px)}${b ? ` (${b.date})` : ""}`}` }),
+      el("div", { class: "hint", text: `${t.rule} · board call then: ${t.call}` }),
+      el("div", { class: "pp-act" }, t.exit == null && b ? el("button", { class: "pf-btn", text: "Sell now (pretend)", onclick: () => upd(x => ({ ...x, exit: b.close, exitDate: b.date, how: "Sold" })) }) : null,
+        el("button", { class: "pf-btn", text: "Remove", onclick: () => upd(() => null) })));
+  });
+  const done = L.filter(t => t.exit != null), wins = done.filter(t => t.exit > t.entry);
+  const plDone = done.reduce((a, t) => a + (t.exit - t.entry) * t.qty, 0), rDone = done.reduce((a, t) => a + (R(t) > 0 ? (t.exit - t.entry) * t.qty / R(t) : 0), 0);
+  const plOpen = L.filter(t => t.exit == null).reduce((a, t) => { const b = board.get(t.sym); return a + ((b ? b.close : t.entry) - t.entry) * t.qty; }, 0);
+  const kp = (l, v, sub, c) => el("div", {}, el("span", { class: "lbl", text: l }), el("b", { class: c || "", text: v }), sub ? el("span", { class: "hint", text: sub }) : null);
+  const sg = v => `${v >= 0 ? "+" : "−"}${inr(Math.abs(v), 0)}`;
+  box.replaceChildren(head,
+    el("div", { class: "panel" }, el("div", { class: "pf-kpis" },
+      kp("Closed trades", String(done.length), done.length ? `${wins.length} won · ${Math.round(100 * wins.length / done.length)}% win rate` : "none closed yet"),
+      kp("Closed profit / loss", sg(plDone), done.length ? `average ${(rDone / done.length).toFixed(2)}R per trade` : "", dir(plDone)),
+      kp("Open trades", String(L.length - done.length), `${sg(plOpen)} on paper right now`, dir(plOpen))),
+      el("p", { class: "hint", style: "margin:10px 0 0", text: "R = what you planned to risk (entry minus stop, times shares). A process that averages above 0R over 20 or more trades is working; one big win or loss tells you little. Judged on scan closing prices, so a real trade could fill differently. Practice only: no order is ever placed." })),
+    el("div", { class: "panel" }, ...rows));
+}
+
 function drawPF() {
   const box = document.getElementById("pfSec");
   box.hidden = state.tab !== "pf";
