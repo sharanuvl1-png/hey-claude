@@ -2,19 +2,9 @@
  "date": "2026-11-18",
  "alerts": [
   {
-   "id": "buyzone:JSWSTEEL:2026-11-18",
-   "title": "JSW Steel is in the buy zone",
-   "text": "JSW Steel moved from buy on dip to buy now at ₹1,315.9."
-  },
-  {
-   "id": "buyzone:SONACOMS:2026-11-18",
-   "title": "Sona BLW Precision Forgings is in the buy zone",
-   "text": "Sona BLW Precision Forgings moved from buy on dip to buy now at ₹889.0."
-  },
-  {
-   "id": "target:CEMPRO:2026-11-18",
-   "title": "Cemindia Projects reached its target",
-   "text": "Cemindia Projects closed at ₹1,354.4, at or above the target of ₹1,330.5."
+   "id": "news:M&M:1962a9b30c",
+   "title": "News: Mahindra & Mahindra",
+   "text": "Mars Finds Surprising Value in Personalized M&M’s"
   }
  ]
 }
