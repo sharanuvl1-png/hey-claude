@@ -730,12 +730,12 @@ def run(symbol, name, out):
             "ema50": float(last_bar["EMA50"]), "ema200": float(last_bar["EMA200"]),
             "closes": [round(float(v), 2) for v in d["df"]["Close"].iloc[-130:]],
             "close_dates": [ix.date().isoformat() for ix in d["df"].index[-130:]],
-            # last 90 daily bars for the in-browser candlestick chart
-            "bars": {"d": [ix.date().isoformat() for ix in d["df"].index[-90:]],
-                     **{k: [round(float(v), 2) for v in d["df"][col].iloc[-90:]]
-                        for k, col in (("o", "Open"), ("h", "High"), ("l", "Low"), ("c", "Close"), ("e", "EMA20"))},
-                     "v": [int(v) for v in d["df"]["Volume"].iloc[-90:]],
-                     "r": [None if v != v else round(float(v), 1) for v in d["df"]["RSI"].iloc[-90:]]},
+            # last 120 daily bars for the in-browser candlestick chart
+            "bars": {"d": [ix.date().isoformat() for ix in d["df"].index[-120:]],
+                     **{k: [round(float(v), 2) for v in d["df"][col].iloc[-120:]]
+                        for k, col in (("o", "Open"), ("h", "High"), ("l", "Low"), ("c", "Close"), ("e", "EMA20"), ("f", "EMA50"))},
+                     "v": [int(v) for v in d["df"]["Volume"].iloc[-120:]],
+                     "r": [None if v != v else round(float(v), 1) for v in d["df"]["RSI"].iloc[-120:]]},
             "volume_ratio": float(d["df"]["Volume"].iloc[-1] / max(1.0, d["df"]["Volume"].iloc[-51:-1].mean())),
             "rec": rec, "conf": conf, "grade": grade, "score": score, "reasons": reasons, "next": nxt,
             "setup": setup, "png": png, "md": md,

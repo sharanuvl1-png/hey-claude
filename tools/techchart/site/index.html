@@ -171,6 +171,12 @@ input::placeholder { color: var(--muted) }
 .kpi.en { border-color: rgba(76, 195, 255, .4) } .kpi.en .val { color: var(--dip) }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 15px; display: grid; gap: 10px }
 .srchart { width: 100%; height: auto; display: block }
+.lwc-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--line) }
+.lwc { width: 100%; height: 320px } .lwc.rsi { height: 96px; border-top: 1px solid var(--line) }
+.lwc-leg { padding: 6px 8px; min-height: 34px; background: #0b1020; border-bottom: 1px solid var(--line); font: 600 11px var(--mono); color: var(--ink2); display: flex; flex-wrap: wrap; gap: 2px 10px }
+.lwc-leg b { color: var(--ink) } .lwc-leg i { font-style: normal }
+.lwc-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.lwc-chips span { font: 700 11.5px var(--mono); padding: 3px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--cc) 50%, transparent); color: var(--cc); background: color-mix(in srgb, var(--cc) 10%, transparent) }
 .srchart text { font: 600 10.5px var(--mono); }
 .chartbox { display: block; background: #fff; border-radius: 18px; overflow: hidden; border: 1px solid var(--line2) }
 .ladder { width: 100%; height: 70px; display: block }
@@ -611,6 +617,77 @@ function srChart(s) {
     el("div", { class: "hint", text: `Last close ${fx(s.close)} is ${where}. Yellow band = entry, cyan lines = T1 (book profit) and T2, red line = exit / stop. Purple line = EMA 20.` }));
 }
 
+// Interactive swing chart (TradingView Lightweight Charts, self-hosted in vendor/): candles, EMA 20/50, volume,
+// RSI 14, and the trade levels as labelled price lines on the axis. Pinch / drag to zoom and pan; tap for OHLC.
+let LWC_P = null;
+const loadLWC = () => LWC_P || (LWC_P = new Promise((ok, no) => {
+  if (window.LightweightCharts) return ok(window.LightweightCharts);
+  const sc = document.createElement("script"); sc.src = "vendor/lightweight-charts.standalone.production.js";
+  sc.onload = () => (window.LightweightCharts ? ok(window.LightweightCharts) : no()); sc.onerror = () => { LWC_P = null; no(); };
+  document.head.append(sc);
+}));
+function proChart(s) {
+  const B = s.bars, L = s.levels || {}, T = s.targets || [];
+  if (!B || !B.c || B.c.length < 10 || !L.support) return srChart(s);
+  const vc = V[s.verdict] ? V[s.verdict].c : "#c7d0e6";
+  const chip = (t, c) => el("span", { style: `--cc:${c}`, text: t });
+  const chips = el("div", { class: "lwc-chips" }, chip(V[s.verdict] ? V[s.verdict].label : s.verdict, vc),
+    chip(`Entry ${fx(s.entry[0])}–${fx(s.entry[1])}`, "#fbbf24"), T[0] ? chip(`T1 book profit ${fx(T[0])}`, "#22d3ee") : null,
+    T[1] ? chip(`T2 ${fx(T[1])}`, "#22d3ee") : null, chip(`Stop ${fx(s.stop)}`, "#ff4d6d"));
+  const legend = el("div", { class: "lwc-leg" }), box = el("div", { class: "lwc" }), rbox = el("div", { class: "lwc rsi" });
+  const where = s.close >= L.resistance[0] ? "at resistance: a place to book profit, or wait for a close above it" : s.close <= L.support[1] ? "at support: the buy zone if it holds" : "between support and resistance";
+  const panel = el("div", { class: "panel" }, el("div", { class: "lbl", text: "Swing chart · daily · pinch or drag to zoom, tap for prices" }), chips,
+    el("div", { class: "lwc-wrap" }, legend, box, rbox),
+    el("div", { class: "hint", text: `Last close ${fx(s.close)} is ${where}. Purple = EMA 20, orange = EMA 50; price above both and both rising is the swing-trend filter. Labelled lines on the right: T2, T1, resistance, entry, support, stop.` }));
+  const build = LW => {
+    if (!box.isConnected) return;
+    const base = h => ({ height: h, width: box.clientWidth || 340, autoSize: false,
+      layout: { background: { type: "solid", color: "#0b1020" }, textColor: "#c7d0e6", fontSize: 11, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" },
+      grid: { vertLines: { color: "rgba(131,145,176,.07)" }, horzLines: { color: "rgba(131,145,176,.07)" } },
+      rightPriceScale: { borderColor: "#26304a", minimumWidth: 72 }, timeScale: { borderColor: "#26304a", rightOffset: 4, barSpacing: 5 },
+      crosshair: { mode: 0 }, localization: { priceFormatter: p => p.toLocaleString("en-IN", { maximumFractionDigits: 2 }) } });
+    const ch = LW.createChart(box, { ...base(320), timeScale: { ...base(0).timeScale, visible: false } });
+    const keep = [T[0], s.stop, L.support[1], L.resistance[0]].filter(Boolean);
+    const cs = ch.addCandlestickSeries({ upColor: "#16c784", downColor: "#ea3943", borderVisible: false, wickUpColor: "#16c784", wickDownColor: "#ea3943",
+      autoscaleInfoProvider: orig => { const r = orig(); if (!r || !r.priceRange) return r;
+        return { ...r, priceRange: { minValue: Math.min(r.priceRange.minValue, ...keep), maxValue: Math.max(r.priceRange.maxValue, ...keep) } }; } });
+    const bars = B.d.map((d, i) => ({ time: d, open: B.o[i], high: B.h[i], low: B.l[i], close: B.c[i] }));
+    cs.setData(bars);
+    cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.2 } });
+    const line = (k, color) => { if (!B[k]) return; const ls = ch.addLineSeries({ color, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+      ls.setData(B.d.map((d, i) => ({ time: d, value: B[k][i] })).filter(p => p.value != null)); };
+    line("e", "#a78bfa"); line("f", "#f59e0b");
+    if (B.v) { const vs = ch.addHistogramSeries({ priceScaleId: "vol", priceFormat: { type: "volume" }, lastValueVisible: false, priceLineVisible: false });
+      ch.priceScale("vol").applyOptions({ scaleMargins: { top: 0.84, bottom: 0 } });
+      vs.setData(B.d.map((d, i) => ({ time: d, value: B.v[i], color: B.c[i] >= B.o[i] ? "rgba(22,199,132,.45)" : "rgba(234,57,67,.45)" }))); }
+    const pl = (price, color, title, style = 2) => price && cs.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
+    pl(T[1], "#22d3ee", "T2", 1); pl(T[0], "#22d3ee", "T1 book"); pl(L.resistance[0], "#ea3943", "Resist", 0);
+    pl(s.entry[1], "#fbbf24", "Entry", 0); pl(L.support[1], "#38bdf8", "Support", 0); pl(s.stop, "#ea3943", "Stop");
+    // RSI pane, time-synced with the price pane.
+    const rc = LW.createChart(rbox, { ...base(96), layout: { ...base(0).layout, attributionLogo: false }, rightPriceScale: { borderColor: "#26304a", minimumWidth: 72, scaleMargins: { top: 0.08, bottom: 0.08 } } });
+    const rs = rc.addLineSeries({ color: "#c084fc", lineWidth: 1.5, priceLineVisible: false, lastValueVisible: true, autoscaleInfoProvider: () => ({ priceRange: { minValue: 15, maxValue: 85 } }) });
+    rs.setData(B.d.map((d, i) => ({ time: d, value: B.r ? B.r[i] : null })).filter(p => p.value != null));
+    for (const v of [70, 30]) rs.createPriceLine({ price: v, color: "#8391b0", lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: String(v) });
+    let sync = false;
+    const link = (a, b) => a.timeScale().subscribeVisibleLogicalRangeChange(r => { if (!r || sync) return; sync = true; b.timeScale().setVisibleLogicalRange(r); sync = false; });
+    link(ch, rc); link(rc, ch);
+    const n = bars.length; ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 75), to: n + 3 });
+    // OHLC legend like a trading terminal.
+    const show = i => { const b = bars[i]; if (!b) return; const chg = i ? 100 * (b.close / bars[i - 1].close - 1) : 0;
+      legend.replaceChildren(el("b", { text: s.symbol }), el("i", { text: fdate(b.time) }), el("i", { text: `O ${fx(b.open)}` }), el("i", { text: `H ${fx(b.high)}` }),
+        el("i", { text: `L ${fx(b.low)}` }), el("i", { class: dir(chg), text: `C ${fx(b.close)} ${pct(chg)}` }),
+        B.v ? el("i", { text: `Vol ${(B.v[i] / 1e5).toFixed(1)}L` }) : null, B.r && B.r[i] != null ? el("i", { text: `RSI ${Number(B.r[i]).toFixed(1)}` }) : null, B.e && B.e[i] != null ? el("i", { style: "color:#a78bfa", text: `EMA20 ${fx(B.e[i])}` }) : null, B.f && B.f[i] != null ? el("i", { style: "color:#f59e0b", text: `EMA50 ${fx(B.f[i])}` }) : null); };
+    show(n - 1);
+    const idx = new Map(bars.map((b, i) => [b.time, i]));
+    const onMove = p => { const t = p && p.time; const key = t && typeof t === "object" ? `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day).padStart(2, "0")}` : t;
+      show(key && idx.has(key) ? idx.get(key) : n - 1); };
+    ch.subscribeCrosshairMove(onMove); rc.subscribeCrosshairMove(onMove);
+    if (window.ResizeObserver) new ResizeObserver(() => { const w = box.clientWidth; if (w) { ch.applyOptions({ width: w }); rc.applyOptions({ width: w }); } }).observe(box);
+  };
+  setTimeout(() => loadLWC().then(build).catch(() => { const f = srChart(s); if (f && panel.isConnected) panel.replaceWith(f); }), 30);
+  return panel;
+}
+
 function sheet(s) {
   const v = V[s.verdict], b = s.breakout, fu = s.fundamentals;
   const sh = document.getElementById("sheet");
@@ -670,7 +747,7 @@ function sheet(s) {
         kpi("Entry zone", `${fx(s.entry[0])}–${fx(s.entry[1])}`, "en"), kpi("Stop-loss", fx(s.stop), "sl"), kpi("Target 1", fx(s.targets[0]), "tg"),
         kpi("Target 2", fx(s.targets[1]), "tg"), kpi("Target 3", fx(s.targets[2]), "tg"), kpi("RSI (14)", String(s.rsi))),
       el("div", { class: "panel" }, el("div", { class: "lbl", text: "Stop → entry → targets" }), ladder(s)),
-      srChart(s),
+      proChart(s),
       el("div", { class: "lbl", text: "Full technical chart" }),
       el("a", { class: "chartbox", href: fresh(s.chart), target: "_blank", rel: "noopener", "aria-label": "Open the chart full size" },
         el("img", { src: fresh(s.chart), alt: `${s.symbol} technical chart with EMAs, levels, MACD and RSI` })),
