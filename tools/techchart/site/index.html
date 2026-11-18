@@ -170,6 +170,14 @@ input::placeholder { color: var(--muted) }
 .kpi.tg { border-color: rgba(34, 229, 139, .35) } .kpi.tg .val { color: var(--up) }
 .kpi.en { border-color: rgba(76, 195, 255, .4) } .kpi.en .val { color: var(--dip) }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 15px; display: grid; gap: 10px }
+.srchart { width: 100%; height: auto; display: block }
+.lwc-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--line) }
+.lwc { width: 100%; height: 320px } .lwc.rsi { height: 96px; border-top: 1px solid var(--line) }
+.lwc-leg { padding: 6px 8px; min-height: 34px; background: #0b1020; border-bottom: 1px solid var(--line); font: 600 11px var(--mono); color: var(--ink2); display: flex; flex-wrap: wrap; gap: 2px 10px }
+.lwc-leg b { color: var(--ink) } .lwc-leg i { font-style: normal }
+.lwc-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.lwc-chips span { font: 700 11.5px var(--mono); padding: 3px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--cc) 50%, transparent); color: var(--cc); background: color-mix(in srgb, var(--cc) 10%, transparent) }
+.srchart text { font: 600 10.5px var(--mono); }
 .chartbox { display: block; background: #fff; border-radius: 18px; overflow: hidden; border: 1px solid var(--line2) }
 .ladder { width: 100%; height: 70px; display: block }
 .facts { display: grid; grid-template-columns: max-content 1fr; gap: 7px 16px; font-size: 13.5px; margin: 0 }
@@ -531,6 +539,155 @@ function ladder(s) {
   return svg;
 }
 
+// A phone-sized swing chart drawn in the browser: candles, EMA 20, support / resistance zones, the entry zone,
+// T1 / T2 (book profit) and the stop, plus volume and RSI panes. Every price label gets its own lane on the right.
+function srChart(s) {
+  const L = s.levels || {}, B = s.bars;
+  if (!L.support || !L.resistance) return null;
+  const bars = B && B.c && B.c.length > 10 ? B.c.map((c, i) => ({ d: B.d[i], o: B.o[i], h: B.h[i], l: B.l[i], c, v: B.v[i], e: B.e[i], r: B.r[i] }))
+    : (s.closes || []).slice(-90).map(c => ({ o: c, h: c, l: c, c }));
+  if (bars.length < 10) return null;
+  const n = bars.length, W = 360, PL = 4, PR = 236, P1 = [30, 210], P2 = [222, 262], P3 = [274, 322], H = 340;
+  const T = s.targets || [];
+  const lo0 = Math.min(...bars.map(b => b.l), L.strong_support[0], s.stop), hi0 = Math.max(...bars.map(b => b.h), L.resistance[1], T[0] || 0, T[1] || 0);
+  const pad = (hi0 - lo0) * 0.05, lo = lo0 - pad, hi = hi0 + pad;
+  const y = v => P1[1] - (v - lo) / (hi - lo) * (P1[1] - P1[0]), step = (PR - PL) / n, x = i => PL + (i + 0.5) * step;
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("class", "srchart"); svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", `${s.symbol} daily candles with support, resistance, entry, targets, stop, volume and RSI`);
+  const txt = (x0, y0, t, fill, a = {}) => { const e = svgEl(svg, "text", { x: x0, y: y0, fill, ...a }); e.textContent = t; return e; };
+  // Verdict badge and entry line at the top.
+  const vc = V[s.verdict] ? V[s.verdict].c : "#c7d0e6";
+  svgEl(svg, "rect", { x: PL, y: 4, width: 92, height: 18, rx: 9, fill: vc, "fill-opacity": .18, stroke: vc });
+  txt(PL + 46, 17, (V[s.verdict] ? V[s.verdict].label : s.verdict).toUpperCase(), vc, { "text-anchor": "middle", "font-weight": 800 });
+  txt(PL + 100, 17, `Entry ${fx(s.entry[0])}–${fx(s.entry[1])} · Stop ${fx(s.stop)}`, "#c7d0e6");
+  // Zones.
+  const band = (z, col, op) => svgEl(svg, "rect", { x: PL, width: PR - PL, y: y(z[1]), height: Math.max(2, y(z[0]) - y(z[1])), fill: col, "fill-opacity": op });
+  band(L.resistance, "#ff4d6d", .14); band(L.support, "#38bdf8", .14); band(L.strong_support, "#22e58b", .12);
+  band(s.entry, "#fbbf24", .22);
+  const hl = (v, col, dash) => svgEl(svg, "line", { x1: PL, x2: PR, y1: y(v), y2: y(v), stroke: col, "stroke-width": 1, "stroke-dasharray": dash });
+  if (T[0]) hl(T[0], "#22d3ee", "4 3"); if (T[1]) hl(T[1], "#22d3ee", "1 3"); hl(s.stop, "#ff4d6d", "4 3");
+  // Candles and EMA 20.
+  const cw = Math.max(1, step * 0.62);
+  bars.forEach((b, i) => {
+    const up = b.c >= b.o, col = up ? "#22e58b" : "#ff4d6d";
+    svgEl(svg, "line", { x1: x(i), x2: x(i), y1: y(b.h), y2: y(b.l), stroke: col, "stroke-width": .8 });
+    svgEl(svg, "rect", { x: x(i) - cw / 2, y: y(Math.max(b.o, b.c)), width: cw, height: Math.max(.8, Math.abs(y(b.o) - y(b.c))), fill: col });
+  });
+  if (bars[0].e != null) svgEl(svg, "polyline", { points: bars.map((b, i) => `${x(i).toFixed(1)},${y(b.e).toFixed(1)}`).join(" "), fill: "none", stroke: "#a78bfa", "stroke-width": 1.1 });
+  // Right-hand labels, nudged apart so none overlap.
+  const mid = z => (z[0] + z[1]) / 2;
+  const lab = [
+    T[1] && { v: T[1], t: `T2 ${fx(T[1])}`, c: "#22d3ee" },
+    T[0] && { v: T[0], t: `T1 book ${fx(T[0])}`, c: "#22d3ee" },
+    { v: mid(L.resistance), t: `Resist ${Math.round(L.resistance[0])}–${Math.round(L.resistance[1])}`, c: "#ff4d6d" },
+    { v: s.close, t: `Now ${fx(s.close)}`, c: "#eef2ff", bold: 1 },
+    { v: mid(s.entry), t: `Entry ${Math.round(s.entry[0])}–${Math.round(s.entry[1])}`, c: "#fbbf24" },
+    { v: mid(L.support), t: `Support ${Math.round(L.support[0])}–${Math.round(L.support[1])}`, c: "#38bdf8" },
+    { v: mid(L.strong_support), t: `Strong ${Math.round(L.strong_support[0])}–${Math.round(L.strong_support[1])}`, c: "#22e58b" },
+    { v: s.stop, t: `Exit/stop ${fx(s.stop)}`, c: "#ff4d6d" },
+  ].filter(Boolean).map(o => ({ ...o, y: y(o.v) })).sort((a, b) => a.y - b.y);
+  const gap = 12.5;
+  for (let k = 1; k < lab.length; k++) if (lab[k].y - lab[k - 1].y < gap) lab[k].y = lab[k - 1].y + gap;
+  const over = lab[lab.length - 1].y - (P1[1] + 4);
+  if (over > 0) { lab[lab.length - 1].y -= over; for (let k = lab.length - 2; k >= 0; k--) lab[k].y = Math.min(lab[k].y, lab[k + 1].y - gap); }
+  for (const o of lab) {
+    svgEl(svg, "line", { x1: PR, x2: PR + 7, y1: y(o.v), y2: o.y, stroke: o.c, "stroke-width": 1 });
+    txt(PR + 10, o.y + 3.5, o.t, o.c, o.bold ? { "font-weight": 800 } : {});
+  }
+  // Volume pane.
+  if (bars[0].v != null) {
+    const vmax = Math.max(...bars.map(b => b.v)) || 1;
+    bars.forEach((b, i) => { const hgt = (P2[1] - P2[0]) * b.v / vmax;
+      svgEl(svg, "rect", { x: x(i) - cw / 2, y: P2[1] - hgt, width: cw, height: hgt, fill: b.c >= b.o ? "#22e58b" : "#ff4d6d", "fill-opacity": .55 }); });
+    txt(PR + 10, P2[0] + 12, "Volume", "#8391b0"); txt(PR + 10, P2[0] + 25, `${s.volume_ratio}× avg today`, s.volume_ratio >= 1.5 ? "#fbbf24" : "#8391b0");
+  }
+  // RSI pane.
+  if (bars.some(b => b.r != null)) {
+    const yr = v => P3[1] - (v - 10) / 80 * (P3[1] - P3[0]);
+    for (const lv of [30, 70]) { svgEl(svg, "line", { x1: PL, x2: PR, y1: yr(lv), y2: yr(lv), stroke: "#8391b0", "stroke-width": .6, "stroke-dasharray": "3 3" }); txt(PR + 10, yr(lv) + 3.5, String(lv), "#8391b0"); }
+    svgEl(svg, "polyline", { points: bars.map((b, i) => b.r == null ? null : `${x(i).toFixed(1)},${yr(b.r).toFixed(1)}`).filter(Boolean).join(" "), fill: "none", stroke: "#c084fc", "stroke-width": 1.2 });
+    txt(PR + 32, yr(50) + 3.5, `RSI ${s.rsi}`, s.rsi >= 70 ? "#ff4d6d" : s.rsi <= 30 ? "#22e58b" : "#c084fc", { "font-weight": 800 });
+  }
+  // Month ticks.
+  if (bars[0].d) { let m = ""; bars.forEach((b, i) => { const mm = b.d.slice(0, 7); if (mm !== m) { if (m) { svgEl(svg, "line", { x1: x(i), x2: x(i), y1: P1[0], y2: P3[1], stroke: "#8391b0", "stroke-opacity": .15 });
+    txt(x(i) + 2, H - 4, new Date(b.d + "T00:00:00").toLocaleDateString("en-IN", { month: "short" }), "#8391b0"); } m = mm; } }); }
+  const where = s.close >= L.resistance[0] ? "at resistance: book profit or wait for a close above it" : s.close <= L.support[1] ? "at support: the buy zone if it holds" : "between support and resistance";
+  return el("div", { class: "panel" }, el("div", { class: "lbl", text: "Swing chart · last 90 days" }), svg,
+    el("div", { class: "hint", text: `Last close ${fx(s.close)} is ${where}. Yellow band = entry, cyan lines = T1 (book profit) and T2, red line = exit / stop. Purple line = EMA 20.` }));
+}
+
+// Interactive swing chart (TradingView Lightweight Charts, self-hosted in vendor/): candles, EMA 20/50, volume,
+// RSI 14, and the trade levels as labelled price lines on the axis. Pinch / drag to zoom and pan; tap for OHLC.
+let LWC_P = null;
+const loadLWC = () => LWC_P || (LWC_P = new Promise((ok, no) => {
+  if (window.LightweightCharts) return ok(window.LightweightCharts);
+  const sc = document.createElement("script"); sc.src = "vendor/lightweight-charts.standalone.production.js";
+  sc.onload = () => (window.LightweightCharts ? ok(window.LightweightCharts) : no()); sc.onerror = () => { LWC_P = null; no(); };
+  document.head.append(sc);
+}));
+function proChart(s) {
+  const B = s.bars, L = s.levels || {}, T = s.targets || [];
+  if (!B || !B.c || B.c.length < 10 || !L.support) return srChart(s);
+  const vc = V[s.verdict] ? V[s.verdict].c : "#c7d0e6";
+  const chip = (t, c) => el("span", { style: `--cc:${c}`, text: t });
+  const chips = el("div", { class: "lwc-chips" }, chip(V[s.verdict] ? V[s.verdict].label : s.verdict, vc),
+    chip(`Entry ${fx(s.entry[0])}–${fx(s.entry[1])}`, "#fbbf24"), T[0] ? chip(`T1 book profit ${fx(T[0])}`, "#22d3ee") : null,
+    T[1] ? chip(`T2 ${fx(T[1])}`, "#22d3ee") : null, chip(`Stop ${fx(s.stop)}`, "#ff4d6d"));
+  const legend = el("div", { class: "lwc-leg" }), box = el("div", { class: "lwc" }), rbox = el("div", { class: "lwc rsi" });
+  const where = s.close >= L.resistance[0] ? "at resistance: a place to book profit, or wait for a close above it" : s.close <= L.support[1] ? "at support: the buy zone if it holds" : "between support and resistance";
+  const panel = el("div", { class: "panel" }, el("div", { class: "lbl", text: "Swing chart · daily · pinch or drag to zoom, tap for prices" }), chips,
+    el("div", { class: "lwc-wrap" }, legend, box, rbox),
+    el("div", { class: "hint", text: `Last close ${fx(s.close)} is ${where}. Purple = EMA 20, orange = EMA 50; price above both and both rising is the swing-trend filter. Labelled lines on the right: T2, T1, resistance, entry, support, stop.` }));
+  const build = LW => {
+    if (!box.isConnected) return;
+    const base = h => ({ height: h, width: box.clientWidth || 340, autoSize: false,
+      layout: { background: { type: "solid", color: "#0b1020" }, textColor: "#c7d0e6", fontSize: 11, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" },
+      grid: { vertLines: { color: "rgba(131,145,176,.07)" }, horzLines: { color: "rgba(131,145,176,.07)" } },
+      rightPriceScale: { borderColor: "#26304a", minimumWidth: 72 }, timeScale: { borderColor: "#26304a", rightOffset: 4, barSpacing: 5 },
+      crosshair: { mode: 0 }, localization: { priceFormatter: p => p.toLocaleString("en-IN", { maximumFractionDigits: 2 }) } });
+    const ch = LW.createChart(box, { ...base(320), timeScale: { ...base(0).timeScale, visible: false } });
+    const keep = [T[0], s.stop, L.support[1], L.resistance[0]].filter(Boolean);
+    const cs = ch.addCandlestickSeries({ upColor: "#16c784", downColor: "#ea3943", borderVisible: false, wickUpColor: "#16c784", wickDownColor: "#ea3943",
+      autoscaleInfoProvider: orig => { const r = orig(); if (!r || !r.priceRange) return r;
+        return { ...r, priceRange: { minValue: Math.min(r.priceRange.minValue, ...keep), maxValue: Math.max(r.priceRange.maxValue, ...keep) } }; } });
+    const bars = B.d.map((d, i) => ({ time: d, open: B.o[i], high: B.h[i], low: B.l[i], close: B.c[i] }));
+    cs.setData(bars);
+    cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.2 } });
+    const line = (k, color) => { if (!B[k]) return; const ls = ch.addLineSeries({ color, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+      ls.setData(B.d.map((d, i) => ({ time: d, value: B[k][i] })).filter(p => p.value != null)); };
+    line("e", "#a78bfa"); line("f", "#f59e0b");
+    if (B.v) { const vs = ch.addHistogramSeries({ priceScaleId: "vol", priceFormat: { type: "volume" }, lastValueVisible: false, priceLineVisible: false });
+      ch.priceScale("vol").applyOptions({ scaleMargins: { top: 0.84, bottom: 0 } });
+      vs.setData(B.d.map((d, i) => ({ time: d, value: B.v[i], color: B.c[i] >= B.o[i] ? "rgba(22,199,132,.45)" : "rgba(234,57,67,.45)" }))); }
+    const pl = (price, color, title, style = 2) => price && cs.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
+    pl(T[1], "#22d3ee", "T2", 1); pl(T[0], "#22d3ee", "T1 book"); pl(L.resistance[0], "#ea3943", "Resist", 0);
+    pl(s.entry[1], "#fbbf24", "Entry", 0); pl(L.support[1], "#38bdf8", "Support", 0); pl(s.stop, "#ea3943", "Stop");
+    // RSI pane, time-synced with the price pane.
+    const rc = LW.createChart(rbox, { ...base(96), layout: { ...base(0).layout, attributionLogo: false }, rightPriceScale: { borderColor: "#26304a", minimumWidth: 72, scaleMargins: { top: 0.08, bottom: 0.08 } } });
+    const rs = rc.addLineSeries({ color: "#c084fc", lineWidth: 1.5, priceLineVisible: false, lastValueVisible: true, autoscaleInfoProvider: () => ({ priceRange: { minValue: 15, maxValue: 85 } }) });
+    rs.setData(B.d.map((d, i) => ({ time: d, value: B.r ? B.r[i] : null })).filter(p => p.value != null));
+    for (const v of [70, 30]) rs.createPriceLine({ price: v, color: "#8391b0", lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: String(v) });
+    let sync = false;
+    const link = (a, b) => a.timeScale().subscribeVisibleLogicalRangeChange(r => { if (!r || sync) return; sync = true; b.timeScale().setVisibleLogicalRange(r); sync = false; });
+    link(ch, rc); link(rc, ch);
+    const n = bars.length; ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 75), to: n + 3 });
+    // OHLC legend like a trading terminal.
+    const show = i => { const b = bars[i]; if (!b) return; const chg = i ? 100 * (b.close / bars[i - 1].close - 1) : 0;
+      legend.replaceChildren(el("b", { text: s.symbol }), el("i", { text: fdate(b.time) }), el("i", { text: `O ${fx(b.open)}` }), el("i", { text: `H ${fx(b.high)}` }),
+        el("i", { text: `L ${fx(b.low)}` }), el("i", { class: dir(chg), text: `C ${fx(b.close)} ${pct(chg)}` }),
+        B.v ? el("i", { text: `Vol ${(B.v[i] / 1e5).toFixed(1)}L` }) : null, B.r && B.r[i] != null ? el("i", { text: `RSI ${Number(B.r[i]).toFixed(1)}` }) : null, B.e && B.e[i] != null ? el("i", { style: "color:#a78bfa", text: `EMA20 ${fx(B.e[i])}` }) : null, B.f && B.f[i] != null ? el("i", { style: "color:#f59e0b", text: `EMA50 ${fx(B.f[i])}` }) : null); };
+    show(n - 1);
+    const idx = new Map(bars.map((b, i) => [b.time, i]));
+    const onMove = p => { const t = p && p.time; const key = t && typeof t === "object" ? `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day).padStart(2, "0")}` : t;
+      show(key && idx.has(key) ? idx.get(key) : n - 1); };
+    ch.subscribeCrosshairMove(onMove); rc.subscribeCrosshairMove(onMove);
+    if (window.ResizeObserver) new ResizeObserver(() => { const w = box.clientWidth; if (w) { ch.applyOptions({ width: w }); rc.applyOptions({ width: w }); } }).observe(box);
+  };
+  setTimeout(() => loadLWC().then(build).catch(() => { const f = srChart(s); if (f && panel.isConnected) panel.replaceWith(f); }), 30);
+  return panel;
+}
+
 function sheet(s) {
   const v = V[s.verdict], b = s.breakout, fu = s.fundamentals;
   const sh = document.getElementById("sheet");
@@ -590,6 +747,8 @@ function sheet(s) {
         kpi("Entry zone", `${fx(s.entry[0])}–${fx(s.entry[1])}`, "en"), kpi("Stop-loss", fx(s.stop), "sl"), kpi("Target 1", fx(s.targets[0]), "tg"),
         kpi("Target 2", fx(s.targets[1]), "tg"), kpi("Target 3", fx(s.targets[2]), "tg"), kpi("RSI (14)", String(s.rsi))),
       el("div", { class: "panel" }, el("div", { class: "lbl", text: "Stop → entry → targets" }), ladder(s)),
+      proChart(s),
+      el("div", { class: "lbl", text: "Full technical chart" }),
       el("a", { class: "chartbox", href: fresh(s.chart), target: "_blank", rel: "noopener", "aria-label": "Open the chart full size" },
         el("img", { src: fresh(s.chart), alt: `${s.symbol} technical chart with EMAs, levels, MACD and RSI` })),
       sizer(s),

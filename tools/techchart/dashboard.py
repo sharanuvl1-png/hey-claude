@@ -56,6 +56,7 @@ def summarise(r):
                    "touches": {"support": int(lv["immediate"][2]), "strong_support": int(lv["strong"][2]),
                                "resistance": int(lv["resistance"][2])}},
         "patterns": r["patterns"], "candles": r["candles"], "divergences": r["divergences"],
+        "bars": r.get("bars"),
         "closes": r["closes"], "volume_ratio": round(float(r.get("volume_ratio") or 0), 2),
         "chart": f"charts/{sym}.png", "report": f"reports/{sym}.md",
     }
