@@ -5,6 +5,14 @@ on:
     - cron: "45 5 * * 1-5"    # 11:15 IST
     - cron: "15 8 * * 1-5"    # 13:45 IST
     - cron: "50 10 * * 1-5"   # 16:20 IST, after the NSE close
+    # Back-up starts. GitHub's timer often starts scheduled runs late or skips them, so each scan has
+    # two spare starts at off-peak minutes; the "gate" job below lets only the first one through.
+    - cron: "7 6 * * 1-5"     # 11:37 IST
+    - cron: "31 6 * * 1-5"    # 12:01 IST
+    - cron: "37 8 * * 1-5"    # 14:07 IST
+    - cron: "3 9 * * 1-5"     # 14:33 IST
+    - cron: "13 11 * * 1-5"   # 16:43 IST
+    - cron: "41 11 * * 1-5"   # 17:11 IST
   workflow_dispatch:
   # Pull requests that change the board run a real scan as a check, without publishing.
   pull_request:
@@ -23,7 +31,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Scheduled starts only: skip when a scan was already saved in the last 75 minutes (the back-up
+  # starts above, or a late start of the same slot). Manual runs and pull requests always go ahead.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          run=true
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            last=$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/swing-history | cut -f1)
+            if [ -n "$last" ]; then
+              when=$(curl -fsS -H "Authorization: Bearer ${{ github.token }}" \
+                "https://api.github.com/repos/${{ github.repository }}/commits/$last" | python3 -c "import json,sys,datetime as d; print(int(d.datetime.fromisoformat(json.load(sys.stdin)['commit']['committer']['date'].replace('Z','+00:00')).timestamp()))" || echo 0)
+              age=$(( $(date +%s) - when ))
+              echo "Last saved scan was $((age / 60)) minutes ago."
+              [ "$age" -lt 4500 ] && run=false
+            fi
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+          echo "Run the scan: $run"
+
   build:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:

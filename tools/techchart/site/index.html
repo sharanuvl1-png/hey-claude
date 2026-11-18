@@ -230,6 +230,20 @@ input::placeholder { color: var(--muted) }
 .sr-rules div { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; font-size: 12.5px; color: var(--ink2) }
 .sr-rules b { display: block; font-size: 13px; color: var(--sc); margin-bottom: 3px }
 #srSec, #srSec > * { min-width: 0; max-width: 100% }
+#pfSec, #pfSec > * { min-width: 0; max-width: 100% }
+.pf-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px }
+.pf-kpis div { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px }
+.pf-kpis b { display: block; font-family: var(--mono); font-size: 18px; margin-top: 2px }
+.pf-mix { display: flex; height: 14px; border-radius: 999px; overflow: hidden; margin: 4px 0 8px }
+.pf-mix i { display: block }
+.pf-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink2) }
+.pf-leg span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; background: var(--c) }
+.pf-tips { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--ink2) } .pf-tips li + li { margin-top: 6px }
+.pf-name { text-align: left !important; white-space: normal !important; min-width: 140px }
+.pf-name small { display: block; color: var(--muted); font-size: 11px }
+.pf-ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.pf-ctl textarea { width: 100%; min-height: 90px; font: 12px var(--mono); background: var(--surface); color: var(--ink); border: 1px solid var(--line2); border-radius: 12px; padding: 8px }
+.pf-btn { border: 1px solid var(--line2); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer }
 .sr-track { display: block } .sr-track > * + * { margin-top: 10px }
 .sr-track summary { cursor: pointer; list-style: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px }
 .sr-track summary::-webkit-details-marker { display: none }
@@ -301,6 +315,7 @@ input::placeholder { color: var(--muted) }
         <button role="tab" id="tab-watch" aria-selected="false" data-tab="watch">★ Watchlist <b id="watchCount">0</b></button>
         <button role="tab" id="tab-track" aria-selected="false" data-tab="track">Track record</button>
         <button role="tab" id="tab-sr" aria-selected="false" data-tab="sr">Support &amp; Resistance <b id="srCount">–</b></button>
+        <button role="tab" id="tab-pf" aria-selected="false" data-tab="pf">My portfolio</button>
       </div>
       <div class="tabnote" id="tabnote"></div>
     </div>
@@ -311,6 +326,7 @@ input::placeholder { color: var(--muted) }
     </section>
     <section class="sec" id="trackSec" hidden></section>
     <section class="sec" id="srSec" hidden></section>
+    <section class="sec" id="pfSec" hidden></section>
     <section class="sec" id="topSec" hidden>
       <div class="sec-h"><h2 id="topTitle">Best setups right now</h2><span class="hint" id="topHint"></span></div>
       <div class="rail" id="top"></div>
@@ -416,7 +432,7 @@ const all = () => DATA.stocks.concat(sec("midcap"), sec("smallcap"));
 const srList = () => DATA.stocks.concat(sec("midcap"), sec("sr_midcap_more"));
 const everyone = () => all().concat(sec("sr_midcap_more"));
 const list = () => state.tab === "mid" ? sec("midcap") : state.tab === "small" ? sec("smallcap")
-  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
+  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" || state.tab === "pf" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
 const daysTo = iso => Math.round((new Date(iso + "T00:00:00+05:30") - new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30")) / 864e5);
 const fdate = iso => new Date(iso + "T00:00:00+05:30").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 function resultsChip(s) {
@@ -616,7 +632,7 @@ function sizer(s) {
 function drawChanges(st) {
   const box = document.getElementById("chgSec"), c = DATA.changes;
   const syms = new Set(st.map(s => s.symbol));
-  if (!c || state.tab === "track") { box.hidden = true; return; }
+  if (!c || state.tab === "track" || state.tab === "pf") { box.hidden = true; return; }
   const moves = c.moves.filter(m => syms.has(m.symbol)), bos = c.new_breakouts.filter(x => syms.has(x));
   box.hidden = false;
   const since = c.since ? new Date(c.since).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", hour: "numeric", minute: "2-digit" }) : null;
@@ -841,9 +857,9 @@ function setFilter(v) { state.filter = state.filter === v ? null : v; drawGrid()
 
 function drawTab() {
   if (state.tab === "track") state.filter = null;
-  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr";
+  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr" || state.tab === "pf";
   for (const id of ["fbar", "gridWrap"]) document.getElementById(id).hidden = track || srTab;
-  drawTrack(); drawSR(); drawChanges(st); drawHeat(srTab ? [] : st);
+  drawTrack(); drawSR(); drawPF(); drawChanges(st); drawHeat(srTab ? [] : st);
   for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === state.tab));
   document.getElementById("rank").hidden = !mid;
   if (!mid && state.sort === "rank") state.sort = "score";
@@ -854,11 +870,11 @@ function drawTab() {
   document.getElementById("tabnote").textContent = mid
     ? `The 20 strongest ${idx} stocks by your daily scan's ranking (trend + fundamentals + 6-month performance, ₹5 crore+ daily turnover), each run through the same swing-trading chart rules. #1 is the strongest.`
     : state.tab === "watch" ? "Stocks you starred, from every list. Saved on this phone only. Changes to their calls show up as alerts at the top."
-    : track ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
-  const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100", sr: "Nifty 100 + Midcap 30" }[state.tab];
+    : track || state.tab === "pf" ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
+  const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100", sr: "Nifty 100 + Midcap 30", pf: "Nifty 100" }[state.tab];
   document.getElementById("breadthLbl").textContent = `Breadth today · ${lbl}`;
   document.getElementById("mixLbl").textContent = `Final recommendation mix · ${lbl}`;
-  const stx = track ? DATA.stocks : st;
+  const stx = track || state.tab === "pf" ? DATA.stocks : st;
   const up = stx.filter(s => s.change_pct > 0).length, dn = stx.filter(s => s.change_pct < 0).length, fl = stx.length - up - dn, n = stx.length || 1;
   document.getElementById("adv").replaceChildren(el("span", { class: "up", text: String(up) }), el("span", { style: "color:var(--muted)", text: " / " }), el("span", { class: "down", text: String(dn) }));
   document.getElementById("breadth").replaceChildren(el("i", { style: `width:${100 * up / n}%;background:var(--up)` }), el("i", { style: `width:${100 * fl / n}%;background:var(--line2)` }), el("i", { style: `width:${100 * dn / n}%;background:var(--down)` }));
@@ -895,6 +911,87 @@ function drawTab() {
   e.hidden = !errs.length && !notes.length;
   e.textContent = [...notes, errs.length ? `No usable prices for ${errs.join(", ")}, so they are left out of this scan.` : ""].filter(Boolean).join(" ");
   drawGrid();
+}
+
+// ---- My portfolio: holdings live only in this phone's storage (sb.pf). Nothing personal is in this site or its repo.
+const PFC = { stocks: ["Stocks", "#0ea5e9"], funds: ["Mutual funds", "#10b981"], bonds: ["Bonds", "#6366f1"], gold: ["Gold bond", "#f59e0b"] };
+function pfLoad() { const p = store.get("pf", null); return p && Array.isArray(p.stocks) ? p : null; }
+function pfImport(text, msg) {
+  let p; try { p = JSON.parse(text); } catch { msg.textContent = "That isn't a holdings file I can read."; return; }
+  if (!p || !Array.isArray(p.stocks)) { msg.textContent = "That file has no holdings in it."; return; }
+  for (const k of ["funds", "bonds", "gold"]) p[k] = Array.isArray(p[k]) ? p[k] : [];
+  store.set("pf", p);
+  if (!pfLoad()) { msg.textContent = "This browser wouldn't save it (private mode?)."; return; }
+  drawPF();
+}
+function pfPicker() {
+  const msg = el("div", { class: "hint" });
+  const file = el("input", { type: "file", accept: ".json,application/json,text/plain" });
+  file.addEventListener("change", () => { const f = file.files && file.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => pfImport(String(r.result), msg); r.readAsText(f); });
+  const ta = el("textarea", { placeholder: "…or paste the holdings file's text here" });
+  return el("div", { class: "pf-ctl" }, file, ta, el("button", { class: "pf-btn", text: "Load pasted text", onclick: () => pfImport(ta.value, msg) }), msg);
+}
+function drawPF() {
+  const box = document.getElementById("pfSec");
+  box.hidden = state.tab !== "pf";
+  if (box.hidden) return;
+  const head = el("div", { class: "sec-h" }, el("h2", { text: "My portfolio" }), el("span", { class: "hint", text: "Saved only on this phone" }));
+  const p = pfLoad();
+  if (!p) return box.replaceChildren(head, el("div", { class: "panel" },
+    el("p", { class: "hint", style: "margin-top:0", text: "Load the holdings file Mehitha made from your CDSL statement. It stays in this phone's browser and is never uploaded, so the public board shows nothing of yours. Stocks the board scans get today's price and its call." }),
+    pfPicker()));
+  const board = new Map(everyone().map(s => [s.symbol, s]));
+  const st = p.stocks.map(h => { const b = board.get(h.sym); const now = b ? b.close : h.now || h.cas_price;
+    return { ...h, b, now, nowDate: b ? b.date : h.now_date || p.as_of, val: h.qty * now, chg: 100 * (now / h.cas_price - 1) }; });
+  const tot = { stocks: st.reduce((a, x) => a + x.val, 0), funds: p.funds.reduce((a, x) => a + x.value, 0), bonds: p.bonds.reduce((a, x) => a + x.value, 0), gold: p.gold.reduce((a, x) => a + x.value, 0) };
+  const T = Object.values(tot).reduce((a, x) => a + x, 0), T0 = st.reduce((a, x) => a + x.cas_value, 0) + tot.funds + tot.bonds + tot.gold;
+  const live = st.filter(x => x.b || x.now_date), l0 = live.reduce((a, x) => a + x.cas_value, 0), l1 = live.reduce((a, x) => a + x.val, 0);
+  const lakh = v => v >= 1e7 ? `₹${(v / 1e7).toFixed(2)} cr` : `₹${(v / 1e5).toFixed(2)} L`;
+  const kp = (l, v, sub, c) => el("div", {}, el("span", { class: "lbl", text: l }), el("b", { class: c || "", text: v }), sub ? el("span", { class: "hint", text: sub }) : null);
+  const kpis = el("div", { class: "pf-kpis" },
+    kp("Total now (est.)", lakh(T), `statement ${lakh(T0)} on ${fdate(p.as_of)}`),
+    kp("Stocks since statement", (l1 >= l0 ? "+" : "−") + inr(Math.abs(l1 - l0), 0), `${live.length} stocks with a fresh price · ${pct(l0 ? 100 * (l1 / l0 - 1) : 0)}`, dir(l1 - l0)),
+    kp("Bond interest a year", "≈ " + lakh(p.bonds.reduce((a, b) => a + (b.interest_yr || 0), 0)), `${p.bonds.length} bonds`));
+  const mix = el("div", { class: "pf-mix" }, ...Object.keys(PFC).filter(k => tot[k]).map(k => el("i", { style: `width:${100 * tot[k] / T}%;background:${PFC[k][1]}`, title: PFC[k][0] })));
+  const leg = el("div", { class: "pf-leg" }, ...Object.keys(PFC).filter(k => tot[k]).map(k => el("span", { style: `--c:${PFC[k][1]}`, text: `${PFC[k][0]} ${lakh(tot[k])} · ${(100 * tot[k] / T).toFixed(0)}%` })));
+  // Things worth a look, computed from the holdings themselves.
+  const tips = [], iss = {};
+  for (const b of p.bonds) iss[b.issuer || b.name] = (iss[b.issuer || b.name] || 0) + b.value;
+  const big = Object.entries(iss).filter(([, v]) => v / T > 0.05).sort((a, b) => b[1] - a[1]);
+  if (big.length) tips.push(`${big.length} bond issuer${big.length > 1 ? "s are" : " is"} over 5% of everything: ${big.map(([n, v]) => `${n} ${(100 * v / T).toFixed(0)}%`).join(", ")}. A default there would hurt, so check their latest ratings.`);
+  const soon = p.bonds.filter(b => daysTo(b.maturity) <= 365 && daysTo(b.maturity) > 0);
+  if (soon.length) tips.push(`Maturing within a year: ${soon.map(b => `${b.name} (${fdate(b.maturity)}, ${lakh(b.value)})`).join(", ")}. Plan where that money goes.`);
+  const tiny = st.filter(x => x.val < 5000);
+  if (tiny.length > 5) tips.push(`${tiny.length} of ${st.length} stocks are under ₹5,000 each (${inr(tiny.reduce((a, x) => a + x.val, 0), 0)} in all). Clearing them would make tracking easier.`);
+  const sc = st.filter(x => x.b), av = sc.filter(x => x.b.verdict === "AVOID").map(x => x.sym), dip = sc.filter(x => x.b.verdict === "BUY ON DIP" || x.b.verdict === "BUY NOW").map(x => x.sym);
+  if (av.length) tips.push(`The board's chart call is AVOID for ${av.join(", ")}, and Buy now or Buy on dip for ${dip.join(", ") || "none"}. That's a short-term swing read, not a long-term verdict.`);
+  const eq = (tot.stocks + tot.funds) / T;
+  tips.push(`Shares and equity funds are ${(100 * eq).toFixed(0)}% of your money, bonds ${(100 * tot.bonds / T).toFixed(0)}% and gold ${(100 * tot.gold / T).toFixed(0)}%.`);
+  const news = q => el("a", { href: `https://news.google.com/search?q=${encodeURIComponent(q + " share news")}&hl=en-IN&gl=IN&ceid=IN:en`, target: "_blank", rel: "noopener", text: "news" });
+  const th = hs => el("thead", {}, el("tr", {}, ...hs.map(h => el("th", { text: h }))));
+  const stRows = st.sort((a, b) => b.val - a.val).map(x => el("tr", {},
+    el("td", { class: "pf-name" }, x.b ? el("a", { href: "#" + x.sym, text: x.name }) : x.name, el("small", { text: `${x.sym} · ${x.qty} sh` })),
+    el("td", { class: "num", text: inr(x.val, 0) }), el("td", { class: "num", text: inr(x.now) }),
+    el("td", { class: "num " + dir(x.chg), text: pct(x.chg) }),
+    el("td", {}, x.b ? el("span", { class: "sig", style: `--sc:${V[x.b.verdict].c}`, text: V[x.b.verdict].label }) : el("span", { class: "hint", text: "not scanned" })),
+    el("td", {}, news(x.name))));
+  const fRows = p.funds.slice().sort((a, b) => b.value - a.value).map(f => el("tr", {}, el("td", { class: "pf-name" }, f.name, el("small", { text: f.cat || "" })),
+    el("td", { class: "num", text: inr(f.value, 0) }), el("td", { class: "num", text: (100 * f.value / T).toFixed(1) + "%" })));
+  const bRows = p.bonds.concat(p.gold.map(g => ({ ...g, issuer: "Govt of India (SGB)", coupon: 2.5, maturity: "2029-05-25", gold: 1 })))
+    .sort((a, b) => b.value - a.value).map(b => el("tr", {}, el("td", { class: "pf-name" }, b.name, el("small", { text: b.issuer || "" })),
+      el("td", { class: "num", text: b.coupon != null ? b.coupon.toFixed(2) + "%" : "–" }), el("td", { class: "num", text: b.maturity ? fdate(b.maturity) + " " + b.maturity.slice(0, 4) : "–" }),
+      el("td", { class: "num", text: inr(b.value, 0) }), el("td", { class: "num " + (b.value / T > 0.05 && !b.gold ? "down" : ""), text: (100 * b.value / T).toFixed(1) + "%" })));
+  const tbl = (hs, rows) => el("div", { class: "tablewrap" }, el("table", { class: "tr-table" }, th(hs), el("tbody", {}, ...rows)));
+  const replace = el("details", {}, el("summary", { class: "hint", style: "cursor:pointer", text: "Load a newer statement or remove from this phone" }),
+    pfPicker(), el("button", { class: "pf-btn", style: "margin-top:8px", text: "Remove my holdings from this phone", onclick: () => { try { localStorage.removeItem("sb.pf"); } catch {} drawPF(); } }));
+  box.replaceChildren(head,
+    el("div", { class: "panel" }, kpis, el("div", { class: "lbl", style: "margin-top:12px", text: "What it's made of" }), mix, leg),
+    el("div", { class: "panel" }, el("div", { class: "lbl", text: "Worth a look" }), el("ol", { class: "pf-tips" }, ...tips.map(t => el("li", { text: t })))),
+    el("div", { class: "panel" }, el("div", { class: "lbl", text: `Stocks (${st.length}) · price today where the board scans it, else ${fdate(p.as_of)}` }), tbl(["Stock", "Value", "Price", "Since stmt", "Board call", ""], stRows)),
+    el("div", { class: "panel" }, el("div", { class: "lbl", text: `Mutual funds (${p.funds.length}) · values as on ${fdate(p.as_of)}` }), tbl(["Fund", "Value", "Of total"], fRows)),
+    el("div", { class: "panel" }, el("div", { class: "lbl", text: `Bonds (${p.bonds.length}) and gold bond · values as on ${fdate(p.as_of)}` }), tbl(["Bond", "Coupon", "Matures", "Value", "Of total"], bRows)),
+    el("p", { class: "hint", text: `From ${p.source || "your statement"}. Prices may be delayed; fund and bond values change only when you load a newer statement. This is information, not advice: decisions are yours.` }),
+    replace);
 }
 
 function nextRefresh() {
