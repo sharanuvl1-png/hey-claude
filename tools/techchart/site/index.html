@@ -178,6 +178,7 @@ input::placeholder { color: var(--muted) }
 .lwc-tog { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 6px } .lwc-tog button { font: 700 11.5px var(--mono); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink2); cursor: pointer }
 .lwc-tog button[aria-pressed="true"] { color: var(--tc); border-color: color-mix(in srgb, var(--tc) 55%, transparent); background: color-mix(in srgb, var(--tc) 12%, transparent) }
 .lwc-tog button[aria-pressed="false"] { text-decoration: line-through; opacity: .6 }
+.pf-sr { display: block; font: 600 10.5px var(--mono); margin-top: 3px; white-space: nowrap }
 .lwc-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
 .lwc-chips span { font: 700 11.5px var(--mono); padding: 3px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--cc) 50%, transparent); color: var(--cc); background: color-mix(in srgb, var(--cc) 10%, transparent) }
 .srchart text { font: 600 10.5px var(--mono); }
@@ -441,7 +442,7 @@ const sec = k => (DATA[k] && DATA[k].stocks) || [];
 const all = () => DATA.stocks.concat(sec("midcap"), sec("smallcap"));
 // Support & Resistance tab: Nifty 100 plus the Midcap top 30 (the Midcap tab's 20 and ranks 21-30, which are only on this tab).
 const srList = () => DATA.stocks.concat(sec("midcap"), sec("sr_midcap_more"));
-const everyone = () => all().concat(sec("sr_midcap_more"));
+const everyone = () => all().concat(sec("sr_midcap_more"), sec("portfolio"));
 const list = () => state.tab === "mid" ? sec("midcap") : state.tab === "small" ? sec("smallcap")
   : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" || state.tab === "pf" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
 const daysTo = iso => Math.round((new Date(iso + "T00:00:00+05:30") - new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30")) / 864e5);
@@ -1190,7 +1191,8 @@ function drawPF() {
     el("td", { class: "pf-name" }, x.b ? el("a", { href: "#" + x.sym, text: x.name }) : x.name, el("small", { text: `${x.sym} · ${x.qty} sh` })),
     el("td", { class: "num", text: inr(x.val, 0) }), el("td", { class: "num", text: inr(x.now) }),
     el("td", { class: "num " + dir(x.chg), text: pct(x.chg) }),
-    el("td", {}, x.b ? el("span", { class: "sig", style: `--sc:${V[x.b.verdict].c}`, text: V[x.b.verdict].label }) : el("span", { class: "hint", text: "not scanned" })),
+    el("td", {}, x.b ? el("span", { class: "sig", style: `--sc:${V[x.b.verdict].c}`, text: V[x.b.verdict].label }) : el("span", { class: "hint", text: "not scanned" }),
+      x.b && x.b.levels && x.b.levels.support ? (g => el("small", { class: "pf-sr", style: `color:${SRS[g.k].c}`, text: "S/R: " + SRS[g.k].label }))(srSignal(x.b)) : null),
     el("td", {}, news(x.name))));
   const fRows = p.funds.slice().sort((a, b) => b.value - a.value).map(f => el("tr", {}, el("td", { class: "pf-name" }, f.name, el("small", { text: f.cat || "" })),
     el("td", { class: "num", text: inr(f.value, 0) }), el("td", { class: "num", text: (100 * f.value / T).toFixed(1) + "%" })));
@@ -1204,7 +1206,7 @@ function drawPF() {
   box.replaceChildren(head,
     el("div", { class: "panel" }, kpis, el("div", { class: "lbl", style: "margin-top:12px", text: "What it's made of" }), mix, leg),
     el("div", { class: "panel" }, el("div", { class: "lbl", text: "Worth a look" }), el("ol", { class: "pf-tips" }, ...tips.map(t => el("li", { text: t })))),
-    el("div", { class: "panel" }, el("div", { class: "lbl", text: `Stocks (${st.length}) · price today where the board scans it, else ${fdate(p.as_of)}` }), tbl(["Stock", "Value", "Price", "Since stmt", "Board call", ""], stRows)),
+    el("div", { class: "panel" }, el("div", { class: "lbl", text: `Stocks (${st.length}) · latest scanned price, else ${fdate(p.as_of)} · tap a name for its chart` }), tbl(["Stock", "Value", "Price", "Since stmt", "Swing call", ""], stRows)),
     el("div", { class: "panel" }, el("div", { class: "lbl", text: `Mutual funds (${p.funds.length}) · values as on ${fdate(p.as_of)}` }), tbl(["Fund", "Value", "Of total"], fRows)),
     el("div", { class: "panel" }, el("div", { class: "lbl", text: `Bonds (${p.bonds.length}) and gold bond · values as on ${fdate(p.as_of)}` }), tbl(["Bond", "Coupon", "Matures", "Value", "Of total"], bRows)),
     el("p", { class: "hint", text: `From ${p.source || "your statement"}. Prices may be delayed; fund and bond values change only when you load a newer statement. This is information, not advice: decisions are yours.` }),

@@ -252,6 +252,21 @@ def main():
     midcap = picks_section(MIDCAP_CSV, "Midcap 150", out, work, prices, args.skip_midcap,
                            extra=SR_MIDCAP - MIDCAP_PICKS, extra_out=sr_midcap_more)
     smallcap = picks_section(SMALLCAP_CSV, "Smallcap 250", out, work, prices, args.skip_midcap)
+    # The owner's holdings (site/pf.json) that none of the tabs above scan: same chart rules, shown only
+    # on the My portfolio tab. Not part of the history or track record.
+    portfolio = {"stocks": [], "errors": [], "notes": []}
+    try:
+        with open(os.path.join(HERE, "site", "pf.json"), encoding="utf-8") as f:
+            held = [h["sym"] for h in json.load(f).get("stocks", []) if h.get("sym")]
+    except (OSError, ValueError):
+        held = []
+    done = {r["symbol"] for r in rows + midcap["stocks"] + smallcap["stocks"] + sr_midcap_more["stocks"]}
+    todo = sorted({h.upper() for h in held} - done)
+    if todo and not args.limit:
+        prow, perr = analyse_all([t + ".NS" for t in todo], out, work, "Portfolio", prices)
+        for row in prow:
+            row["group"] = "pf"
+        portfolio.update(stocks=prow, errors=perr)
     shutil.rmtree(work, ignore_errors=True)
 
     # Sector (NSE's own industry column) and the next results date for every stock on the board.
@@ -304,14 +319,14 @@ def main():
             "market": None if market is None else {k: (round(v, 4) if isinstance(v, float) else bool(v)) for k, v in market.items()},
             "rules": {k: rules[k] for k in ("volume_multiple", "require_above_ema", "max_below_52w_high_pct") if k in rules},
             "stocks": rows, "errors": errors, "notes": notes, "midcap": midcap, "smallcap": smallcap,
-            "sr_midcap_more": sr_midcap_more, "changes": changes, "track_record": record,
+            "sr_midcap_more": sr_midcap_more, "portfolio": portfolio, "changes": changes, "track_record": record,
             "sr_track_record": sr_record}
     with open(os.path.join(out, "data.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
     if symbols:
         with open(os.path.join(out, "nifty100.txt"), "w", encoding="utf-8") as f:
             f.write("\n".join(symbols) + "\n")
-    print(f"{len(rows)} analysed, {len(errors)} failed; midcap {len(midcap['stocks'])} (+{len(sr_midcap_more['stocks'])} for S/R), smallcap {len(smallcap['stocks'])}; notes: {notes}")
+    print(f"{len(rows)} analysed, {len(errors)} failed; midcap {len(midcap['stocks'])} (+{len(sr_midcap_more['stocks'])} for S/R), smallcap {len(smallcap['stocks'])}, portfolio {len(portfolio['stocks'])}/{len(portfolio['stocks']) + len(portfolio['errors'])}; notes: {notes}")
     if not rows:
         sys.exit(1)
 
