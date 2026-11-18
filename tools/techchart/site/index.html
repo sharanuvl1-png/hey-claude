@@ -629,16 +629,18 @@ const loadLWC = () => LWC_P || (LWC_P = new Promise((ok, no) => {
 function proChart(s) {
   const B = s.bars, L = s.levels || {}, T = s.targets || [];
   if (!B || !B.c || B.c.length < 10 || !L.support) return srChart(s);
-  const vc = V[s.verdict] ? V[s.verdict].c : "#c7d0e6";
+  // Support & resistance rule only: buy zone = support, book profit = resistance, stop = bottom of support.
+  const g = srSignal(s), SG = SRS[g.k];
   const chip = (t, c) => el("span", { style: `--cc:${c}`, text: t });
-  const chips = el("div", { class: "lwc-chips" }, chip(V[s.verdict] ? V[s.verdict].label : s.verdict, vc),
-    chip(`Entry ${fx(s.entry[0])}–${fx(s.entry[1])}`, "#fbbf24"), T[0] ? chip(`T1 book profit ${fx(T[0])}`, "#22d3ee") : null,
-    T[1] ? chip(`T2 ${fx(T[1])}`, "#22d3ee") : null, chip(`Stop ${fx(s.stop)}`, "#ff4d6d"));
+  const chips = el("div", { class: "lwc-chips" }, chip(SG.label, SG.c),
+    chip(`Buy zone ${fx(L.support[0])}–${fx(L.support[1])}`, "#38bdf8"), chip(`Book profit ${fx(g.target)}`, "#22d3ee"),
+    chip(`Stop ${fx(g.stop)}`, "#ff4d6d"), g.rr != null ? chip(`Reward:risk ${fx(g.rr, 1)}×`, "#c7d0e6") : null,
+    chip(`Breakout above ${fx(L.resistance[1])}`, "#fbbf24"));
   const legend = el("div", { class: "lwc-leg" }), box = el("div", { class: "lwc" }), rbox = el("div", { class: "lwc rsi" });
   const where = s.close >= L.resistance[0] ? "at resistance: a place to book profit, or wait for a close above it" : s.close <= L.support[1] ? "at support: the buy zone if it holds" : "between support and resistance";
   const panel = el("div", { class: "panel" }, el("div", { class: "lbl", text: "Swing chart · daily · pinch or drag to zoom, tap for prices" }), chips,
     el("div", { class: "lwc-wrap" }, legend, box, rbox),
-    el("div", { class: "hint", text: `Last close ${fx(s.close)} is ${where}. Purple = EMA 20, orange = EMA 50; price above both and both rising is the swing-trend filter. Labelled lines on the right: T2, T1, resistance, entry, support, stop.` }));
+    el("div", { class: "hint", text: `${SG.label}: ${g.why}. ${SG.rule} Purple = EMA 20, orange = EMA 50 (trend filter). Lines on the right: breakout, resistance (book profit), support (buy zone), strong support, stop.` }));
   const build = LW => {
     if (!box.isConnected) return;
     const base = h => ({ height: h, width: box.clientWidth || 340, autoSize: false,
@@ -647,7 +649,7 @@ function proChart(s) {
       rightPriceScale: { borderColor: "#26304a", minimumWidth: 72 }, timeScale: { borderColor: "#26304a", rightOffset: 4, barSpacing: 5 },
       crosshair: { mode: 0 }, localization: { priceFormatter: p => p.toLocaleString("en-IN", { maximumFractionDigits: 2 }) } });
     const ch = LW.createChart(box, { ...base(320), timeScale: { ...base(0).timeScale, visible: false } });
-    const keep = [T[0], s.stop, L.support[1], L.resistance[0]].filter(Boolean);
+    const keep = [g.stop, L.support[0], L.resistance[1], L.strong_support[1]].filter(Boolean);
     const cs = ch.addCandlestickSeries({ upColor: "#16c784", downColor: "#ea3943", borderVisible: false, wickUpColor: "#16c784", wickDownColor: "#ea3943",
       autoscaleInfoProvider: orig => { const r = orig(); if (!r || !r.priceRange) return r;
         return { ...r, priceRange: { minValue: Math.min(r.priceRange.minValue, ...keep), maxValue: Math.max(r.priceRange.maxValue, ...keep) } }; } });
@@ -661,8 +663,8 @@ function proChart(s) {
       ch.priceScale("vol").applyOptions({ scaleMargins: { top: 0.84, bottom: 0 } });
       vs.setData(B.d.map((d, i) => ({ time: d, value: B.v[i], color: B.c[i] >= B.o[i] ? "rgba(22,199,132,.45)" : "rgba(234,57,67,.45)" }))); }
     const pl = (price, color, title, style = 2) => price && cs.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title });
-    pl(T[1], "#22d3ee", "T2", 1); pl(T[0], "#22d3ee", "T1 book"); pl(L.resistance[0], "#ea3943", "Resist", 0);
-    pl(s.entry[1], "#fbbf24", "Entry", 0); pl(L.support[1], "#38bdf8", "Support", 0); pl(s.stop, "#ea3943", "Stop");
+    pl(L.resistance[1], "#fbbf24", "Breakout", 1); pl(L.resistance[0], "#22d3ee", "Resist · book"); pl(L.support[1], "#38bdf8", "Support · buy", 0);
+    pl(L.strong_support[1], "#16c784", "Strong sup", 1); pl(g.stop, "#ea3943", "Stop");
     // RSI pane, time-synced with the price pane.
     const rc = LW.createChart(rbox, { ...base(96), layout: { ...base(0).layout, attributionLogo: false }, rightPriceScale: { borderColor: "#26304a", minimumWidth: 72, scaleMargins: { top: 0.08, bottom: 0.08 } } });
     const rs = rc.addLineSeries({ color: "#c084fc", lineWidth: 1.5, priceLineVisible: false, lastValueVisible: true, autoscaleInfoProvider: () => ({ priceRange: { minValue: 15, maxValue: 85 } }) });
@@ -747,8 +749,8 @@ function sheet(s) {
         kpi("Entry zone", `${fx(s.entry[0])}–${fx(s.entry[1])}`, "en"), kpi("Stop-loss", fx(s.stop), "sl"), kpi("Target 1", fx(s.targets[0]), "tg"),
         kpi("Target 2", fx(s.targets[1]), "tg"), kpi("Target 3", fx(s.targets[2]), "tg"), kpi("RSI (14)", String(s.rsi))),
       el("div", { class: "panel" }, el("div", { class: "lbl", text: "Stop → entry → targets" }), ladder(s)),
-      proChart(s),
-      el("div", { class: "lbl", text: "Full technical chart" }),
+      state.tab === "sr" ? proChart(s) : null,
+      state.tab === "sr" ? el("div", { class: "lbl", text: "Full technical chart" }) : null,
       el("a", { class: "chartbox", href: fresh(s.chart), target: "_blank", rel: "noopener", "aria-label": "Open the chart full size" },
         el("img", { src: fresh(s.chart), alt: `${s.symbol} technical chart with EMAs, levels, MACD and RSI` })),
       sizer(s),
