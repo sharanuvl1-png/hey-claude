@@ -101,7 +101,8 @@ def main():
     today = dt.date.today()
     more = (data.get("sr_midcap_more") or {}).get("stocks", [])
     picks = (data.get("midcap") or {}).get("stocks", []) + (data.get("smallcap") or {}).get("stocks", []) + more
-    stocks = data["stocks"] + picks
+    held = (data.get("portfolio") or {}).get("stocks", [])
+    stocks = data["stocks"] + picks + held
     probs, checked = [], 0
     for s in stocks:
         p = check_stock(s, today)
@@ -111,7 +112,7 @@ def main():
         checked += 1
         time.sleep(0.15)
     print(f"VALIDATION: checked {checked} stocks ({len(data['stocks'])} Nifty 100, "
-          f"{len((data.get('midcap') or {}).get('stocks', []))} midcap, {len((data.get('smallcap') or {}).get('stocks', []))} smallcap, {len(more)} midcap ranks 21-30 for S/R) "
+          f"{len((data.get('midcap') or {}).get('stocks', []))} midcap, {len((data.get('smallcap') or {}).get('stocks', []))} smallcap, {len(more)} midcap ranks 21-30 for S/R, {len(held)} portfolio-only) "
           f"against a fresh Yahoo Finance download")
     board = {s["symbol"]: s["close"] for s in stocks}
     for c in (data.get("track_record") or {}).get("recent", []) + (data.get("sr_track_record") or {}).get("recent", []):
