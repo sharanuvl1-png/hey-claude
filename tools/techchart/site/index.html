@@ -533,46 +533,82 @@ function ladder(s) {
   return svg;
 }
 
-// A plain, phone-sized support & resistance picture: closing prices, the three zones, and the trade lines,
-// with every price label in its own lane on the right so nothing overlaps the price or each other.
+// A phone-sized swing chart drawn in the browser: candles, EMA 20, support / resistance zones, the entry zone,
+// T1 / T2 (book profit) and the stop, plus volume and RSI panes. Every price label gets its own lane on the right.
 function srChart(s) {
-  const c = (s.closes || []).filter(v => v != null), L = s.levels || {};
-  if (c.length < 10 || !L.support || !L.resistance) return null;
-  const W = 360, H = 230, PL = 6, PR = 240, PT = 10, PB = 200;
-  const lo0 = Math.min(...c, L.strong_support[0], s.stop), hi0 = Math.max(...c, L.resistance[1], s.targets[0]);
-  const pad = (hi0 - lo0) * 0.06, lo = lo0 - pad, hi = hi0 + pad;
-  const y = v => PB - (v - lo) / (hi - lo) * (PB - PT), x = i => PL + i * (PR - PL) / (c.length - 1);
+  const L = s.levels || {}, B = s.bars;
+  if (!L.support || !L.resistance) return null;
+  const bars = B && B.c && B.c.length > 10 ? B.c.map((c, i) => ({ d: B.d[i], o: B.o[i], h: B.h[i], l: B.l[i], c, v: B.v[i], e: B.e[i], r: B.r[i] }))
+    : (s.closes || []).slice(-90).map(c => ({ o: c, h: c, l: c, c }));
+  if (bars.length < 10) return null;
+  const n = bars.length, W = 360, PL = 4, PR = 236, P1 = [30, 210], P2 = [222, 262], P3 = [274, 322], H = 340;
+  const T = s.targets || [];
+  const lo0 = Math.min(...bars.map(b => b.l), L.strong_support[0], s.stop), hi0 = Math.max(...bars.map(b => b.h), L.resistance[1], T[0] || 0, T[1] || 0);
+  const pad = (hi0 - lo0) * 0.05, lo = lo0 - pad, hi = hi0 + pad;
+  const y = v => P1[1] - (v - lo) / (hi - lo) * (P1[1] - P1[0]), step = (PR - PL) / n, x = i => PL + (i + 0.5) * step;
   const svg = document.createElementNS(NS, "svg");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("class", "srchart"); svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `${s.symbol}: support ${fx(L.support[0])} to ${fx(L.support[1])}, resistance ${fx(L.resistance[0])} to ${fx(L.resistance[1])}, last close ${fx(s.close)}`);
-  const zones = [[L.resistance, "#ff4d6d", "Resistance"], [L.support, "#38bdf8", "Support"], [L.strong_support, "#22e58b", "Strong support"]];
-  for (const [z, col] of zones) svgEl(svg, "rect", { x: PL, width: PR - PL, y: y(z[1]), height: Math.max(2, y(z[0]) - y(z[1])), fill: col, "fill-opacity": .16 });
-  const lines = [[s.targets[0], "#22d3ee", "T1", "3 3"], [L.breakout, "#c7d0e6", "Breakout", "5 4"], [s.stop, "#ff4d6d", "Stop", "2 3"]];
-  for (const [v, col, , dash] of lines) svgEl(svg, "line", { x1: PL, x2: PR, y1: y(v), y2: y(v), stroke: col, "stroke-width": 1, "stroke-dasharray": dash, "stroke-opacity": .8 });
-  svgEl(svg, "polyline", { points: c.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" "), fill: "none", stroke: "#eef2ff", "stroke-width": 1.6, "stroke-linejoin": "round" });
-  svgEl(svg, "circle", { cx: x(c.length - 1), cy: y(s.close), r: 3.5, fill: "#fbbf24" });
+  svg.setAttribute("aria-label", `${s.symbol} daily candles with support, resistance, entry, targets, stop, volume and RSI`);
+  const txt = (x0, y0, t, fill, a = {}) => { const e = svgEl(svg, "text", { x: x0, y: y0, fill, ...a }); e.textContent = t; return e; };
+  // Verdict badge and entry line at the top.
+  const vc = V[s.verdict] ? V[s.verdict].c : "#c7d0e6";
+  svgEl(svg, "rect", { x: PL, y: 4, width: 92, height: 18, rx: 9, fill: vc, "fill-opacity": .18, stroke: vc });
+  txt(PL + 46, 17, (V[s.verdict] ? V[s.verdict].label : s.verdict).toUpperCase(), vc, { "text-anchor": "middle", "font-weight": 800 });
+  txt(PL + 100, 17, `Entry ${fx(s.entry[0])}–${fx(s.entry[1])} · Stop ${fx(s.stop)}`, "#c7d0e6");
+  // Zones.
+  const band = (z, col, op) => svgEl(svg, "rect", { x: PL, width: PR - PL, y: y(z[1]), height: Math.max(2, y(z[0]) - y(z[1])), fill: col, "fill-opacity": op });
+  band(L.resistance, "#ff4d6d", .14); band(L.support, "#38bdf8", .14); band(L.strong_support, "#22e58b", .12);
+  band(s.entry, "#fbbf24", .22);
+  const hl = (v, col, dash) => svgEl(svg, "line", { x1: PL, x2: PR, y1: y(v), y2: y(v), stroke: col, "stroke-width": 1, "stroke-dasharray": dash });
+  if (T[0]) hl(T[0], "#22d3ee", "4 3"); if (T[1]) hl(T[1], "#22d3ee", "1 3"); hl(s.stop, "#ff4d6d", "4 3");
+  // Candles and EMA 20.
+  const cw = Math.max(1, step * 0.62);
+  bars.forEach((b, i) => {
+    const up = b.c >= b.o, col = up ? "#22e58b" : "#ff4d6d";
+    svgEl(svg, "line", { x1: x(i), x2: x(i), y1: y(b.h), y2: y(b.l), stroke: col, "stroke-width": .8 });
+    svgEl(svg, "rect", { x: x(i) - cw / 2, y: y(Math.max(b.o, b.c)), width: cw, height: Math.max(.8, Math.abs(y(b.o) - y(b.c))), fill: col });
+  });
+  if (bars[0].e != null) svgEl(svg, "polyline", { points: bars.map((b, i) => `${x(i).toFixed(1)},${y(b.e).toFixed(1)}`).join(" "), fill: "none", stroke: "#a78bfa", "stroke-width": 1.1 });
   // Right-hand labels, nudged apart so none overlap.
+  const mid = z => (z[0] + z[1]) / 2;
   const lab = [
-    { v: (L.resistance[0] + L.resistance[1]) / 2, t: `Resist ${Math.round(L.resistance[0])}–${Math.round(L.resistance[1])}`, c: "#ff4d6d" },
-    { v: (L.support[0] + L.support[1]) / 2, t: `Support ${Math.round(L.support[0])}–${Math.round(L.support[1])}`, c: "#38bdf8" },
-    { v: (L.strong_support[0] + L.strong_support[1]) / 2, t: `Strong ${Math.round(L.strong_support[0])}–${Math.round(L.strong_support[1])}`, c: "#22e58b" },
-    { v: s.close, t: `Now ${fx(s.close)}`, c: "#fbbf24" },
-    ...lines.map(([v, col, n]) => ({ v, t: `${n} ${fx(v)}`, c: col })),
-  ].map(o => ({ ...o, y: y(o.v) })).sort((a, b) => a.y - b.y);
-  const gap = 13;
-  for (let i = 1; i < lab.length; i++) if (lab[i].y - lab[i - 1].y < gap) lab[i].y = lab[i - 1].y + gap;
-  const over = lab[lab.length - 1].y - (H - 8);
-  if (over > 0) for (let i = lab.length - 1; i >= 0; i--) { lab[i].y -= over; if (i && lab[i].y - lab[i - 1].y >= gap) break; if (i) lab[i - 1].y = Math.min(lab[i - 1].y, lab[i].y - gap); }
+    T[1] && { v: T[1], t: `T2 ${fx(T[1])}`, c: "#22d3ee" },
+    T[0] && { v: T[0], t: `T1 book ${fx(T[0])}`, c: "#22d3ee" },
+    { v: mid(L.resistance), t: `Resist ${Math.round(L.resistance[0])}–${Math.round(L.resistance[1])}`, c: "#ff4d6d" },
+    { v: s.close, t: `Now ${fx(s.close)}`, c: "#eef2ff", bold: 1 },
+    { v: mid(s.entry), t: `Entry ${Math.round(s.entry[0])}–${Math.round(s.entry[1])}`, c: "#fbbf24" },
+    { v: mid(L.support), t: `Support ${Math.round(L.support[0])}–${Math.round(L.support[1])}`, c: "#38bdf8" },
+    { v: mid(L.strong_support), t: `Strong ${Math.round(L.strong_support[0])}–${Math.round(L.strong_support[1])}`, c: "#22e58b" },
+    { v: s.stop, t: `Exit/stop ${fx(s.stop)}`, c: "#ff4d6d" },
+  ].filter(Boolean).map(o => ({ ...o, y: y(o.v) })).sort((a, b) => a.y - b.y);
+  const gap = 12.5;
+  for (let k = 1; k < lab.length; k++) if (lab[k].y - lab[k - 1].y < gap) lab[k].y = lab[k - 1].y + gap;
+  const over = lab[lab.length - 1].y - (P1[1] + 4);
+  if (over > 0) { lab[lab.length - 1].y -= over; for (let k = lab.length - 2; k >= 0; k--) lab[k].y = Math.min(lab[k].y, lab[k + 1].y - gap); }
   for (const o of lab) {
-    svgEl(svg, "line", { x1: PR, x2: PR + 8, y1: y(o.v), y2: o.y, stroke: o.c, "stroke-width": 1 });
-    const t = svgEl(svg, "text", { x: PR + 11, y: o.y + 3.5, fill: o.c }); t.textContent = o.t;
+    svgEl(svg, "line", { x1: PR, x2: PR + 7, y1: y(o.v), y2: o.y, stroke: o.c, "stroke-width": 1 });
+    txt(PR + 10, o.y + 3.5, o.t, o.c, o.bold ? { "font-weight": 800 } : {});
   }
-  for (const [tx, anchor, label] of [[PL, "start", "6 months ago"], [PR, "end", "Latest close"]]) {
-    const t = svgEl(svg, "text", { x: tx, y: H - 12, fill: "#8391b0", "text-anchor": anchor }); t.textContent = label;
+  // Volume pane.
+  if (bars[0].v != null) {
+    const vmax = Math.max(...bars.map(b => b.v)) || 1;
+    bars.forEach((b, i) => { const hgt = (P2[1] - P2[0]) * b.v / vmax;
+      svgEl(svg, "rect", { x: x(i) - cw / 2, y: P2[1] - hgt, width: cw, height: hgt, fill: b.c >= b.o ? "#22e58b" : "#ff4d6d", "fill-opacity": .55 }); });
+    txt(PR + 10, P2[0] + 12, "Volume", "#8391b0"); txt(PR + 10, P2[0] + 25, `${s.volume_ratio}× avg today`, s.volume_ratio >= 1.5 ? "#fbbf24" : "#8391b0");
   }
-  const where = s.close > L.resistance[0] ? "at or above resistance" : s.close < L.support[1] && s.close >= L.support[0] ? "inside support" : s.close < L.support[0] ? "below support" : "between support and resistance";
-  return el("div", { class: "panel" }, el("div", { class: "lbl", text: "Support & resistance · simple view" }), svg,
-    el("div", { class: "hint", text: `Last close ${fx(s.close)} is ${where}. Shaded bands are the zones; dashed lines are T1, the breakout level and the stop.` }));
+  // RSI pane.
+  if (bars.some(b => b.r != null)) {
+    const yr = v => P3[1] - (v - 10) / 80 * (P3[1] - P3[0]);
+    for (const lv of [30, 70]) { svgEl(svg, "line", { x1: PL, x2: PR, y1: yr(lv), y2: yr(lv), stroke: "#8391b0", "stroke-width": .6, "stroke-dasharray": "3 3" }); txt(PR + 10, yr(lv) + 3.5, String(lv), "#8391b0"); }
+    svgEl(svg, "polyline", { points: bars.map((b, i) => b.r == null ? null : `${x(i).toFixed(1)},${yr(b.r).toFixed(1)}`).filter(Boolean).join(" "), fill: "none", stroke: "#c084fc", "stroke-width": 1.2 });
+    txt(PR + 32, yr(50) + 3.5, `RSI ${s.rsi}`, s.rsi >= 70 ? "#ff4d6d" : s.rsi <= 30 ? "#22e58b" : "#c084fc", { "font-weight": 800 });
+  }
+  // Month ticks.
+  if (bars[0].d) { let m = ""; bars.forEach((b, i) => { const mm = b.d.slice(0, 7); if (mm !== m) { if (m) { svgEl(svg, "line", { x1: x(i), x2: x(i), y1: P1[0], y2: P3[1], stroke: "#8391b0", "stroke-opacity": .15 });
+    txt(x(i) + 2, H - 4, new Date(b.d + "T00:00:00").toLocaleDateString("en-IN", { month: "short" }), "#8391b0"); } m = mm; } }); }
+  const where = s.close >= L.resistance[0] ? "at resistance: book profit or wait for a close above it" : s.close <= L.support[1] ? "at support: the buy zone if it holds" : "between support and resistance";
+  return el("div", { class: "panel" }, el("div", { class: "lbl", text: "Swing chart · last 90 days" }), svg,
+    el("div", { class: "hint", text: `Last close ${fx(s.close)} is ${where}. Yellow band = entry, cyan lines = T1 (book profit) and T2, red line = exit / stop. Purple line = EMA 20.` }));
 }
 
 function sheet(s) {
