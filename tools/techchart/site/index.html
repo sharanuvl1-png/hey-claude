@@ -1157,6 +1157,7 @@ function route() {
   const s = DATA && everyone().find(x => x.symbol === sym);
   const scrim = document.getElementById("scrim");
   if (s) {
+    noteOpened(s.symbol);
     lastFocus = lastFocus || document.activeElement;
     sheet(s); scrim.hidden = false; document.body.style.overflow = "hidden";
     document.getElementById("sheet").scrollTop = 0;
@@ -1295,6 +1296,37 @@ function paperEval(t, now) {
   if (now.close >= t.target) return { ...t, exit: t.target, exitDate: now.date, how: "Target hit" };
   return t;
 }
+// Automatic paper trades: the scan turns every new Buy now call into a pretend buy (that day's close, the
+// board's stop and T1) and judges it on later closes. Shares are sized here from the Position size settings.
+function autoPaperStats() {
+  const T = (DATA.track_record && DATA.track_record.auto_paper) || [], size = store.get("size", { cap: 100000, risk: 1 });
+  const rows = T.map(t => { const risk = t.entry - t.stop, qty = Math.max(1, Math.min(Math.floor(size.cap * size.risk / 100 / risk), Math.floor(size.cap / t.entry)));
+    const px = t.exit != null ? t.exit : t.now != null ? t.now : t.entry; return { ...t, qty, px, pl: (px - t.entry) * qty, r: (px - t.entry) / risk }; });
+  const done = rows.filter(t => t.exit != null), open = rows.filter(t => t.exit == null);
+  return { rows, done, open, wins: done.filter(t => t.pl > 0).length, plDone: done.reduce((a, t) => a + t.pl, 0), plOpen: open.reduce((a, t) => a + t.pl, 0),
+    avgR: done.length ? done.reduce((a, t) => a + t.r, 0) / done.length : null, since: rows.length ? rows[0].date : null };
+}
+function autoPaperPanel() {
+  const S = autoPaperStats(), sg = v => `${v >= 0 ? "+" : "−"}${inr(Math.abs(v), 0)}`;
+  const kp = (l, v, sub, c) => el("div", {}, el("span", { class: "lbl", text: l }), el("b", { class: c || "", text: v }), sub ? el("span", { class: "hint", text: sub }) : null);
+  const HOW = { stop: "Stop hit", target: "Target hit", time: "20 days, closed" };
+  if (!S.rows.length) return el("div", { class: "panel" }, el("div", { class: "lbl", text: "Automatic: every Buy now call" }),
+    el("p", { class: "hint", style: "margin:0", text: "Starts with the next scan: each new Buy now call becomes a pretend trade on its own." }));
+  const list = S.rows.slice().sort((a, b) => (a.exit != null) - (b.exit != null) || (b.exit_date || b.date).localeCompare(a.exit_date || a.date)).map(t =>
+    el("div", { class: "pp-row" },
+      el("header", {}, el("b", {}, el("a", { href: "#" + t.sym, text: t.sym })), el("span", { class: "pp-st", style: `color:${t.exit == null ? "var(--ink2)" : t.pl >= 0 ? "var(--up)" : "var(--down)"}`, text: t.exit == null ? "Open" : HOW[t.how] })),
+      el("div", { class: "num " + dir(t.pl), style: "font-weight:700", text: `${sg(t.pl)} · ${pct(100 * (t.px / t.entry - 1))} · ${t.r >= 0 ? "+" : ""}${t.r.toFixed(1)}R` }),
+      el("div", { class: "hint", text: `${t.qty} sh at ${inr(t.entry)} on ${fdate(t.date)} · stop ${fx(t.stop)} · target ${fx(t.target)} · ${t.exit != null ? `closed ${fdate(t.exit_date)} at ${inr(t.exit)}` : t.now != null ? `now ${inr(t.now)} (${fdate(t.now_date)})` : "no newer price yet"}` })));
+  const more = el("details", {}, el("summary", { class: "hint", style: "cursor:pointer;margin-top:8px", text: `Show all ${S.rows.length} automatic trades` }), ...list);
+  return el("div", { class: "panel" }, el("div", { class: "lbl", style: "margin-bottom:6px", text: `Automatic: every Buy now call since ${fdate(S.since)}` }),
+    el("div", { class: "pf-kpis" },
+      kp("Closed", String(S.done.length), S.done.length ? `${S.wins} won · ${Math.round(100 * S.wins / S.done.length)}% win rate` : "none closed yet"),
+      kp("Closed profit / loss", sg(S.plDone), S.avgR != null ? `average ${S.avgR.toFixed(2)}R per trade` : "", dir(S.plDone)),
+      kp("Open", String(S.open.length), `${sg(S.plOpen)} on paper right now`, dir(S.plOpen))),
+    el("p", { class: "hint", style: "margin:10px 0 0", text: `Added by the scan, not by you: each new Buy now call is bought at that day's close and sold at the first close at or below the stop, at or above target 1, or after 20 trading days. Shares follow your Position size settings (${inr(store.get("size", { cap: 100000, risk: 1 }).cap, 0)}, ${store.get("size", { cap: 100000, risk: 1 }).risk}% risk). Closing prices only. Pretend money: no order is ever placed.` }),
+    more);
+}
+
 function drawPaper() {
   const box = document.getElementById("paperSec");
   box.hidden = state.tab !== "paper";
@@ -1302,9 +1334,10 @@ function drawPaper() {
   let L = paperAll(); const L2 = L.map(t => paperEval(t, board.get(t.sym)));
   if (JSON.stringify(L2) !== JSON.stringify(L)) { L = L2; paperSave(L); } else paperSave(L);
   if (box.hidden) return;
-  const head = el("div", { class: "sec-h" }, el("h2", { text: "Paper trades" }), el("span", { class: "hint", text: "Pretend money · saved on this phone only" }));
-  if (!L.length) return box.replaceChildren(head, el("div", { class: "panel" }, el("p", { class: "hint", style: "margin:0", text:
-    "No paper trades yet. Open any stock and tap Paper buy. It records today's price, the stop and the target, and each scan checks whether the stop or the target was reached first (on closing prices). Try it for 4 to 6 weeks before risking real money." })));
+  const head = el("div", { class: "sec-h" }, el("h2", { text: "Paper trades" }), el("span", { class: "hint", text: "Pretend money · no real orders" }));
+  const auto = autoPaperPanel();
+  if (!L.length) return box.replaceChildren(head, auto, el("div", { class: "panel" }, el("div", { class: "lbl", text: "Your own paper trades" }), el("p", { class: "hint", style: "margin:0", text:
+    "None yet. Open any stock and tap Paper buy. It records today's price, the stop and the target, and each scan checks whether the stop or the target was reached first (on closing prices). Try it for 4 to 6 weeks before risking real money." })));
   const R = t => (t.entry - t.stop) * t.qty;
   const rows = L.slice().sort((a, b) => (!!a.exit - !!b.exit) || b.id - a.id).map(t => {
     const b = board.get(t.sym), px = t.exit != null ? t.exit : b ? b.close : t.entry, pl = (px - t.entry) * t.qty, r = R(t) > 0 ? pl / R(t) : 0;
@@ -1323,8 +1356,8 @@ function drawPaper() {
   const plOpen = L.filter(t => t.exit == null).reduce((a, t) => { const b = board.get(t.sym); return a + ((b ? b.close : t.entry) - t.entry) * t.qty; }, 0);
   const kp = (l, v, sub, c) => el("div", {}, el("span", { class: "lbl", text: l }), el("b", { class: c || "", text: v }), sub ? el("span", { class: "hint", text: sub }) : null);
   const sg = v => `${v >= 0 ? "+" : "−"}${inr(Math.abs(v), 0)}`;
-  box.replaceChildren(head,
-    el("div", { class: "panel" }, el("div", { class: "pf-kpis" },
+  box.replaceChildren(head, auto,
+    el("div", { class: "panel" }, el("div", { class: "lbl", style: "margin-bottom:6px", text: "Your own paper trades" }), el("div", { class: "pf-kpis" },
       kp("Closed trades", String(done.length), done.length ? `${wins.length} won · ${Math.round(100 * wins.length / done.length)}% win rate` : "none closed yet"),
       kp("Closed profit / loss", sg(plDone), done.length ? `average ${(rDone / done.length).toFixed(2)}R per trade` : "", dir(plDone)),
       kp("Open trades", String(L.length - done.length), `${sg(plOpen)} on paper right now`, dir(plOpen))),
@@ -1381,6 +1414,36 @@ function mood() {
   return { k, size, title: T[0], short: T[1] + (X && X.level !== "calm" && k === "up" ? ` ${vx}: use ${sizeTxt}.` : ""), tips, nf, vx, sizeTxt };
 }
 
+// Automatic watchlist for phone alerts: starred stocks, open paper trades and stocks opened in the last
+// 14 days. When the alerts topic is saved here, the list is posted to <topic>-watch on ntfy (a topic
+// nobody subscribes to, so it never buzzes); the next scan reads it and watches those stocks too.
+function noteOpened(sym) { const o = store.get("opened", {}); o[sym] = Date.now(); store.set("opened", o); syncWatch(); }
+function autoWatch() {
+  const o = store.get("opened", {}), cut = Date.now() - 14 * 864e5;
+  const opened = Object.entries(o).filter(([, t]) => t > cut).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([k]) => k);
+  return [...new Set([...WATCH, ...paperAll().filter(t => t.exit == null).map(t => t.sym), ...opened])].slice(0, 40).sort();
+}
+function syncWatch(force) {
+  const topic = store.get("ntfy", ""); if (!topic) return Promise.resolve(false);
+  const syms = autoWatch(), last = store.get("watchSync", {});
+  if (!force && JSON.stringify(last.syms) === JSON.stringify(syms) && Date.now() - (last.t || 0) < 6 * 36e5) return Promise.resolve(true);
+  return fetch(`https://ntfy.sh/${encodeURIComponent(topic)}-watch`, { method: "POST", body: JSON.stringify({ syms }) })
+    .then(r => { if (r.ok) store.set("watchSync", { syms, t: Date.now() }); return r.ok; }).catch(() => false);
+}
+function alertsPanel() {
+  const topic = store.get("ntfy", ""), syms = autoWatch(), last = store.get("watchSync", {});
+  const msg = el("div", { class: "hint", style: "margin-top:6px" });
+  const inp = el("input", { type: "text", value: topic, placeholder: "your ntfy topic name", autocomplete: "off", spellcheck: "false", style: "width:100%;margin-top:6px" });
+  const save = el("button", { class: "pf-btn", style: "margin-top:6px", text: topic ? "Update" : "Save", onclick: () => {
+    const t = inp.value.trim().replace(/^https?:\/\/ntfy\.sh\//, ""); if (!/^[A-Za-z0-9_-]{6,64}$/.test(t)) { msg.textContent = "Use the same topic name as in the ntfy app (letters, numbers, - or _)."; return; }
+    store.set("ntfy", t); msg.textContent = "Saving…"; syncWatch(true).then(ok => { msg.textContent = ok ? "Saved. The next scan will watch these stocks." : "Saved on this phone, but couldn't reach ntfy right now. It will retry next time."; }); } });
+  return el("div", { class: "panel" }, el("div", { class: "sec-h", style: "margin:0" }, el("h2", { style: "font-size:17px", text: "Phone alerts" }), el("span", { class: "hint", text: topic ? `watching ${syms.length}` : "" })),
+    el("p", { class: "hint", style: "margin:4px 0", text: "Pushes come for: your holdings (support or stop broken, target 1 reached, results within 3 days); Buy now calls where both rules agree and the market is strong (max 3 a day); volume breakouts after the close (max 3 a day); and a morning summary before 9:15. Nothing between 9 PM and 7 AM." }),
+    el("p", { class: "hint", style: "margin:4px 0", text: syms.length ? `Also watched automatically (starred, paper traded or opened in the last 14 days): ${syms.join(", ")}.${last.t ? ` Last sent ${new Date(last.t).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}.` : ""}` : "Star, paper trade or open a stock and it's watched automatically: you'll hear when it enters its buy zone, turns Buy now or breaks support." }),
+    topic ? null : el("p", { class: "hint", style: "margin:4px 0", text: "To switch on the automatic watchlist, type the topic name you subscribed to in the ntfy app once:" }),
+    inp, save, msg);
+}
+
 function drawHome() {
   const box = document.getElementById("homeSec");
   box.hidden = state.tab !== "home";
@@ -1430,14 +1493,17 @@ function drawHome() {
   }
   const L = paperAll(), openT = L.filter(t => t.exit == null);
   const pl = openT.reduce((a, t) => { const b = everyone().find(x => x.symbol === t.sym); return a + ((b ? b.close : t.entry) - t.entry) * t.qty; }, 0);
-  kids.push(panel("Paper trades", L.length ? `${openT.length} open · ${pl >= 0 ? "+" : "−"}${inr(Math.abs(pl), 0)} on paper` : "",
-    el("p", { class: "hint", text: L.length ? `${L.length - openT.length} closed so far. Practise for 4 to 6 weeks before using real money.` : "None yet. Open any stock and tap Paper buy to practise with pretend money." }),
+  const AP = autoPaperStats(), sgn = v => `${v >= 0 ? "+" : "−"}${inr(Math.abs(v), 0)}`;
+  kids.push(panel("Paper trades", L.length ? `${openT.length} open · ${sgn(pl)} on paper` : "",
+    AP.rows.length ? el("p", { class: "hint", text: `Automatic (every Buy now call): ${AP.open.length} open (${sgn(AP.plOpen)}), ${AP.done.length} closed${AP.done.length ? ` with ${AP.wins} won, ${sgn(AP.plDone)}` : ""}.` }) : null,
+    el("p", { class: "hint", text: L.length ? `Yours: ${L.length - openT.length} closed so far. Practise for 4 to 6 weeks before using real money.` : "Yours: none yet. Open any stock and tap Paper buy to practise with pretend money." }),
     link("Open Paper trades", "paper")));
   const t = DATA.track_record, r = t && t.by_verdict && t.by_verdict["BUY NOW"], o = r && r.outcomes, d = r && (r["10"] || r["5"]);
   kids.push(panel("How the Buy now calls have done", t && t.since ? `since ${fdate(t.since)}` : "",
     el("p", { class: "hint", text: o || d ? [o ? `${o.target} reached the target first, ${o.stopped} hit the stop first, ${o.neither} still open` : "", d ? `${d.win}% were up after ${r["10"] ? 10 : 5} trading days (avg ${d.avg > 0 ? "+" : ""}${d.avg}%)` : ""].filter(Boolean).join(". ") + ". Trust grows after 20+ scored calls."
       : "Every call is saved and scored 5, 10 and 20 trading days later. The first results appear about a week after the record started." }),
     link("Open Track record", "track")));
+  kids.push(alertsPanel());
   box.replaceChildren(...kids);
 }
 
@@ -1552,7 +1618,7 @@ function drawAsOf(data, date) {
 setInterval(() => { if (DATA) drawAsOf(DATA, [...new Set(DATA.stocks.map(s => s.date))].sort().reverse()[0]); }, 60000);
 
 function render(data) {
-  DATA = data;
+  DATA = data; setTimeout(() => syncWatch(), 3000);
   data.midcap = data.midcap || { stocks: [], errors: [], notes: ["Midcap picks are not in this scan yet."] };
   data.midcap.stocks.forEach((s, i) => { s.rank = i + 1; });
   data.smallcap = data.smallcap || { stocks: [], errors: [], notes: ["Smallcap picks start with the next scan."] };
