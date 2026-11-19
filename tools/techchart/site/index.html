@@ -182,6 +182,16 @@ input::placeholder { color: var(--muted) }
 .lwc-tog button[aria-pressed="true"] { color: var(--tc); border-color: color-mix(in srgb, var(--tc) 55%, transparent); background: color-mix(in srgb, var(--tc) 12%, transparent) }
 .lwc-tog button[aria-pressed="false"] { text-decoration: line-through; opacity: .6 }
 .pf-sr { display: block; font: 600 10.5px var(--mono); margin-top: 3px; white-space: nowrap }
+.lwc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap }
+.lwc-mode { display: inline-flex; border: 1px solid var(--line2); border-radius: 999px; overflow: hidden }
+.lwc-mode button { font: 700 12px var(--sans, inherit); padding: 5px 14px; border: 0; background: transparent; color: var(--ink2); cursor: pointer }
+.lwc-mode button[aria-pressed="true"] { background: var(--brand2, #38bdf8); color: #06101f }
+.lwc-say { margin: 10px 0; padding: 10px 12px; border-left: 4px solid var(--cc); background: color-mix(in srgb, var(--cc) 8%, transparent); border-radius: 8px; font-size: 14.5px; line-height: 1.5; color: var(--ink) }
+.lwc-say b { color: var(--cc) }
+.lwc-key { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0 6px; font-size: 12px; color: var(--ink2) }
+.lwc-key span::before { content: ""; display: inline-block; width: 14px; height: 10px; margin-right: 6px; vertical-align: -1px; border-radius: 3px; background: var(--kc) }
+.lwc-key span.ln::before { height: 2px; vertical-align: 3px; border-radius: 0 }
+.lwc-zone { position: absolute; left: 0; pointer-events: none; border-top: 1px dashed; border-bottom: 1px dashed; z-index: 2 }
 .lwc-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
 .lwc-chips span { font: 700 11.5px var(--mono); padding: 3px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--cc) 50%, transparent); color: var(--cc); background: color-mix(in srgb, var(--cc) 10%, transparent) }
 .srchart text { font: 600 10.5px var(--mono); }
@@ -682,9 +692,24 @@ function proChart(s) {
     chip(`Stop ${fx(stp)}`, "#ff4d6d"), rr != null ? chip(`Reward:risk ${fx(rr, 1)}×`, "#c7d0e6") : null,
     bo ? chip(`Broke out above ${fx(L.resistance[1])}`, "#fbbf24") : chip(`Breakout above ${fx(L.resistance[1])}`, "#fbbf24"));
   // Indicator switches, remembered on this phone.
-  const IND = [["e", "EMA 20", "#a78bfa"], ["f", "EMA 50", "#f59e0b"], ["g", "EMA 200", "#94a3b8"], ["v", "Volume", "#16c784"], ["r", "RSI", "#c084fc"], ["lv", "Levels", "#fbbf24"]];
+  // Simple (default): candles, shaded buy / take-profit zones, stop and target. Pro: plus EMAs, volume, RSI, Supertrend.
+  const pro = store.get("chartPro", false);
+  const IND = [["e", "EMA 20", "#a78bfa"], ["f", "EMA 50", "#f59e0b"], ["g", "EMA 200", "#94a3b8"], ["v", "Volume", "#16c784"], ["r", "RSI", "#c084fc"], ["st", "Supertrend", "#22c55e"], ["lv", "Levels", "#fbbf24"]];
   let on = {}; try { on = JSON.parse(localStorage.getItem("sb.ind") || "{}") || {}; } catch (e) { on = {}; }
-  const isOn = k => on[k] !== false, apply = {};
+  const isOn = k => k === "st" ? on.st === true : on[k] !== false, apply = {};
+  const show = k => pro ? isOn(k) : k === "lv";
+  let panel;
+  const modeBtn = (t, v) => el("button", { type: "button", "aria-pressed": String(pro === v), text: t, onclick: () => { if (pro === v) return; store.set("chartPro", v); const np = proChart(s); panel.replaceWith(np); } });
+  const modes = el("div", { class: "lwc-mode", role: "group", "aria-label": "Chart detail" }, modeBtn("Simple", false), modeBtn("Pro", true));
+  // One plain-English line: where the price is against the zones, and the plan.
+  const c = s.close, pctTo = (a, b) => fx(Math.abs(100 * (a - b) / b), 1);
+  const plan = `Stop ${inr(stp)}, ${bo ? "target" : "take profit near"} ${inr(tgt)}` + (rr != null ? `, so you risk ₹1 to make ₹${fx(rr, 1)}.` : ".");
+  const say = bo ? (c > zone[1] ? `${inr(c)} broke out above ${inr(L.resistance[1])}. Best entry is a pullback into ${inr(zone[0])}–${inr(zone[1])} (the old ceiling, now the floor). ${plan}` : `${inr(c)} is back at the old ceiling ${inr(zone[0])}–${inr(zone[1])}, the pullback buy zone after the breakout. ${plan}`)
+    : c < zone[0] ? `${inr(c)} is ${pctTo(zone[0], c)}% below the buy zone (${inr(zone[0])}–${inr(zone[1])}): support broke. Stay out until it closes back above ${inr(zone[1])}.`
+    : c <= zone[1] ? `${inr(c)} is inside the buy zone (${inr(zone[0])}–${inr(zone[1])}).${g.k === "care" ? " Careful: " + g.why.toLowerCase() + ", so wait for a bounce first." : ""} ${plan}`
+    : c >= L.resistance[0] ? `${inr(c)} is at the take-profit zone (${inr(L.resistance[0])}–${inr(L.resistance[1])}). Book profit if you hold it; buy only on a close above ${inr(L.resistance[1])} with volume.`
+    : `${inr(c)} is ${pctTo(c, zone[1])}% above the buy zone (${inr(zone[0])}–${inr(zone[1])}) and ${pctTo(L.resistance[0], c)}% below the take-profit zone. ${g.k === "buy" ? "Close enough to buy by the rule. " + plan : "Wait for a dip into the buy zone. " + plan}`;
+  const sentence = el("p", { class: "lwc-say", style: `--cc:${SG.c}` }, el("b", { text: SG.label + ". " }), say);
   const tog = el("div", { class: "lwc-tog", role: "group", "aria-label": "Show or hide indicators" }, ...IND.map(([k, t, c]) => {
     const b = el("button", { type: "button", style: `--tc:${c}`, "aria-pressed": String(isOn(k)), text: t });
     b.addEventListener("click", () => { on[k] = !isOn(k); b.setAttribute("aria-pressed", String(isOn(k)));
@@ -692,9 +717,13 @@ function proChart(s) {
     return b; }));
   const legend = el("div", { class: "lwc-leg" }), box = el("div", { class: "lwc" }), rbox = el("div", { class: "lwc rsi" });
   const where = s.close >= L.resistance[0] ? "at resistance: a place to book profit, or wait for a close above it" : s.close <= L.support[1] ? "at support: the buy zone if it holds" : "between support and resistance";
-  const panel = el("div", { class: "panel" }, el("div", { class: "lbl", text: "Support & resistance chart · daily, up to 2 years · pinch or drag to zoom, tap for prices" }), chips, srLadder(s, { g, zone, tgt, stp, bo }),
-    tog, el("div", { class: "lwc-wrap" }, legend, box, rbox),
-    el("div", { class: "hint", text: `${SG.label}: ${g.why}. ${SG.rule} Purple = EMA 20, orange = EMA 50, grey = EMA 200 (trend filters). Tap the buttons above the chart to switch indicators on or off. Scroll left for up to 2 years of history.` }));
+  const key = el("div", { class: "lwc-key" }, el("span", { style: "--kc:rgba(22,199,132,.35)", text: bo ? "Pullback buy zone" : "Buy zone" }),
+    bo ? null : el("span", { style: "--kc:rgba(56,189,248,.35)", text: "Take-profit zone" }), el("span", { class: "ln", style: "--kc:#ea3943", text: "Stop" }), el("span", { class: "ln", style: "--kc:#22d3ee", text: bo ? "Target" : "Book profit" }));
+  panel = el("div", { class: "panel" }, el("div", { class: "lwc-top" }, el("div", { class: "lbl", text: "Support & resistance chart · daily, up to 2 years" }), modes), sentence,
+    pro ? chips : null, srLadder(s, { g, zone, tgt, stp, bo }),
+    pro ? tog : null, key, el("div", { class: "lwc-wrap" }, legend, box, rbox),
+    el("div", { class: "hint", text: pro ? `${SG.label}: ${g.why}. ${SG.rule} Purple = EMA 20, orange = EMA 50, grey = EMA 200 (trend filters). Supertrend (10, 3) is green under the price in an uptrend and red above it in a downtrend; a close below the green line is a trailing-stop exit. Tap the buttons to switch indicators on or off.`
+      : `${SG.rule} Pinch or drag to zoom, tap a candle for its prices, scroll left for up to 2 years. Switch to Pro for EMAs, volume, RSI and Supertrend.` }));
   const build = LW => {
     if (!box.isConnected) return;
     const base = h => ({ height: h, width: box.clientWidth || 340, autoSize: false,
@@ -706,25 +735,50 @@ function proChart(s) {
     const keep = [stp, zone[0], L.resistance[1], L.support[1]].filter(Boolean);
     const cs = ch.addCandlestickSeries({ upColor: "#16c784", downColor: "#ea3943", borderVisible: false, wickUpColor: "#16c784", wickDownColor: "#ea3943",
       autoscaleInfoProvider: orig => { const r = orig(); if (!r || !r.priceRange) return r;
-        const k2 = isOn("lv") ? keep : [];
+        const k2 = show("lv") ? keep : [];
         return { ...r, priceRange: { minValue: Math.min(r.priceRange.minValue, ...k2), maxValue: Math.max(r.priceRange.maxValue, ...k2) } }; } });
     const bars = B.d.map((d, i) => ({ time: d, open: B.o[i], high: B.h[i], low: B.l[i], close: B.c[i] }));
     cs.setData(bars);
     cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.2 } });
     const line = (k, color) => { if (!B[k]) return; const ls = ch.addLineSeries({ color, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
       ls.setData(B.d.map((d, i) => ({ time: d, value: B[k][i] })).filter(p => p.value != null));
-      apply[k] = v => ls.applyOptions({ visible: v }); apply[k](isOn(k)); };
+      apply[k] = v => ls.applyOptions({ visible: v }); apply[k](show(k)); };
     line("e", "#a78bfa"); line("f", "#f59e0b"); line("g", "#94a3b8");
     if (B.v) { const vs = ch.addHistogramSeries({ priceScaleId: "vol", priceFormat: { type: "volume" }, lastValueVisible: false, priceLineVisible: false });
       ch.priceScale("vol").applyOptions({ scaleMargins: { top: 0.84, bottom: 0 } });
       vs.setData(B.d.map((d, i) => ({ time: d, value: B.v[i], color: B.c[i] >= B.o[i] ? "rgba(22,199,132,.45)" : "rgba(234,57,67,.45)" })));
-      apply.v = v => { vs.applyOptions({ visible: v }); cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: v ? 0.2 : 0.06 } }); }; apply.v(isOn("v")); }
+      apply.v = v => { vs.applyOptions({ visible: v }); cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: v ? 0.2 : 0.06 } }); }; apply.v(show("v")); }
     const lines = [];
     const pl = (price, color, title, style = 2) => price && lines.push([cs.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title }), title]);
-    if (bo) { pl(tgt, "#22d3ee", "Target"); pl(L.resistance[1], "#fbbf24", "Old ceiling = floor", 0); pl(L.support[1], "#38bdf8", "Support", 1); }
+    if (!pro) { pl(tgt, "#22d3ee", bo ? "Target" : "Book profit"); }
+    else if (bo) { pl(tgt, "#22d3ee", "Target"); pl(L.resistance[1], "#fbbf24", "Old ceiling = floor", 0); pl(L.support[1], "#38bdf8", "Support", 1); }
     else { pl(L.resistance[1], "#fbbf24", "Breakout", 1); pl(L.resistance[0], "#22d3ee", "Resist · book"); pl(L.support[1], "#38bdf8", "Support · buy", 0); pl(L.strong_support[1], "#16c784", "Strong sup", 1); }
     pl(stp, "#ea3943", "Stop");
-    apply.lv = v => lines.forEach(([ln, title]) => ln.applyOptions({ lineVisible: v, axisLabelVisible: v, title: v ? title : "" })); apply.lv(isOn("lv"));
+    // Shaded zones: an overlay positioned from the price scale on every frame while the chart is on screen.
+    const zones = [[zone[0], zone[1], "rgba(22,199,132,.16)", "rgba(22,199,132,.55)"]].concat(bo ? [] : [[L.resistance[0], L.resistance[1], "rgba(56,189,248,.14)", "rgba(56,189,248,.5)"]]);
+    box.style.position = "relative";
+    const ov = zones.map(([, , bg, bd]) => { const d = el("div", { class: "lwc-zone", style: `background:${bg};border-color:${bd}` }); box.append(d); return d; });
+    const paint = () => { if (!box.isConnected) return; const w = ch.timeScale().width();
+      zones.forEach(([lo, hi], i) => { const y1 = cs.priceToCoordinate(hi), y2 = cs.priceToCoordinate(lo);
+        if (y1 == null || y2 == null || !show("lv")) { ov[i].style.display = "none"; return; }
+        Object.assign(ov[i].style, { display: "", top: Math.min(y1, y2) + "px", height: Math.max(2, Math.abs(y2 - y1)) + "px", width: w + "px" }); });
+      requestAnimationFrame(paint); };
+    requestAnimationFrame(paint);
+    // Supertrend (ATR 10, multiplier 3), Pro only.
+    { const n = B.c.length, tr = [], st = new Array(n).fill(null), up = [], dn = []; let atr = null, dir = 1;
+      for (let i = 0; i < n; i++) { const pc = i ? B.c[i - 1] : B.c[i]; tr.push(Math.max(B.h[i] - B.l[i], Math.abs(B.h[i] - pc), Math.abs(B.l[i] - pc)));
+        atr = i < 10 ? (i === 9 ? tr.slice(0, 10).reduce((a, x) => a + x, 0) / 10 : null) : (atr * 9 + tr[i]) / 10;
+        if (atr == null) { up.push(null); dn.push(null); continue; }
+        const mid = (B.h[i] + B.l[i]) / 2; let u = mid - 3 * atr, d = mid + 3 * atr;
+        if (up[i - 1] != null && B.c[i - 1] > up[i - 1]) u = Math.max(u, up[i - 1]);
+        if (dn[i - 1] != null && B.c[i - 1] < dn[i - 1]) d = Math.min(d, dn[i - 1]);
+        up.push(u); dn.push(d);
+        if (dir === 1 && B.c[i] < u) dir = -1; else if (dir === -1 && B.c[i] > d) dir = 1;
+        st[i] = { v: dir === 1 ? u : d, up: dir === 1 }; }
+      const sts = ch.addLineSeries({ lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+      sts.setData(B.d.map((d, i) => st[i] && { time: d, value: +st[i].v.toFixed(2), color: st[i].up ? "#22c55e" : "#ef4444" }).filter(Boolean));
+      apply.st = v => sts.applyOptions({ visible: v }); apply.st(show("st")); }
+    apply.lv = v => lines.forEach(([ln, title]) => ln.applyOptions({ lineVisible: v, axisLabelVisible: v, title: v ? title : "" })); apply.lv(show("lv"));
     if (bo) { const i = B.c.length - 1; cs.setMarkers([{ time: B.d[i], position: "belowBar", color: "#fbbf24", shape: "arrowUp", text: "BO" }]); }
     // RSI pane, time-synced with the price pane.
     const rc = LW.createChart(rbox, { ...base(96), layout: { ...base(0).layout, attributionLogo: false }, rightPriceScale: { borderColor: "#26304a", minimumWidth: 72, scaleMargins: { top: 0.08, bottom: 0.08 } } });
@@ -734,18 +788,18 @@ function proChart(s) {
     let sync = false;
     const link = (a, b) => a.timeScale().subscribeVisibleLogicalRangeChange(r => { if (!r || sync) return; sync = true; b.timeScale().setVisibleLogicalRange(r); sync = false; });
     link(ch, rc); link(rc, ch);
-    apply.r = v => { rbox.style.display = v ? "" : "none"; ch.timeScale().applyOptions({ visible: !v }); }; apply.r(isOn("r"));
+    apply.r = v => { rbox.style.display = v ? "" : "none"; ch.timeScale().applyOptions({ visible: !v }); }; apply.r(show("r"));
     const n = bars.length; ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 130), to: n + 3 });
     ch.timeScale().applyOptions({ fixLeftEdge: true }); rc.timeScale().applyOptions({ fixLeftEdge: true });
     // OHLC legend like a trading terminal.
-    const show = i => { const b = bars[i]; if (!b) return; const chg = i ? 100 * (b.close / bars[i - 1].close - 1) : 0;
+    const legendAt = i => { const b = bars[i]; if (!b) return; const chg = i ? 100 * (b.close / bars[i - 1].close - 1) : 0;
       legend.replaceChildren(...[el("b", { text: s.symbol }), el("i", { text: fdate(b.time) }), el("i", { text: `O ${fx(b.open)}` }), el("i", { text: `H ${fx(b.high)}` }),
         el("i", { text: `L ${fx(b.low)}` }), el("i", { class: dir(chg), text: `C ${fx(b.close)} ${pct(chg)}` }),
-        B.v && isOn("v") ? el("i", { text: `Vol ${(B.v[i] / 1e5).toFixed(1)}L` }) : null, B.r && isOn("r") && B.r[i] != null ? el("i", { text: `RSI ${Number(B.r[i]).toFixed(1)}` }) : null, B.e && isOn("e") && B.e[i] != null ? el("i", { style: "color:#a78bfa", text: `EMA20 ${fx(B.e[i])}` }) : null, B.f && isOn("f") && B.f[i] != null ? el("i", { style: "color:#f59e0b", text: `EMA50 ${fx(B.f[i])}` }) : null, B.g && isOn("g") && B.g[i] != null ? el("i", { style: "color:#94a3b8", text: `EMA200 ${fx(B.g[i])}` }) : null].filter(Boolean)); };
-    show(n - 1); apply.leg = () => show(n - 1);
+        B.v && show("v") ? el("i", { text: `Vol ${(B.v[i] / 1e5).toFixed(1)}L` }) : null, B.r && show("r") && B.r[i] != null ? el("i", { text: `RSI ${Number(B.r[i]).toFixed(1)}` }) : null, B.e && show("e") && B.e[i] != null ? el("i", { style: "color:#a78bfa", text: `EMA20 ${fx(B.e[i])}` }) : null, B.f && show("f") && B.f[i] != null ? el("i", { style: "color:#f59e0b", text: `EMA50 ${fx(B.f[i])}` }) : null, B.g && show("g") && B.g[i] != null ? el("i", { style: "color:#94a3b8", text: `EMA200 ${fx(B.g[i])}` }) : null].filter(Boolean)); };
+    legendAt(n - 1); apply.leg = () => legendAt(n - 1);
     const idx = new Map(bars.map((b, i) => [b.time, i]));
     const onMove = p => { const t = p && p.time; const key = t && typeof t === "object" ? `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day).padStart(2, "0")}` : t;
-      show(key && idx.has(key) ? idx.get(key) : n - 1); };
+      legendAt(key && idx.has(key) ? idx.get(key) : n - 1); };
     ch.subscribeCrosshairMove(onMove); rc.subscribeCrosshairMove(onMove);
     if (window.ResizeObserver) new ResizeObserver(() => { const w = box.clientWidth; if (w) { ch.applyOptions({ width: w }); rc.applyOptions({ width: w }); } }).observe(box);
   };
