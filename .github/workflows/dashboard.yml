@@ -80,7 +80,10 @@ jobs:
           # Past calls, for the track record and "what changed since the last scan".
           mkdir -p hist
           git fetch -q --depth=1 origin swing-history 2>/dev/null && git show origin/swing-history:history.json > hist/history.json 2>/dev/null || rm -f hist/history.json
-          python tools/techchart/dashboard.py --out site --cache nifty100.txt --history hist/history.json --alerts alerts.json
+          # The evening market radar (whole-NSE scan, sectors, 52-week highs, big money, events).
+          mkdir -p radar_in
+          git fetch -q --depth=1 origin radar 2>/dev/null && git archive origin/radar | tar -x -C radar_in 2>/dev/null || true
+          python tools/techchart/dashboard.py --out site --cache nifty100.txt --history hist/history.json --alerts alerts.json --radar radar_in
         env:
           WATCHLIST: ${{ secrets.WATCHLIST }}
 

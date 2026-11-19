@@ -1,0 +1,73 @@
+name: Market radar
+
+# Evening scan of the whole NSE after the exchange publishes its end-of-day files: two-step whole-market
+# scan, sector rotation, 52-week highs, bulk/block deals and delivery, and the 7-day event radar.
+# Saved to the "radar" branch; the swing board shows it from its next refresh.
+on:
+  schedule:
+    - cron: "50 13 * * 1-5"   # 19:20 IST
+    - cron: "35 14 * * 1-5"   # 20:05 IST (back-up start)
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "tools/techchart/radar.py"
+      - ".github/workflows/radar.yml"
+
+permissions:
+  contents: write
+  actions: write   # starts a board refresh so the new radar shows tonight
+
+concurrency:
+  group: market-radar
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Skip if today's radar is already saved
+        id: gate
+        run: |
+          run=true
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            git init -q chk && cd chk
+            if git fetch -q --depth=1 "https://github.com/${{ github.repository }}.git" radar 2>/dev/null; then
+              day=$(git show FETCH_HEAD:radar.json 2>/dev/null | python3 -c "import json,sys; print(json.load(sys.stdin).get('generated_at','')[:10])" || true)
+              [ "$day" = "$(TZ=Asia/Kolkata date +%F)" ] && run=false
+            fi
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"; echo "Run: $run"
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'true'
+
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.run == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Install libraries
+        if: steps.gate.outputs.run == 'true'
+        run: pip install -q yfinance matplotlib pandas numpy
+
+      - name: Build the radar
+        if: steps.gate.outputs.run == 'true'
+        run: python tools/techchart/radar.py --out radar_out --focus tools/techchart/portfolio_symbols.txt
+
+      - name: Save to the radar branch
+        if: steps.gate.outputs.run == 'true' && github.event_name != 'pull_request'
+        run: |
+          cd radar_out
+          git init -q -b radar
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Market radar $(TZ=Asia/Kolkata date '+%F %H:%M IST')"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" radar
+
+      - name: Refresh the board so the radar shows tonight
+        if: steps.gate.outputs.run == 'true' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run dashboard.yml --ref main --repo "${{ github.repository }}"
