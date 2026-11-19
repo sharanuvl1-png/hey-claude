@@ -440,7 +440,27 @@ def main():
         for row in prow:
             row["group"] = "pf"
         portfolio.update(stocks=prow, errors=perr)
+    # Watched stocks (the WATCHLIST secret plus the stocks the phone app asks to watch): scanned for the
+    # alerts only when no tab covers them. Not shown on the board.
+    import push
+    watch = {w.strip().upper() for w in os.environ.get("WATCHLIST", "").replace(";", ",").split(",") if w.strip()}
+    h_watch = {}
+    if args.history and os.environ.get("NTFY_TOPIC"):
+        import history as hi0
+        h_watch = hi0.load(args.history)
+        watch |= push.watch_from_phone(os.environ["NTFY_TOPIC"], h_watch, now)
+    watched_rows = []
+    wtodo = sorted(watch - done - {r["symbol"] for r in portfolio["stocks"]})[:30]
+    if wtodo and not args.limit:
+        watched_rows, _ = analyse_all([t + ".NS" for t in wtodo], out, work, "Watchlist", None)
+        for row in watched_rows:
+            row["group"] = "watch"
+    print(f"Watching {len(watch)} stock(s): {', '.join(sorted(watch)) or 'none'}")
     shutil.rmtree(work, ignore_errors=True)
+    try:
+        context = market_context(nf, now)
+    except Exception as e:
+        context = {"errors": [type(e).__name__]}
 
     # Sector (NSE's own industry column) and the next results date for every stock on the board.
     sectors = {}
@@ -475,33 +495,17 @@ def main():
         sr_record = hi.sr_track_record(h, prices, nifty)
         hi.save(h, args.history)
         if args.alerts:
-            watch = {w.strip().upper() for w in os.environ.get("WATCHLIST", "").replace(";", ",").split(",") if w.strip()}
-            alerts = []
-            for m in changes["moves"]:
-                if m["symbol"] in watch and m["to"] == "BUY NOW":
-                    alerts.append({"id": f"board:{m['symbol']}:{today}:{m['to']}", "title": f"{m['symbol']} turned Buy now",
-                                   "text": f"{m['symbol']} moved from {m['from'].title()} to Buy now on the swing board."})
-            for sym in changes["new_breakouts"]:
-                if sym in watch:
-                    alerts.append({"id": f"board:{sym}:{today}:bo", "title": f"{sym} broke out",
-                                   "text": f"{sym} passed every breakout rule on the swing board."})
-            # The owner's holdings: a close below the support zone or at/below the stop.
-            by_sym = {r["symbol"]: r for r in rows + midcap["stocks"] + smallcap["stocks"] + sr_midcap_more["stocks"] + portfolio["stocks"]}
-            for sym in held:
-                r = by_sym.get(sym)
-                if not r or not (r.get("levels") or {}).get("support"):
-                    continue
-                lo = r["levels"]["support"][0]
-                if r["close"] < lo:
-                    alerts.append({"id": f"held:{sym}:{r['date']}:support", "title": f"{sym} broke below support",
-                                   "text": f"{sym} (you hold it) closed at ₹{r['close']:,.2f}, below its support zone starting ₹{lo:,.2f}. Swing call: {r['verdict'].title()}."})
-                elif r["close"] <= r["stop"]:
-                    alerts.append({"id": f"held:{sym}:{r['date']}:stop", "title": f"{sym} at its stop-loss",
-                                   "text": f"{sym} (you hold it) closed at ₹{r['close']:,.2f}, at or below the swing stop of ₹{r['stop']:,.2f}."})
-            # Each alert goes out once: remember what was sent in the history file.
-            sent = h.get("sent_alerts") or []
-            alerts = [a for a in alerts if a["id"] not in sent]
-            h["sent_alerts"] = (sent + [a["id"] for a in alerts])[-400:]
+            if h_watch.get("watch"):
+                h["watch"] = h_watch["watch"]
+            results = {r["symbol"]: r.get("results_date") for r in every + sr_midcap_more["stocks"] if r.get("results_date")}
+            for sym in sorted(set(held) | watch):
+                if sym not in results and not args.limit:
+                    rd = results_date(sym, today)
+                    if rd:
+                        results[sym] = rd
+            board = {"n100": rows, "mid": midcap["stocks"] + sr_midcap_more["stocks"], "small": smallcap["stocks"],
+                     "pf": portfolio["stocks"], "watch": watched_rows}
+            alerts = push.build(h, now, board, set(held), watch, context, results)
             hi.save(h, args.history)
             with open(args.alerts, "w", encoding="utf-8") as f:
                 json.dump(alerts, f)
@@ -512,10 +516,6 @@ def main():
             seen.add(r["symbol"])
             board_rows.append(r)
     official = official_check(board_rows, now)
-    try:
-        context = market_context(nf, now)
-    except Exception as e:
-        context = {"errors": [type(e).__name__]}
     data = {"generated_at": now.isoformat(timespec="minutes"),
             "source": "Yahoo Finance (NSE). Prices can be about 15 minutes behind.",
             "market": None if market is None else {k: (round(v, 4) if isinstance(v, float) else bool(v)) for k, v in market.items()},

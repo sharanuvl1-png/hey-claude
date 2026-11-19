@@ -99,7 +99,7 @@ jobs:
           git commit -q -m "Swing board calls $(TZ=Asia/Kolkata date '+%F %H:%M IST')"
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" swing-history
 
-      - name: Watchlist alerts to the ntfy app (optional, needs the NTFY_TOPIC and WATCHLIST secrets)
+      - name: Phone alerts to the ntfy app (needs the NTFY_TOPIC secret)
         if: github.event_name != 'pull_request' && env.NTFY_TOPIC != ''
         run: |
           python -c "import json,os,sys; sys.path.insert(0,'tools/techchart'); import breakouts as b; a=json.load(open('alerts.json')) if os.path.exists('alerts.json') else []; print(len(a),'alert(s)'); a and b.ntfy(os.environ['NTFY_TOPIC'], a)"

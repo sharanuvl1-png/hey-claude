@@ -1,0 +1,21 @@
+name: Weekly report to the phone
+
+on:
+  schedule:
+    - cron: "37 4 * * 0"   # Sunday 10:07 IST
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    env:
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Send the weekly report
+        run: |
+          pip install -q yfinance matplotlib pandas numpy
+          python tools/techchart/weekly.py
