@@ -33,6 +33,15 @@ def close_enough(a, b, tol=TOL):
     return a is not None and b is not None and abs(a - b) <= tol * max(abs(b), 1e-9)
 
 
+IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
+
+
+def live_session(day):
+    """True while `day` is today's NSE session and it hasn't closed yet (prices still moving)."""
+    now = dt.datetime.now(IST)
+    return day == now.date().isoformat() and now.weekday() < 5 and dt.time(9, 15) <= now.time() < dt.time(15, 40)
+
+
 def finite(*vals):
     return all(isinstance(v, (int, float)) and math.isfinite(v) for v in vals)
 
@@ -76,6 +85,17 @@ def check_stock(s, today):
         return probs + [f"{sym}: {s['date']} not found in fresh data"]
     i = h.index.get_loc(row.index[0])
     fresh_close, fresh_prev = float(h["Close"].iloc[i]), float(h["Close"].iloc[i - 1]) if i > 0 else None
+    fresh_hi, fresh_lo = float(h["High"].iloc[i]), float(h["Low"].iloc[i])
+    if live_session(s["date"]):
+        # The session is still trading: the scan's price was taken minutes before this check, so it only has
+        # to be a price the stock actually traded at today, and its day range must sit inside today's range.
+        if not (fresh_lo * (1 - TOL) <= s["close"] <= fresh_hi * (1 + TOL)):
+            probs.append(f"{sym}: live price {s['close']} is outside today's range {fresh_lo:.2f}–{fresh_hi:.2f}")
+        if s["day_high"] > fresh_hi * 1.01 or s["day_low"] < fresh_lo * 0.99:
+            probs.append(f"{sym}: day range {s['day_low']}–{s['day_high']} is outside today's {fresh_lo:.2f}–{fresh_hi:.2f}")
+        if fresh_prev is not None and not close_enough(s["prev_close"], fresh_prev):
+            probs.append(f"{sym}: previous close {s['prev_close']} vs fresh {fresh_prev:.2f}")
+        return probs
     if not close_enough(s["close"], fresh_close):
         probs.append(f"{sym}: close {s['close']} vs fresh {fresh_close:.2f}")
     if fresh_prev is not None and not close_enough(s["prev_close"], fresh_prev):
