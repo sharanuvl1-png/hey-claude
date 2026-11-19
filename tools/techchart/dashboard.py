@@ -141,6 +141,183 @@ def fund_summary(f, rank):
             "revenue_growth_pct": r(f.get("rg"), 100), "pe": r(f.get("pe"))}
 
 
+def portfolio_symbols():
+    """NSE symbols of the owner's stocks: portfolio_symbols.txt (symbols only, no quantities), else site/pf.json."""
+    try:
+        with open(os.path.join(HERE, "portfolio_symbols.txt"), encoding="utf-8") as f:
+            syms = [x.strip().upper() for x in f if x.strip() and not x.startswith("#")]
+        if syms:
+            return syms
+    except OSError:
+        pass
+    try:
+        with open(os.path.join(HERE, "site", "pf.json"), encoding="utf-8") as f:
+            return [h["sym"].upper() for h in json.load(f).get("stocks", []) if h.get("sym")]
+    except (OSError, ValueError, KeyError):
+        return []
+
+
+def nse_official(today):
+    """(date, {symbol: close}) from NSE's end-of-day bhavcopy for the latest session it has published,
+    or (None, {}) when NSE can't be reached. A weekday with no file was a holiday (or isn't published yet)."""
+    import csv
+    import io
+    import urllib.request
+    import zipfile
+    hdr = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+           "Accept": "*/*", "Referer": "https://www.nseindia.com/"}
+    for back in range(0, 10):
+        d = today - dt.timedelta(days=back)
+        if d.weekday() >= 5:
+            continue
+        url = f"https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_{d:%Y%m%d}_F_0000.csv.zip"
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=20) as r:
+                raw = r.read()
+            z = zipfile.ZipFile(io.BytesIO(raw))
+            text = z.read(z.namelist()[0]).decode("utf-8", "replace")
+        except Exception:
+            continue
+        closes = {}
+        for row in csv.DictReader(io.StringIO(text)):
+            if row.get("SctySrs") in ("EQ", "BE", "BZ") and row.get("ClsPric"):
+                try:
+                    closes[row["TckrSymb"].strip()] = float(row["ClsPric"])
+                except ValueError:
+                    pass
+        if closes:
+            return d.isoformat(), closes
+    return None, {}
+
+
+def official_check(rows, now):
+    """Compare the board's closes with NSE's official closes for the same day; mark the last trading day."""
+    try:
+        day, closes = nse_official(now.date())
+    except Exception as e:
+        return {"error": type(e).__name__}
+    if not day:
+        return {"error": "NSE bhavcopy not reachable"}
+    same, mism, stale = [], [], []
+    for r in rows:
+        c = closes.get(r["symbol"])
+        if c is None:
+            continue
+        if r["date"] == day:
+            r["nse_close"] = c
+            same.append(r)
+            if abs(r["close"] / c - 1) > 0.005:
+                mism.append({"symbol": r["symbol"], "board": r["close"], "nse": c})
+        elif r["date"] < day:
+            stale.append(r["symbol"])
+    today = now.date().isoformat()
+    last = today if any(r["date"] == today for r in rows) and today > day else day
+    print(f"NSE official close {day}: {len(same)} checked, {len(mism)} differ, {len(stale)} older than NSE's day; last trading day {last}")
+    return {"date": day, "last_trading_day": last, "checked": len(same), "n_mismatch": len(mism), "mismatches": mism[:40],
+            "n_stale": len(stale), "stale": stale[:40]}
+
+
+GLOBAL = [("^GSPC", "S&P 500"), ("^IXIC", "Nasdaq"), ("^DJI", "Dow Jones"), ("^N225", "Nikkei"),
+          ("^HSI", "Hang Seng"), ("BZ=F", "Brent crude"), ("INR=X", "USD/INR")]
+NEWS_RSS = "https://news.google.com/rss/search?q=Indian+stock+market+Sensex+Nifty+when:1d&hl=en-IN&gl=IN&ceid=IN:en"
+
+
+def _last_two(sym):
+    """(date, close, % change vs previous close) from Yahoo daily bars, or None."""
+    import yfinance as yf
+    d = yf.Ticker(sym).history(period="10d", interval="1d", auto_adjust=False)
+    d = d.dropna(subset=["Close"])
+    if len(d) < 2:
+        return None
+    c, p = float(d["Close"].iloc[-1]), float(d["Close"].iloc[-2])
+    return {"date": d.index[-1].date().isoformat(), "close": round(c, 2), "chg_pct": round((c / p - 1) * 100, 2)}
+
+
+def regime_of(nf):
+    """Nifty 50 mood from real daily closes: up (trending above a rising 50 EMA), weak (below the 50 EMA)
+    or sideways (stuck in a narrow 20-day range close to the 50 EMA)."""
+    if nf is None or len(nf) < 60:
+        return None
+    c = nf["Close"].astype(float)
+    ema50 = c.ewm(span=50, adjust=False).mean()
+    last, e = float(c.iloc[-1]), float(ema50.iloc[-1])
+    hi20, lo20 = float(nf["High"].iloc[-20:].max()), float(nf["Low"].iloc[-20:].min())
+    rng = (hi20 / lo20 - 1) * 100
+    gap = (last / e - 1) * 100
+    slope = (e / float(ema50.iloc[-11]) - 1) * 100
+    if rng < 4.5 and abs(gap) < 2 and abs(slope) < 1:
+        mood = "sideways"
+    elif last < e:
+        mood = "weak"
+    else:
+        mood = "up"
+    return {"mood": mood, "date": nf.index[-1].date().isoformat(), "close": round(last, 2), "ema50": round(e, 2),
+            "gap_pct": round(gap, 2), "range20_pct": round(rng, 2), "high20": round(hi20, 2), "low20": round(lo20, 2),
+            "ema50_slope10_pct": round(slope, 2)}
+
+
+def news_headlines(n=6):
+    import urllib.request
+    import xml.etree.ElementTree as ET
+    req = urllib.request.Request(NEWS_RSS, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        root = ET.fromstring(r.read())
+    out = []
+    for it in root.iter("item"):
+        t = (it.findtext("title") or "").strip()
+        src = (it.findtext("source") or "").strip()
+        if src and t.endswith(" - " + src):
+            t = t[: -len(src) - 3]
+        if t:
+            out.append({"title": t, "source": src, "link": (it.findtext("link") or "").strip(),
+                        "published": (it.findtext("pubDate") or "").strip()})
+        if len(out) >= n:
+            break
+    return out
+
+
+def market_context(nf, now):
+    """Nifty mood, India VIX, overnight global markets and morning headlines. Anything that can't be
+    fetched is left out (never guessed)."""
+    ctx = {"fetched_at": now.isoformat(timespec="minutes"), "regime": None, "vix": None, "global": [], "news": [],
+           "errors": []}
+    try:
+        ctx["regime"] = regime_of(nf)
+    except Exception as e:
+        ctx["errors"].append(f"regime: {type(e).__name__}")
+    try:
+        v = _last_two("^INDIAVIX")
+        if v:
+            v["level"] = "high" if v["close"] >= 20 else "elevated" if v["close"] >= 16 else "calm"
+        ctx["vix"] = v
+    except Exception as e:
+        ctx["errors"].append(f"vix: {type(e).__name__}")
+    for sym, name in GLOBAL:
+        try:
+            g = _last_two(sym)
+            if g:
+                ctx["global"].append(dict(g, symbol=sym, name=name))
+        except Exception as e:
+            ctx["errors"].append(f"{sym}: {type(e).__name__}")
+    try:
+        ctx["news"] = news_headlines()
+    except Exception as e:
+        ctx["errors"].append(f"news: {type(e).__name__}")
+    r, v = ctx["regime"], ctx["vix"]
+    mood = r["mood"] if r else None
+    if mood == "weak" or (v and v["level"] == "high"):
+        ctx["size"] = "half"
+    elif mood == "sideways" or (v and v["level"] == "elevated"):
+        ctx["size"] = "reduced"
+    elif mood == "up":
+        ctx["size"] = "normal"
+    else:
+        ctx["size"] = None
+    print(f"Market context: mood {mood}, VIX {v and v['close']}, {len(ctx['global'])} global, {len(ctx['news'])} headlines, "
+          f"size {ctx['size']}, errors {ctx['errors']}")
+    return ctx
+
+
 def analyse_all(symbols, out, work, label, prices=None):
     rows, errors = [], []
     for i, s in enumerate(symbols):
@@ -224,7 +401,7 @@ def main():
         symbols = symbols[:args.limit]
 
     # Breakout rules need one batch download plus the Nifty 50.
-    checks, market, nifty = {}, None, None
+    checks, market, nifty, nf = {}, None, None, None
     try:
         frames, _ = bo.download(symbols) if symbols else ({}, {})
         nf = frames.pop(bo.NIFTY, None)
@@ -255,11 +432,7 @@ def main():
     # The owner's holdings (site/pf.json) that none of the tabs above scan: same chart rules, shown only
     # on the My portfolio tab. Not part of the history or track record.
     portfolio = {"stocks": [], "errors": [], "notes": []}
-    try:
-        with open(os.path.join(HERE, "site", "pf.json"), encoding="utf-8") as f:
-            held = [h["sym"] for h in json.load(f).get("stocks", []) if h.get("sym")]
-    except (OSError, ValueError):
-        held = []
+    held = portfolio_symbols()
     done = {r["symbol"] for r in rows + midcap["stocks"] + smallcap["stocks"] + sr_midcap_more["stocks"]}
     todo = sorted({h.upper() for h in held} - done)
     if todo and not args.limit:
@@ -311,15 +484,43 @@ def main():
                 if sym in watch:
                     alerts.append({"id": f"board:{sym}:{today}:bo", "title": f"{sym} broke out",
                                    "text": f"{sym} passed every breakout rule on the swing board."})
+            # The owner's holdings: a close below the support zone or at/below the stop.
+            by_sym = {r["symbol"]: r for r in rows + midcap["stocks"] + smallcap["stocks"] + sr_midcap_more["stocks"] + portfolio["stocks"]}
+            for sym in held:
+                r = by_sym.get(sym)
+                if not r or not (r.get("levels") or {}).get("support"):
+                    continue
+                lo = r["levels"]["support"][0]
+                if r["close"] < lo:
+                    alerts.append({"id": f"held:{sym}:{r['date']}:support", "title": f"{sym} broke below support",
+                                   "text": f"{sym} (you hold it) closed at ₹{r['close']:,.2f}, below its support zone starting ₹{lo:,.2f}. Swing call: {r['verdict'].title()}."})
+                elif r["close"] <= r["stop"]:
+                    alerts.append({"id": f"held:{sym}:{r['date']}:stop", "title": f"{sym} at its stop-loss",
+                                   "text": f"{sym} (you hold it) closed at ₹{r['close']:,.2f}, at or below the swing stop of ₹{r['stop']:,.2f}."})
+            # Each alert goes out once: remember what was sent in the history file.
+            sent = h.get("sent_alerts") or []
+            alerts = [a for a in alerts if a["id"] not in sent]
+            h["sent_alerts"] = (sent + [a["id"] for a in alerts])[-400:]
+            hi.save(h, args.history)
             with open(args.alerts, "w", encoding="utf-8") as f:
                 json.dump(alerts, f)
 
+    seen, board_rows = set(), []
+    for r in rows + midcap["stocks"] + smallcap["stocks"] + sr_midcap_more["stocks"] + portfolio["stocks"]:
+        if r["symbol"] not in seen:
+            seen.add(r["symbol"])
+            board_rows.append(r)
+    official = official_check(board_rows, now)
+    try:
+        context = market_context(nf, now)
+    except Exception as e:
+        context = {"errors": [type(e).__name__]}
     data = {"generated_at": now.isoformat(timespec="minutes"),
             "source": "Yahoo Finance (NSE). Prices can be about 15 minutes behind.",
             "market": None if market is None else {k: (round(v, 4) if isinstance(v, float) else bool(v)) for k, v in market.items()},
             "rules": {k: rules[k] for k in ("volume_multiple", "require_above_ema", "max_below_52w_high_pct") if k in rules},
             "stocks": rows, "errors": errors, "notes": notes, "midcap": midcap, "smallcap": smallcap,
-            "sr_midcap_more": sr_midcap_more, "portfolio": portfolio, "changes": changes, "track_record": record,
+            "sr_midcap_more": sr_midcap_more, "portfolio": portfolio, "official": official, "context": context, "changes": changes, "track_record": record,
             "sr_track_record": sr_record}
     with open(os.path.join(out, "data.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))

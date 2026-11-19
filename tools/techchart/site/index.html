@@ -66,6 +66,19 @@ h1 em { font-style: normal; background: linear-gradient(90deg, var(--brand2), va
 .offline-tag { display: none; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; margin-left: 8px;
   color: var(--wait); background: rgba(255, 176, 32, .1); border: 1px solid rgba(255, 176, 32, .35) }
 body.offline .offline-tag { display: inline-flex }
+.agree { font: 700 11px var(--mono); padding: 3px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ac) 55%, transparent); color: var(--ac); background: color-mix(in srgb, var(--ac) 12%, transparent); white-space: nowrap }
+.agree-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 8px 0 2px; position: relative; z-index: 1 }
+.rec { position: relative; z-index: 1; margin: 6px 0 0; font-size: 12.5px }
+.mkt-bar.side{background:color-mix(in srgb,#d4a017 14%,transparent);border-color:#d4a017}
+.mood-weak{border-left:4px solid var(--down)}.mood-sideways{border-left:4px solid #d4a017}.mood-up{border-left:4px solid var(--up)}
+.mood-tips,.news{margin:6px 0 0;padding-left:18px}.mood-tips li,.news li{margin:3px 0}.news a{color:inherit}
+.glob{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:8px 0}.glob>div{display:flex;flex-direction:column;gap:1px}
+.mkt-bar { margin-top: 8px; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255, 77, 109, .5); background: rgba(255, 77, 109, .1); color: var(--ink); font-size: 13px; font-weight: 600 }
+.asof-bar .nse { margin-top: 4px; font-size: 12px; color: var(--up) } .asof-bar .nse.warn { color: var(--wait) }
+.subtabs button { font-size: 12.5px }
+.home-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; margin-top: 8px; text-align: left; background: transparent; color: var(--ink); width: 100%; cursor: pointer; font: inherit }
+.home-row b { font-size: 15px } .home-row .hint { font-size: 12px; grid-column: 1 / -1 }
+.home-link { margin-top: 10px }
 .asof-bar { margin-top: 8px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line2); background: var(--surface); font-size: 13px; line-height: 1.45 }
 .asof-bar b { font-size: 15px; font-weight: 800; color: var(--ink) } .asof-bar span { color: var(--ink2) }
 .asof-bar.old { border-color: rgba(255, 176, 32, .55); background: rgba(255, 176, 32, .1) } .asof-bar.old em { color: var(--wait); font-style: normal; font-weight: 700 }
@@ -182,6 +195,20 @@ input::placeholder { color: var(--muted) }
 .lwc-tog button[aria-pressed="true"] { color: var(--tc); border-color: color-mix(in srgb, var(--tc) 55%, transparent); background: color-mix(in srgb, var(--tc) 12%, transparent) }
 .lwc-tog button[aria-pressed="false"] { text-decoration: line-through; opacity: .6 }
 .pf-sr { display: block; font: 600 10.5px var(--mono); margin-top: 3px; white-space: nowrap }
+.lwc-wrap .fs-x { display: none }
+.lwc-wrap.fs { position: fixed; inset: 0; z-index: 1000; border-radius: 0; border: 0; background: #0b1020; overflow: hidden; padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left) }
+.lwc-wrap.fs .fs-x { display: block; position: absolute; top: calc(6px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); z-index: 6; font: 700 12px inherit; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line2); background: rgba(11,16,32,.85); color: var(--ink) }
+.fs-btn { font: 700 12px inherit; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line2); background: transparent; color: var(--ink2); cursor: pointer }
+.lwc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap }
+.lwc-mode { display: inline-flex; border: 1px solid var(--line2); border-radius: 999px; overflow: hidden }
+.lwc-mode button { font: 700 12px var(--sans, inherit); padding: 5px 14px; border: 0; background: transparent; color: var(--ink2); cursor: pointer }
+.lwc-mode button[aria-pressed="true"] { background: var(--brand2, #38bdf8); color: #06101f }
+.lwc-say { margin: 10px 0; padding: 10px 12px; border-left: 4px solid var(--cc); background: color-mix(in srgb, var(--cc) 8%, transparent); border-radius: 8px; font-size: 14.5px; line-height: 1.5; color: var(--ink) }
+.lwc-say b { color: var(--cc) }
+.lwc-key { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0 6px; font-size: 12px; color: var(--ink2) }
+.lwc-key span::before { content: ""; display: inline-block; width: 14px; height: 10px; margin-right: 6px; vertical-align: -1px; border-radius: 3px; background: var(--kc) }
+.lwc-key span.ln::before { height: 2px; vertical-align: 3px; border-radius: 0 }
+.lwc-zone { position: absolute; left: 0; pointer-events: none; border-top: 1px dashed; border-bottom: 1px dashed; z-index: 2 }
 .lwc-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
 .lwc-chips span { font: 700 11.5px var(--mono); padding: 3px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--cc) 50%, transparent); color: var(--cc); background: color-mix(in srgb, var(--cc) 10%, transparent) }
 .srchart text { font: 600 10.5px var(--mono); }
@@ -300,7 +327,7 @@ input::placeholder { color: var(--muted) }
     <div class="brand">
       <div class="logo">
         <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#0a0f1d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 3 8-9"/><path d="M15 6h5v5"/></svg></div>
-        <div><h1>Sharan <em>Swing Trading</em></h1><div class="sub" id="asof">Loading the latest scan…</div><div class="sub" id="refresh" style="opacity:.75;font-size:.85em;margin-top:2px"></div><div class="asof-bar" id="asofBar" hidden></div></div>
+        <div><h1>Sharan <em>Swing Trading</em></h1><div class="sub" id="asof">Loading the latest scan…</div><div class="sub" id="refresh" style="opacity:.75;font-size:.85em;margin-top:2px"></div><div class="asof-bar" id="asofBar" hidden></div><div class="mkt-bar" id="mktBar" hidden></div></div>
       </div>
       <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px 0"><span class="live" id="live">Loading</span><button class="install" id="installBtn" hidden>Install app</button><span class="offline-tag">Offline · last saved scan</span></div>
     </div>
@@ -329,14 +356,18 @@ input::placeholder { color: var(--muted) }
   <div class="max gut" style="padding-block:14px 18px;display:grid;gap:22px">
     <div style="display:grid;gap:10px">
       <div class="tabs" role="tablist" aria-label="Stock list">
-        <button role="tab" id="tab-n100" aria-selected="true" data-tab="n100">Nifty 100 <b id="n100Count">–</b></button>
-        <button role="tab" id="tab-mid" aria-selected="false" data-tab="mid">Midcap top 20 <b id="midCount">–</b></button>
-        <button role="tab" id="tab-small" aria-selected="false" data-tab="small">Smallcap top 20 <b id="smallCount">–</b></button>
-        <button role="tab" id="tab-watch" aria-selected="false" data-tab="watch">★ Watchlist <b id="watchCount">0</b></button>
-        <button role="tab" id="tab-track" aria-selected="false" data-tab="track">Track record</button>
+        <button role="tab" id="tab-home" aria-selected="true" data-tab="home">Home</button>
+        <button role="tab" id="tab-picks" aria-selected="false" data-tab="n100" data-group="picks">Picks</button>
         <button role="tab" id="tab-sr" aria-selected="false" data-tab="sr">Support &amp; Resistance <b id="srCount">–</b></button>
         <button role="tab" id="tab-pf" aria-selected="false" data-tab="pf">My portfolio</button>
         <button role="tab" id="tab-paper" aria-selected="false" data-tab="paper">Paper trades <b id="paperCount">0</b></button>
+        <button role="tab" id="tab-watch" aria-selected="false" data-tab="watch">★ Watchlist <b id="watchCount">0</b></button>
+        <button role="tab" id="tab-track" aria-selected="false" data-tab="track">Track record</button>
+      </div>
+      <div class="tabs subtabs" id="picksSub" role="tablist" aria-label="Which list" hidden>
+        <button role="tab" id="tab-n100" aria-selected="false" data-tab="n100">Nifty 100 <b id="n100Count">–</b></button>
+        <button role="tab" id="tab-mid" aria-selected="false" data-tab="mid">Midcap top 20 <b id="midCount">–</b></button>
+        <button role="tab" id="tab-small" aria-selected="false" data-tab="small">Smallcap top 20 <b id="smallCount">–</b></button>
       </div>
       <div class="tabnote" id="tabnote"></div>
     </div>
@@ -347,6 +378,7 @@ input::placeholder { color: var(--muted) }
     </section>
     <section class="sec" id="trackSec" hidden></section>
     <section class="sec" id="srSec" hidden></section>
+    <section class="sec" id="homeSec" hidden></section>
     <section class="sec" id="pfSec" hidden></section>
     <section class="sec" id="paperSec" hidden></section>
     <section class="sec" id="topSec" hidden>
@@ -427,7 +459,7 @@ const svgEl = (svg, name, a) => { const n = document.createElementNS(NS, name); 
 const vstyle = s => `--vc:${V[s.verdict].c}`;
 const ret = (s, n) => (s.closes && s.closes.length > n ? 100 * (s.close / s.closes[s.closes.length - 1 - n] - 1) : null);
 
-const state = { tab: "n100", filter: null, q: "", sort: "score", sector: null };
+const state = { tab: "home", filter: null, q: "", sort: "score", sector: null };
 let DATA = null;
 // Per-phone conveniences (watchlist, last-seen calls, position-size inputs). Kept only in this browser.
 const store = {
@@ -454,7 +486,7 @@ const all = () => DATA.stocks.concat(sec("midcap"), sec("smallcap"));
 const srList = () => DATA.stocks.concat(sec("midcap"), sec("sr_midcap_more"));
 const everyone = () => all().concat(sec("sr_midcap_more"), sec("portfolio"));
 const list = () => state.tab === "mid" ? sec("midcap") : state.tab === "small" ? sec("smallcap")
-  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" || state.tab === "pf" || state.tab === "paper" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
+  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" || state.tab === "pf" || state.tab === "paper" || state.tab === "home" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
 const daysTo = iso => Math.round((new Date(iso + "T00:00:00+05:30") - new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30")) / 864e5);
 const fdate = iso => new Date(iso + "T00:00:00+05:30").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 function resultsChip(s) {
@@ -518,7 +550,7 @@ function card(s, compact = false) {
     el("div", {}, el("div", { class: "lbl", text: "Entry" }), el("div", { class: "v", style: "color:var(--dip)", text: `${fx(s.entry[0], 0)}–${fx(s.entry[1], 0)}` })),
     el("div", {}, el("div", { class: "lbl", text: "Stop" }), el("div", { class: "v down", text: fx(s.stop, 1) })),
     el("div", {}, el("div", { class: "lbl", text: "Target" }), el("div", { class: "v up", text: fx(s.targets[0], 1) }))));
-  const chips = el("div", { class: "chips" }, resultsChip(s), el("span", { class: "chip", text: `Grade ${s.grade}` }), el("span", { class: "chip", text: `RSI ${Math.round(s.rsi)}` }),
+  const chips = el("div", { class: "chips" }, agreeChip(s), resultsChip(s), el("span", { class: "chip", text: `Grade ${s.grade}` }), el("span", { class: "chip", text: `RSI ${Math.round(s.rsi)}` }),
     !compact ? el("span", { class: "chip", text: s.trend }) : null, ...fundChips(f).slice(0, compact ? 1 : 3));
   if (b && b.status === "breakout") chips.append(el("span", { class: "chip bo", text: "⚡ Breakout" }));
   else if (b && b.status === "near") chips.append(el("span", { class: "chip bo", text: `${b.gap_pct}% to breakout` }));
@@ -682,19 +714,56 @@ function proChart(s) {
     chip(`Stop ${fx(stp)}`, "#ff4d6d"), rr != null ? chip(`Reward:risk ${fx(rr, 1)}×`, "#c7d0e6") : null,
     bo ? chip(`Broke out above ${fx(L.resistance[1])}`, "#fbbf24") : chip(`Breakout above ${fx(L.resistance[1])}`, "#fbbf24"));
   // Indicator switches, remembered on this phone.
-  const IND = [["e", "EMA 20", "#a78bfa"], ["f", "EMA 50", "#f59e0b"], ["g", "EMA 200", "#94a3b8"], ["v", "Volume", "#16c784"], ["r", "RSI", "#c084fc"], ["lv", "Levels", "#fbbf24"]];
+  // Simple (default): candles, shaded buy / take-profit zones, stop and target. Pro: plus EMAs, volume, RSI, Supertrend.
+  const pro = store.get("chartPro", false);
+  const IND = [["e", "EMA 20", "#a78bfa"], ["f", "EMA 50", "#f59e0b"], ["g", "EMA 200", "#94a3b8"], ["v", "Volume", "#16c784"], ["r", "RSI", "#c084fc"], ["st", "Supertrend", "#22c55e"], ["lv", "Levels", "#fbbf24"]];
   let on = {}; try { on = JSON.parse(localStorage.getItem("sb.ind") || "{}") || {}; } catch (e) { on = {}; }
-  const isOn = k => on[k] !== false, apply = {};
+  const isOn = k => k === "st" ? on.st === true : on[k] !== false, apply = {};
+  const show = k => pro ? isOn(k) : k === "lv";
+  let panel;
+  const modeBtn = (t, v) => el("button", { type: "button", "aria-pressed": String(pro === v), text: t, onclick: () => { if (pro === v) return; store.set("chartPro", v); const np = proChart(s); panel.replaceWith(np); } });
+  const modes = el("div", { class: "lwc-mode", role: "group", "aria-label": "Chart detail" }, modeBtn("Simple", false), modeBtn("Pro", true));
+  // One plain-English line: where the price is against the zones, and the plan.
+  const c = s.close, pctTo = (a, b) => fx(Math.abs(100 * (a - b) / b), 1);
+  const plan = `Stop ${inr(stp)}, ${bo ? "target" : "take profit near"} ${inr(tgt)}` + (rr != null ? `, so you risk ₹1 to make ₹${fx(rr, 1)}.` : ".");
+  const say = bo ? (c > zone[1] ? `${inr(c)} broke out above ${inr(L.resistance[1])}. Best entry is a pullback into ${inr(zone[0])}–${inr(zone[1])} (the old ceiling, now the floor). ${plan}` : `${inr(c)} is back at the old ceiling ${inr(zone[0])}–${inr(zone[1])}, the pullback buy zone after the breakout. ${plan}`)
+    : c < zone[0] ? `${inr(c)} is ${pctTo(zone[0], c)}% below the buy zone (${inr(zone[0])}–${inr(zone[1])}): support broke. Stay out until it closes back above ${inr(zone[1])}.`
+    : c <= zone[1] ? `${inr(c)} is inside the buy zone (${inr(zone[0])}–${inr(zone[1])}).${g.k === "care" ? " Careful: " + g.why.toLowerCase() + ", so wait for a bounce first." : ""} ${plan}`
+    : c >= L.resistance[0] ? `${inr(c)} is at the take-profit zone (${inr(L.resistance[0])}–${inr(L.resistance[1])}). Book profit if you hold it; buy only on a close above ${inr(L.resistance[1])} with volume.`
+    : `${inr(c)} is ${pctTo(c, zone[1])}% above the buy zone (${inr(zone[0])}–${inr(zone[1])}) and ${pctTo(L.resistance[0], c)}% below the take-profit zone. ${g.k === "buy" ? "Close enough to buy by the rule. " + plan : "Wait for a dip into the buy zone. " + plan}`;
+  const sentence = el("p", { class: "lwc-say", style: `--cc:${SG.c}` }, el("b", { text: SG.label + ". " }), say);
   const tog = el("div", { class: "lwc-tog", role: "group", "aria-label": "Show or hide indicators" }, ...IND.map(([k, t, c]) => {
     const b = el("button", { type: "button", style: `--tc:${c}`, "aria-pressed": String(isOn(k)), text: t });
     b.addEventListener("click", () => { on[k] = !isOn(k); b.setAttribute("aria-pressed", String(isOn(k)));
-      try { localStorage.setItem("sb.ind", JSON.stringify(on)); } catch (e) {} if (apply[k]) apply[k](isOn(k)); if (apply.leg) apply.leg(); });
+      try { localStorage.setItem("sb.ind", JSON.stringify(on)); } catch (e) {} if (apply[k]) apply[k](isOn(k)); if (apply.leg) apply.leg(); if (apply.fit) apply.fit(); });
     return b; }));
   const legend = el("div", { class: "lwc-leg" }), box = el("div", { class: "lwc" }), rbox = el("div", { class: "lwc rsi" });
   const where = s.close >= L.resistance[0] ? "at resistance: a place to book profit, or wait for a close above it" : s.close <= L.support[1] ? "at support: the buy zone if it holds" : "between support and resistance";
-  const panel = el("div", { class: "panel" }, el("div", { class: "lbl", text: "Support & resistance chart · daily, up to 2 years · pinch or drag to zoom, tap for prices" }), chips, srLadder(s, { g, zone, tgt, stp, bo }),
-    tog, el("div", { class: "lwc-wrap" }, legend, box, rbox),
-    el("div", { class: "hint", text: `${SG.label}: ${g.why}. ${SG.rule} Purple = EMA 20, orange = EMA 50, grey = EMA 200 (trend filters). Tap the buttons above the chart to switch indicators on or off. Scroll left for up to 2 years of history.` }));
+  const key = el("div", { class: "lwc-key" }, el("span", { style: "--kc:rgba(22,199,132,.35)", text: bo ? "Pullback buy zone" : "Buy zone" }),
+    bo ? null : el("span", { style: "--kc:rgba(56,189,248,.35)", text: "Take-profit zone" }), el("span", { class: "ln", style: "--kc:#ea3943", text: "Stop" }), el("span", { class: "ln", style: "--kc:#22d3ee", text: bo ? "Target" : "Book profit" }));
+  // Full screen: real fullscreen where the browser allows it (plus landscape on Android); otherwise the chart
+  // is moved to a fixed layer over the whole page. Rotate the phone for landscape.
+  const fsX = el("button", { type: "button", class: "fs-x", "aria-label": "Exit full screen", text: "✕ Exit" });
+  const wrap = el("div", { class: "lwc-wrap" }, fsX, legend, box, rbox);
+  let home = null;
+  const fsEnter = () => { if (wrap.classList.contains("fs")) return; home = el("div"); wrap.replaceWith(home); document.body.append(wrap); wrap.classList.add("fs");
+    document.body.style.overflow = "hidden";
+    const rq = wrap.requestFullscreen || wrap.webkitRequestFullscreen; if (rq) Promise.resolve(rq.call(wrap)).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock("landscape")).catch(() => {});
+    window.addEventListener("hashchange", fsExit, { once: true });
+    requestAnimationFrame(() => apply.fit && apply.fit()); };
+  const fsExit = () => { if (!wrap.classList.contains("fs")) return; wrap.classList.remove("fs"); if (home) home.replaceWith(wrap); home = null;
+    if (document.getElementById("scrim").hidden) document.body.style.overflow = "";
+    try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+    const fe = document.fullscreenElement || document.webkitFullscreenElement; if (fe) (document.exitFullscreen || document.webkitExitFullscreen).call(document).catch?.(() => {});
+    requestAnimationFrame(() => apply.fit && apply.fit()); };
+  fsX.addEventListener("click", fsExit);
+  for (const ev of ["fullscreenchange", "webkitfullscreenchange"]) document.addEventListener(ev, () => { if (!(document.fullscreenElement || document.webkitFullscreenElement)) fsExit(); });
+  const fsBtn = el("button", { type: "button", class: "fs-btn", "aria-label": "Show the chart full screen", text: "⛶ Full screen", onclick: fsEnter });
+  panel = el("div", { class: "panel" }, el("div", { class: "lwc-top" }, el("div", { class: "lbl", text: "Support & resistance chart · daily, up to 2 years" }), el("div", { style: "display:flex;gap:8px;align-items:center" }, fsBtn, modes)), sentence,
+    pro ? chips : null, srLadder(s, { g, zone, tgt, stp, bo }),
+    pro ? tog : null, key, wrap,
+    el("div", { class: "hint", text: pro ? `${SG.label}: ${g.why}. ${SG.rule} Purple = EMA 20, orange = EMA 50, grey = EMA 200 (trend filters). Supertrend (10, 3) is green under the price in an uptrend and red above it in a downtrend; a close below the green line is a trailing-stop exit. Tap the buttons to switch indicators on or off.`
+      : `${SG.rule} Pinch or drag to zoom, tap a candle for its prices, scroll left for up to 2 years. Switch to Pro for EMAs, volume, RSI and Supertrend.` }));
   const build = LW => {
     if (!box.isConnected) return;
     const base = h => ({ height: h, width: box.clientWidth || 340, autoSize: false,
@@ -706,25 +775,50 @@ function proChart(s) {
     const keep = [stp, zone[0], L.resistance[1], L.support[1]].filter(Boolean);
     const cs = ch.addCandlestickSeries({ upColor: "#16c784", downColor: "#ea3943", borderVisible: false, wickUpColor: "#16c784", wickDownColor: "#ea3943",
       autoscaleInfoProvider: orig => { const r = orig(); if (!r || !r.priceRange) return r;
-        const k2 = isOn("lv") ? keep : [];
+        const k2 = show("lv") ? keep : [];
         return { ...r, priceRange: { minValue: Math.min(r.priceRange.minValue, ...k2), maxValue: Math.max(r.priceRange.maxValue, ...k2) } }; } });
     const bars = B.d.map((d, i) => ({ time: d, open: B.o[i], high: B.h[i], low: B.l[i], close: B.c[i] }));
     cs.setData(bars);
     cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.2 } });
     const line = (k, color) => { if (!B[k]) return; const ls = ch.addLineSeries({ color, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
       ls.setData(B.d.map((d, i) => ({ time: d, value: B[k][i] })).filter(p => p.value != null));
-      apply[k] = v => ls.applyOptions({ visible: v }); apply[k](isOn(k)); };
+      apply[k] = v => ls.applyOptions({ visible: v }); apply[k](show(k)); };
     line("e", "#a78bfa"); line("f", "#f59e0b"); line("g", "#94a3b8");
     if (B.v) { const vs = ch.addHistogramSeries({ priceScaleId: "vol", priceFormat: { type: "volume" }, lastValueVisible: false, priceLineVisible: false });
       ch.priceScale("vol").applyOptions({ scaleMargins: { top: 0.84, bottom: 0 } });
       vs.setData(B.d.map((d, i) => ({ time: d, value: B.v[i], color: B.c[i] >= B.o[i] ? "rgba(22,199,132,.45)" : "rgba(234,57,67,.45)" })));
-      apply.v = v => { vs.applyOptions({ visible: v }); cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: v ? 0.2 : 0.06 } }); }; apply.v(isOn("v")); }
+      apply.v = v => { vs.applyOptions({ visible: v }); cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: v ? 0.2 : 0.06 } }); }; apply.v(show("v")); }
     const lines = [];
     const pl = (price, color, title, style = 2) => price && lines.push([cs.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title }), title]);
-    if (bo) { pl(tgt, "#22d3ee", "Target"); pl(L.resistance[1], "#fbbf24", "Old ceiling = floor", 0); pl(L.support[1], "#38bdf8", "Support", 1); }
+    if (!pro) { pl(tgt, "#22d3ee", bo ? "Target" : "Book profit"); }
+    else if (bo) { pl(tgt, "#22d3ee", "Target"); pl(L.resistance[1], "#fbbf24", "Old ceiling = floor", 0); pl(L.support[1], "#38bdf8", "Support", 1); }
     else { pl(L.resistance[1], "#fbbf24", "Breakout", 1); pl(L.resistance[0], "#22d3ee", "Resist · book"); pl(L.support[1], "#38bdf8", "Support · buy", 0); pl(L.strong_support[1], "#16c784", "Strong sup", 1); }
     pl(stp, "#ea3943", "Stop");
-    apply.lv = v => lines.forEach(([ln, title]) => ln.applyOptions({ lineVisible: v, axisLabelVisible: v, title: v ? title : "" })); apply.lv(isOn("lv"));
+    // Shaded zones: an overlay positioned from the price scale on every frame while the chart is on screen.
+    const zones = [[zone[0], zone[1], "rgba(22,199,132,.16)", "rgba(22,199,132,.55)"]].concat(bo ? [] : [[L.resistance[0], L.resistance[1], "rgba(56,189,248,.14)", "rgba(56,189,248,.5)"]]);
+    box.style.position = "relative";
+    const ov = zones.map(([, , bg, bd]) => { const d = el("div", { class: "lwc-zone", style: `background:${bg};border-color:${bd}` }); box.append(d); return d; });
+    const paint = () => { if (!box.isConnected) return; const w = ch.timeScale().width();
+      zones.forEach(([lo, hi], i) => { const y1 = cs.priceToCoordinate(hi), y2 = cs.priceToCoordinate(lo);
+        if (y1 == null || y2 == null || !show("lv")) { ov[i].style.display = "none"; return; }
+        Object.assign(ov[i].style, { display: "", top: Math.min(y1, y2) + "px", height: Math.max(2, Math.abs(y2 - y1)) + "px", width: w + "px" }); });
+      requestAnimationFrame(paint); };
+    requestAnimationFrame(paint);
+    // Supertrend (ATR 10, multiplier 3), Pro only.
+    { const n = B.c.length, tr = [], st = new Array(n).fill(null), up = [], dn = []; let atr = null, dir = 1;
+      for (let i = 0; i < n; i++) { const pc = i ? B.c[i - 1] : B.c[i]; tr.push(Math.max(B.h[i] - B.l[i], Math.abs(B.h[i] - pc), Math.abs(B.l[i] - pc)));
+        atr = i < 10 ? (i === 9 ? tr.slice(0, 10).reduce((a, x) => a + x, 0) / 10 : null) : (atr * 9 + tr[i]) / 10;
+        if (atr == null) { up.push(null); dn.push(null); continue; }
+        const mid = (B.h[i] + B.l[i]) / 2; let u = mid - 3 * atr, d = mid + 3 * atr;
+        if (up[i - 1] != null && B.c[i - 1] > up[i - 1]) u = Math.max(u, up[i - 1]);
+        if (dn[i - 1] != null && B.c[i - 1] < dn[i - 1]) d = Math.min(d, dn[i - 1]);
+        up.push(u); dn.push(d);
+        if (dir === 1 && B.c[i] < u) dir = -1; else if (dir === -1 && B.c[i] > d) dir = 1;
+        st[i] = { v: dir === 1 ? u : d, up: dir === 1 }; }
+      const sts = ch.addLineSeries({ lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+      sts.setData(B.d.map((d, i) => st[i] && { time: d, value: +st[i].v.toFixed(2), color: st[i].up ? "#22c55e" : "#ef4444" }).filter(Boolean));
+      apply.st = v => sts.applyOptions({ visible: v }); apply.st(show("st")); }
+    apply.lv = v => lines.forEach(([ln, title]) => ln.applyOptions({ lineVisible: v, axisLabelVisible: v, title: v ? title : "" })); apply.lv(show("lv"));
     if (bo) { const i = B.c.length - 1; cs.setMarkers([{ time: B.d[i], position: "belowBar", color: "#fbbf24", shape: "arrowUp", text: "BO" }]); }
     // RSI pane, time-synced with the price pane.
     const rc = LW.createChart(rbox, { ...base(96), layout: { ...base(0).layout, attributionLogo: false }, rightPriceScale: { borderColor: "#26304a", minimumWidth: 72, scaleMargins: { top: 0.08, bottom: 0.08 } } });
@@ -734,20 +828,25 @@ function proChart(s) {
     let sync = false;
     const link = (a, b) => a.timeScale().subscribeVisibleLogicalRangeChange(r => { if (!r || sync) return; sync = true; b.timeScale().setVisibleLogicalRange(r); sync = false; });
     link(ch, rc); link(rc, ch);
-    apply.r = v => { rbox.style.display = v ? "" : "none"; ch.timeScale().applyOptions({ visible: !v }); }; apply.r(isOn("r"));
+    apply.r = v => { rbox.style.display = v ? "" : "none"; ch.timeScale().applyOptions({ visible: !v }); }; apply.r(show("r"));
     const n = bars.length; ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 130), to: n + 3 });
     ch.timeScale().applyOptions({ fixLeftEdge: true }); rc.timeScale().applyOptions({ fixLeftEdge: true });
     // OHLC legend like a trading terminal.
-    const show = i => { const b = bars[i]; if (!b) return; const chg = i ? 100 * (b.close / bars[i - 1].close - 1) : 0;
+    const legendAt = i => { const b = bars[i]; if (!b) return; const chg = i ? 100 * (b.close / bars[i - 1].close - 1) : 0;
       legend.replaceChildren(...[el("b", { text: s.symbol }), el("i", { text: fdate(b.time) }), el("i", { text: `O ${fx(b.open)}` }), el("i", { text: `H ${fx(b.high)}` }),
         el("i", { text: `L ${fx(b.low)}` }), el("i", { class: dir(chg), text: `C ${fx(b.close)} ${pct(chg)}` }),
-        B.v && isOn("v") ? el("i", { text: `Vol ${(B.v[i] / 1e5).toFixed(1)}L` }) : null, B.r && isOn("r") && B.r[i] != null ? el("i", { text: `RSI ${Number(B.r[i]).toFixed(1)}` }) : null, B.e && isOn("e") && B.e[i] != null ? el("i", { style: "color:#a78bfa", text: `EMA20 ${fx(B.e[i])}` }) : null, B.f && isOn("f") && B.f[i] != null ? el("i", { style: "color:#f59e0b", text: `EMA50 ${fx(B.f[i])}` }) : null, B.g && isOn("g") && B.g[i] != null ? el("i", { style: "color:#94a3b8", text: `EMA200 ${fx(B.g[i])}` }) : null].filter(Boolean)); };
-    show(n - 1); apply.leg = () => show(n - 1);
+        B.v && show("v") ? el("i", { text: `Vol ${(B.v[i] / 1e5).toFixed(1)}L` }) : null, B.r && show("r") && B.r[i] != null ? el("i", { text: `RSI ${Number(B.r[i]).toFixed(1)}` }) : null, B.e && show("e") && B.e[i] != null ? el("i", { style: "color:#a78bfa", text: `EMA20 ${fx(B.e[i])}` }) : null, B.f && show("f") && B.f[i] != null ? el("i", { style: "color:#f59e0b", text: `EMA50 ${fx(B.f[i])}` }) : null, B.g && show("g") && B.g[i] != null ? el("i", { style: "color:#94a3b8", text: `EMA200 ${fx(B.g[i])}` }) : null].filter(Boolean)); };
+    legendAt(n - 1); apply.leg = () => legendAt(n - 1);
     const idx = new Map(bars.map((b, i) => [b.time, i]));
     const onMove = p => { const t = p && p.time; const key = t && typeof t === "object" ? `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day).padStart(2, "0")}` : t;
-      show(key && idx.has(key) ? idx.get(key) : n - 1); };
+      legendAt(key && idx.has(key) ? idx.get(key) : n - 1); };
     ch.subscribeCrosshairMove(onMove); rc.subscribeCrosshairMove(onMove);
-    if (window.ResizeObserver) new ResizeObserver(() => { const w = box.clientWidth; if (w) { ch.applyOptions({ width: w }); rc.applyOptions({ width: w }); } }).observe(box);
+    apply.fit = () => { const w = box.clientWidth; if (!w) return;
+      if (wrap.classList.contains("fs")) { const H = window.innerHeight, rh = show("r") ? Math.max(70, Math.round(H * 0.2)) : 0, mh = Math.max(160, H - legend.offsetHeight - rh);
+        box.style.height = mh + "px"; rbox.style.height = rh + "px"; ch.applyOptions({ width: w, height: mh }); if (rh) rc.applyOptions({ width: w, height: rh }); }
+      else { box.style.height = ""; rbox.style.height = ""; ch.applyOptions({ width: w, height: 320 }); rc.applyOptions({ width: w, height: 96 }); } };
+    if (window.ResizeObserver) new ResizeObserver(() => apply.fit()).observe(box);
+    window.addEventListener("resize", () => { if (box.isConnected) apply.fit(); });
   };
   const getBars = fetch(`bars/${s.symbol}.json?v=${encodeURIComponent((DATA && DATA.generated_at) || "")}`).then(r => (r.ok ? r.json() : null)).catch(() => null)
     .then(b => b && b.c && b.c.length > 10 ? b : s.bars && s.bars.c ? s.bars : null);
@@ -783,6 +882,7 @@ function sheet(s) {
   const m1 = ret(s, 21), m3 = ret(s, 63);
   f("Moves", `1 month ${m1 == null ? "–" : pct(m1)} · 3 months ${m3 == null ? "–" : pct(m3)}`);
   f("Day range", `${inr(s.day_low)} – ${inr(s.day_high)} · prices for ${s.date}`);
+  if (s.nse_close != null) f("NSE official close", `${inr(s.nse_close)}${Math.abs(s.close / s.nse_close - 1) > 0.005 ? " ⚠ differs from the board's price" : " ✓ matches"}`);
   if (s.volume_ratio) f("Volume", `${fx(s.volume_ratio, 2)}× its 50-day average` + (s.date === new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) ? " (part of the day if the market is open)" : ""));
   if (s.sector) f("Sector", s.sector);
   f("Next results", s.results_date ? `${fdate(s.results_date)} (${daysTo(s.results_date)} days) · from Yahoo Finance, can be an estimate` : "No date published yet");
@@ -809,7 +909,9 @@ function sheet(s) {
         el("div", { class: "lbl", style: "position:relative;z-index:1", text: "Final recommendation" }),
         el("div", { class: "v", style: "position:relative;z-index:1", text: v.label.toUpperCase() }),
         el("div", { class: "meta" }, meter(s.confidence), el("span", { text: `Confidence ${s.confidence}/10` }), el("span", { text: `Trade quality ${s.grade}` }), el("span", { text: `Reward:risk to T1 ${s.rr1}` })),
+        el("div", { class: "agree-row" }, agreeChip(s), (g0 => g0 ? el("span", { class: "hint", text: `Swing rules: ${v.label} · S/R rule: ${SRS[g0.k].label}` }) : null)(s.levels && s.levels.support ? srSignal(s) : null)),
         el("p", { class: "next", text: s.next }),
+        recordLine(s),
         el("p", { class: "why", text: s.reasons.join(" · ") })),
       el("div", { class: "kpis" },
         kpi("Entry zone", `${fx(s.entry[0])}–${fx(s.entry[1])}`, "en"), kpi("Stop-loss", fx(s.stop), "sl"), kpi("Target 1", fx(s.targets[0]), "tg"),
@@ -860,7 +962,7 @@ function sizer(s) {
 function drawChanges(st) {
   const box = document.getElementById("chgSec"), c = DATA.changes;
   const syms = new Set(st.map(s => s.symbol));
-  if (!c || state.tab === "track" || state.tab === "pf" || state.tab === "paper") { box.hidden = true; return; }
+  if (!c || state.tab === "track" || state.tab === "pf" || state.tab === "paper" || state.tab === "home") { box.hidden = true; return; }
   const moves = c.moves.filter(m => syms.has(m.symbol)), bos = c.new_breakouts.filter(x => syms.has(x));
   box.hidden = false;
   const since = c.since ? new Date(c.since).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", hour: "numeric", minute: "2-digit" }) : null;
@@ -1085,10 +1187,12 @@ function setFilter(v) { state.filter = state.filter === v ? null : v; drawGrid()
 
 function drawTab() {
   if (state.tab === "track") state.filter = null;
-  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr" || state.tab === "pf" || state.tab === "paper";
+  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr" || state.tab === "pf" || state.tab === "paper" || state.tab === "home";
   for (const id of ["fbar", "gridWrap"]) document.getElementById(id).hidden = track || srTab;
-  drawTrack(); drawSR(); drawPF(); drawPaper(); drawChanges(st); drawHeat(srTab ? [] : st);
-  for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === state.tab));
+  drawTrack(); drawSR(); drawPF(); drawPaper(); drawHome(); drawChanges(st); drawHeat(srTab ? [] : st);
+  const picks = ["n100", "mid", "small"].includes(state.tab);
+  for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.group === "picks" ? picks : b.dataset.tab === state.tab));
+  document.getElementById("picksSub").hidden = !picks;
   document.getElementById("rank").hidden = !mid;
   if (!mid && state.sort === "rank") state.sort = "score";
   if (mid && state.sort === "score" && !state._midSorted) { state.sort = "rank"; state._midSorted = true; }
@@ -1098,11 +1202,11 @@ function drawTab() {
   document.getElementById("tabnote").textContent = mid
     ? `The 20 strongest ${idx} stocks by your daily scan's ranking (trend + fundamentals + 6-month performance, ₹5 crore+ daily turnover), each run through the same swing-trading chart rules. #1 is the strongest.`
     : state.tab === "watch" ? "Stocks you starred, from every list. Saved on this phone only. Changes to their calls show up as alerts at the top."
-    : track || state.tab === "pf" || state.tab === "paper" ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
+    : track || state.tab === "pf" || state.tab === "paper" || state.tab === "home" ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
   const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100", sr: "Nifty 100 + Midcap 30", pf: "Nifty 100" }[state.tab];
   document.getElementById("breadthLbl").textContent = `Breadth today · ${lbl}`;
   document.getElementById("mixLbl").textContent = `Final recommendation mix · ${lbl}`;
-  const stx = track || state.tab === "pf" || state.tab === "paper" ? DATA.stocks : st;
+  const stx = track || state.tab === "pf" || state.tab === "paper" || state.tab === "home" ? DATA.stocks : st;
   const up = stx.filter(s => s.change_pct > 0).length, dn = stx.filter(s => s.change_pct < 0).length, fl = stx.length - up - dn, n = stx.length || 1;
   document.getElementById("adv").replaceChildren(el("span", { class: "up", text: String(up) }), el("span", { style: "color:var(--muted)", text: " / " }), el("span", { class: "down", text: String(dn) }));
   document.getElementById("breadth").replaceChildren(el("i", { style: `width:${100 * up / n}%;background:var(--up)` }), el("i", { style: `width:${100 * fl / n}%;background:var(--line2)` }), el("i", { style: `width:${100 * dn / n}%;background:var(--down)` }));
@@ -1228,11 +1332,120 @@ function drawPaper() {
     el("div", { class: "panel" }, ...rows));
 }
 
+// One combined verdict: do the swing rules and the support & resistance rule point the same way?
+const SWING_DIR = { "BUY NOW": 1, "BUY ON DIP": 1, WAIT: 0, AVOID: -1 }, SR_DIR = { bo: 1, buy: 1, care: 0, mid: 0, res: -1 };
+function agree(s) {
+  if (!s || !s.levels || !s.levels.support) return null;
+  const g = srSignal(s), a = SWING_DIR[s.verdict] ?? 0, b = SR_DIR[g.k] ?? 0;
+  if (a > 0 && b > 0) return { k: "yes", label: "Both rules agree: buy", c: "var(--up)", g };
+  if (a > 0 || b > 0) return { k: "mixed", label: "Rules disagree: careful", c: "var(--wait)", g };
+  if (a < 0 || b < 0) return { k: "no", label: "Don't buy now", c: "var(--down)", g };
+  return { k: "wait", label: "Both rules: wait", c: "var(--muted)", g };
+}
+function agreeChip(s) { const a = agree(s); return a ? el("span", { class: "agree", style: `--ac:${a.c}`, title: `Swing rules: ${V[s.verdict].label} · S/R rule: ${SRS[a.g.k].label}`, text: a.label }) : null; }
+// How past calls of the same kind have done (scored automatically each scan from closing prices).
+function recordLine(s) {
+  const part = (name, r) => { if (!r || !r.calls) return null; const o = r.outcomes, d = r["10"] || r["5"], bits = [];
+    if (o) bits.push(`target first ${o.target}, stop first ${o.stopped}, still open ${o.neither}`);
+    if (d) bits.push(`${d.win}% were up after ${r["10"] ? 10 : 5} days (avg ${d.avg > 0 ? "+" : ""}${d.avg}%, ${d.n} scored)`);
+    return `${name}: ${bits.length ? bits.join(" · ") : `${r.calls} so far, too new to score`}`; };
+  const t = DATA.track_record, t2 = DATA.sr_track_record, g = s.levels && s.levels.support ? srSignal(s) : null;
+  const a = part(`Past "${V[s.verdict].label}" calls`, t && t.by_verdict && t.by_verdict[s.verdict]);
+  const b = g ? part(`past "${SRS[g.k].label}" signals`, t2 && t2.by_signal && t2.by_signal[g.k]) : null;
+  const txt = [a, b].filter(Boolean).join("; ");
+  return el("p", { class: "hint rec", text: (txt ? txt + ". " : "Track record is building: every call is scored 5, 10 and 20 trading days later. ") +
+    (t && t.since ? `Record since ${fdate(t.since)}; trust it more after 20+ scored calls.` : "") });
+}
+function goTab(t) { state.tab = t; state.filter = null; state.sector = null; drawTab(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+// Market mood from the Nifty 50 (trend vs its 50-day average, 20-day range) and India VIX, and what
+// it means for swing trades. Uses only what the scan fetched; unknown pieces are left out.
+function mood() {
+  const C = DATA && DATA.context, R = C && C.regime, X = C && C.vix;
+  let k = R ? R.mood : DATA && DATA.market ? (DATA.market.up ? "up" : "weak") : null;
+  if (!k) return null;
+  const vx = X ? `India VIX ${X.close.toFixed(1)} (${X.chg_pct > 0 ? "+" : ""}${X.chg_pct}%${X.level === "high" ? ", high fear" : X.level === "elevated" ? ", nervous" : ", calm"})` : "";
+  const size = C && C.size || (k === "weak" ? "half" : k === "sideways" ? "reduced" : "normal");
+  const nf = R ? `Nifty 50 ${inr(R.close)} on ${fdate(R.date)}, ${R.gap_pct >= 0 ? "+" : ""}${R.gap_pct}% from its 50-day average, 20-day range ${R.range20_pct}%` : "";
+  const T = {
+    up: ["Market trending up", "Normal conditions for swing buys. Breakouts with strong volume work best now.",
+      ["Follow Buy now and breakout calls as planned.", "Keep every stop-loss; trends can turn."]],
+    weak: ["Market weak", "The Nifty 50 is below its 50-day average, so breakouts fail more often. Use half size and only take stocks where both rules agree.",
+      ["Use half your normal position size.", "Only take setups where both rules say buy (the green \u201cBoth agree\u201d chip).", "Skip fresh breakouts; wait for the Nifty to close back above its 50-day average.", "Protect holdings that break support."]],
+    sideways: ["Market sideways", "The Nifty 50 is stuck in a narrow range. Buy near support, book profits near resistance, and skip breakouts that lack strong volume.",
+      ["Buy near support (S/R tab: \u201cBuy zone\u201d), not after big up days.", "Book profit at the first target or resistance; don't wait for target 2.", "Skip breakouts unless volume is clearly above normal.", "Use a slightly smaller size than usual."]],
+  }[k];
+  const tips = T[2].slice();
+  if (X && X.level === "high") tips.unshift("VIX is high (20 or more): expect big swings. Use half size and keep stops a little wider so normal noise doesn't hit them.");
+  else if (X && X.level === "elevated") tips.unshift("VIX is above 16: swings are bigger than usual, so trim size a little.");
+  const sizeTxt = { half: "half your normal size", reduced: "a bit less than your normal size", normal: "your normal size" }[size];
+  return { k, size, title: T[0], short: T[1] + (X && X.level !== "calm" && k === "up" ? ` ${vx}: use ${sizeTxt}.` : ""), tips, nf, vx, sizeTxt };
+}
+
+function drawHome() {
+  const box = document.getElementById("homeSec");
+  box.hidden = state.tab !== "home";
+  if (box.hidden) return;
+  const seen = new Set(), pool = all().concat(sec("sr_midcap_more")).filter(x => !seen.has(x.symbol) && seen.add(x.symbol));
+  const best = pool.map(x => ({ x, a: agree(x) })).filter(o => o.a && o.a.k === "yes")
+    .sort((p, q) => (q.x.verdict === "BUY NOW") - (p.x.verdict === "BUY NOW") || q.x.confidence - p.x.confidence || q.x.score - p.x.score);
+  const row = (x, extra) => el("button", { class: "home-row", onclick: () => open(x.symbol) },
+    el("div", {}, el("b", { text: x.symbol }), " ", el("span", { class: "hint", text: x.name && x.name !== x.symbol ? x.name : "" })),
+    el("div", { class: "num", style: "text-align:right" }, inr(x.close), " ", el("span", { class: "chg " + dir(x.change_pct), text: pct(x.change_pct) })),
+    el("div", { class: "hint" }, extra || `${V[x.verdict].label} · ${SRS[srSignal(x).k].label} · entry ${fx(x.entry[0])}–${fx(x.entry[1])} · stop ${fx(x.stop)} · target ${fx(x.targets[0])}`));
+  const panel = (title, hint, ...kids) => el("div", { class: "panel" }, el("div", { class: "sec-h", style: "margin:0" }, el("h2", { style: "font-size:17px", text: title }), hint ? el("span", { class: "hint", text: hint }) : null), ...kids);
+  const link = (t, tab) => el("button", { class: "pf-btn home-link", text: t, onclick: () => goTab(tab) });
+  const m = mood(), C = DATA.context || {};
+  const weak = m && m.size !== "normal";
+  const kids = [];
+  if (m) kids.push(el("div", { class: "panel mood mood-" + m.k }, el("div", { class: "sec-h", style: "margin:0" }, el("h2", { style: "font-size:17px", text: m.title }), el("span", { class: "hint", text: "Size: " + m.sizeTxt })),
+    el("p", { class: "hint", style: "margin:4px 0", text: [m.nf, m.vx].filter(Boolean).join(" · ") }),
+    el("ul", { class: "mood-tips" }, ...m.tips.map(t => el("li", { text: t })))));
+  const G = C.global || [], N = C.news || [];
+  if (G.length || N.length) {
+    const sgn = v => (v > 0 ? "+" : "") + v.toFixed(2) + "%";
+    const up = G.filter(g => !/INR|crude/i.test(g.name)), avg = up.length ? up.reduce((a, g) => a + g.chg_pct, 0) / up.length : null;
+    const tone = avg == null ? "" : avg > 0.4 ? "Overnight markets were positive, so an up start is likely." : avg < -0.4 ? "Overnight markets were negative, so a weak start is likely. Avoid buying in the first 15 minutes." : "Overnight markets were mixed, so no strong cue for the open.";
+    kids.push(panel("Morning: global markets & news", C.fetched_at ? `as of ${new Date(C.fetched_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} IST` : "",
+      tone ? el("p", { class: "hint", style: "margin:4px 0", text: tone }) : null,
+      G.length ? el("div", { class: "glob" }, ...G.map(g => el("div", {}, el("span", { class: "lbl", text: g.name }), el("b", { class: "num", text: g.close.toLocaleString("en-IN", { maximumFractionDigits: 2 }) }),
+        el("span", { class: "chg " + dir(/INR/.test(g.symbol) ? -g.chg_pct : g.chg_pct), text: sgn(g.chg_pct) }), el("small", { class: "hint", text: fdate(g.date) })))) : null,
+      N.length ? el("ul", { class: "news" }, ...N.map(n => el("li", {}, el("a", { href: n.link, target: "_blank", rel: "noopener", text: n.title }), n.source ? el("small", { class: "hint", text: " · " + n.source }) : null))) : null,
+      el("p", { class: "hint", style: "font-size:12px", text: "Prices from Yahoo Finance (daily close, can be delayed); headlines from Google News. A rupee falling (USD/INR up) is shown red." })));
+  }
+  kids.push(panel("Best setups today", best.length ? `${best.length} where both rules say buy` : "",
+    ...(best.length ? best.slice(0, 3).map(o => row(o.x)) : [el("p", { class: "hint", text: "No stock has both rules agreeing on a buy right now. Waiting is a valid answer." })]),
+    weak ? el("p", { class: "hint", style: "color:var(--down)", text: `${m.title}: use ${m.sizeTxt}.` }) : null,
+    link("See all picks", "n100")));
+  const p = pfLoad();
+  if (p) {
+    const board = new Map(everyone().map(x => [x.symbol, x]));
+    let v0 = 0, v1 = 0; const look = [];
+    for (const h of p.stocks) { const b = board.get(h.sym); if (!b) continue; v0 += h.cas_value; v1 += h.qty * b.close;
+      if (b.levels && b.levels.support && b.close < b.levels.support[0]) look.push([b, `Broke below support ${fx(b.levels.support[0])} · swing call ${V[b.verdict].label}`]);
+      else if (b.verdict === "AVOID") look.push([b, `Swing call Avoid · S/R ${SRS[srSignal(b).k].label}`]); }
+    kids.push(panel("Your stocks", v0 ? `${v1 >= v0 ? "+" : "−"}${inr(Math.abs(v1 - v0), 0)} (${pct(100 * (v1 / v0 - 1))}) since your ${fdate(p.as_of)} statement` : "",
+      ...(look.length ? [el("p", { class: "hint", style: "margin:6px 0 0", text: `${look.length} holding${look.length > 1 ? "s" : ""} worth a look:` }), ...look.slice(0, 5).map(([b, t]) => row(b, t))]
+        : [el("p", { class: "hint", text: "None of your stocks has broken its support or turned Avoid." })]),
+      link("Open My portfolio", "pf")));
+  }
+  const L = paperAll(), openT = L.filter(t => t.exit == null);
+  const pl = openT.reduce((a, t) => { const b = everyone().find(x => x.symbol === t.sym); return a + ((b ? b.close : t.entry) - t.entry) * t.qty; }, 0);
+  kids.push(panel("Paper trades", L.length ? `${openT.length} open · ${pl >= 0 ? "+" : "−"}${inr(Math.abs(pl), 0)} on paper` : "",
+    el("p", { class: "hint", text: L.length ? `${L.length - openT.length} closed so far. Practise for 4 to 6 weeks before using real money.` : "None yet. Open any stock and tap Paper buy to practise with pretend money." }),
+    link("Open Paper trades", "paper")));
+  const t = DATA.track_record, r = t && t.by_verdict && t.by_verdict["BUY NOW"], o = r && r.outcomes, d = r && (r["10"] || r["5"]);
+  kids.push(panel("How the Buy now calls have done", t && t.since ? `since ${fdate(t.since)}` : "",
+    el("p", { class: "hint", text: o || d ? [o ? `${o.target} reached the target first, ${o.stopped} hit the stop first, ${o.neither} still open` : "", d ? `${d.win}% were up after ${r["10"] ? 10 : 5} trading days (avg ${d.avg > 0 ? "+" : ""}${d.avg}%)` : ""].filter(Boolean).join(". ") + ". Trust grows after 20+ scored calls."
+      : "Every call is saved and scored 5, 10 and 20 trading days later. The first results appear about a week after the record started." }),
+    link("Open Track record", "track")));
+  box.replaceChildren(...kids);
+}
+
 function drawPF() {
   const box = document.getElementById("pfSec");
   box.hidden = state.tab !== "pf";
   if (box.hidden) return;
-  const head = el("div", { class: "sec-h" }, el("h2", { text: "My portfolio" }), el("span", { class: "hint", text: store.get("pf", null) ? "Loaded on this phone" : "From your statement" }));
+  const head = el("div", { class: "sec-h" }, el("h2", { text: "My portfolio" }), el("span", { class: "hint", text: store.get("pf", null) ? "Saved on this phone" : "From your statement" }));
   const p = pfLoad();
   if (!p) return box.replaceChildren(head, el("div", { class: "panel" },
     el("p", { class: "hint", style: "margin-top:0", text: "Loading your holdings… If nothing appears, load a holdings file (.json) here. Stocks the board scans get today's price and its call." }),
@@ -1294,7 +1507,7 @@ function drawPF() {
 
 function nextRefresh() {
   // Scheduled scans (IST minutes after midnight), Monday to Friday; GitHub can start them a few minutes late.
-  const slots = [675, 825, 980];
+  const slots = [510, 675, 825, 980];
   const ist = new Date(Date.now() + 330 * 6e4);
   for (let d = 0; d < 8; d++) {
     const day = new Date(ist.getTime() + d * 864e5), wd = day.getUTCDay();
@@ -1323,11 +1536,18 @@ function drawAsOf(data, date) {
   const dayTxt = new Date(date + "T12:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
   const mins = Math.max(0, Math.round((Date.now() - when.getTime()) / 6e4));
   const ago = mins < 60 ? `${mins} min ago` : mins < 2880 ? `${Math.round(mins / 60)} h ago` : `${Math.round(mins / 1440)} days ago`;
-  const old = date < expIso;
+  const O = data.official || null;
+  const old = O && O.last_trading_day ? date < O.last_trading_day : date < expIso;
   bar.hidden = false; bar.classList.toggle("old", old); document.getElementById("asof").hidden = true;
   bar.replaceChildren(el("b", { text: `Prices as of ${dayTxt}${midday ? `, ${scanIST.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })} (market open, about 15 min delayed)` : " close"}` }), el("br"),
     el("span", { text: `Last refreshed ${isNaN(when) ? data.generated_at : ist(when)} IST · ${ago}` }),
-    old ? el("em", { text: ` · Older than the last trading day (${new Date(expIso + "T12:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}) unless that was a market holiday, so these numbers may be stale.` }) : null);
+    old ? el("em", { text: ` · Older than the last trading day (${new Date(((O && O.last_trading_day) || expIso) + "T12:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })})${O ? "" : " unless that was a market holiday"}, so these numbers may be stale.` }) : null,
+    O && O.checked ? el("div", { class: O.n_mismatch ? "nse warn" : "nse", text: O.n_mismatch ? `⚠ ${O.n_mismatch} of ${O.checked} prices differ from NSE's official ${fdate(O.date)} close: ${O.mismatches.slice(0, 6).map(m => m.symbol).join(", ")}${O.n_mismatch > 6 ? "…" : ""}`
+      : `✓ All ${O.checked} prices match NSE's official ${fdate(O.date)} close` }) : null);
+  const mk = document.getElementById("mktBar");
+  if (mk) { const m = mood(); mk.hidden = !m || m.k === "up" && m.size === "normal";
+    mk.className = "mkt-bar" + (m && m.k === "sideways" ? " side" : "");
+    mk.textContent = m ? `${m.title}: ${m.short}` : ""; }
 }
 setInterval(() => { if (DATA) drawAsOf(DATA, [...new Set(DATA.stocks.map(s => s.date))].sort().reverse()[0]); }, 60000);
 
@@ -1367,7 +1587,9 @@ function render(data) {
   drawTab();
   route();
   if (!PF_SITE) fetch(`pf.json?v=${encodeURIComponent(data.generated_at || "")}`, { cache: "no-store" }).then(r => (r.ok ? r.json() : null))
-    .then(p => { if (p && Array.isArray(p.stocks)) { for (const k of ["funds", "bonds", "gold"]) p[k] = p[k] || []; PF_SITE = p; drawPF(); } }).catch(() => {});
+    .then(p => { if (p && Array.isArray(p.stocks)) { for (const k of ["funds", "bonds", "gold"]) p[k] = p[k] || []; PF_SITE = p;
+      // Keep a copy on this phone, so the holdings can be removed from the public site.
+      if (!store.get("pf", null)) store.set("pf", p); drawPF(); drawHome(); } }).catch(() => {});
 }
 
 for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => { state.tab = b.dataset.tab; state.filter = null; state.sector = null; drawTab(); });
