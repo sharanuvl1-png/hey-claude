@@ -66,6 +66,19 @@ h1 em { font-style: normal; background: linear-gradient(90deg, var(--brand2), va
 .offline-tag { display: none; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; margin-left: 8px;
   color: var(--wait); background: rgba(255, 176, 32, .1); border: 1px solid rgba(255, 176, 32, .35) }
 body.offline .offline-tag { display: inline-flex }
+.agree { font: 700 11px var(--mono); padding: 3px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ac) 55%, transparent); color: var(--ac); background: color-mix(in srgb, var(--ac) 12%, transparent); white-space: nowrap }
+.agree-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 8px 0 2px; position: relative; z-index: 1 }
+.rec { position: relative; z-index: 1; margin: 6px 0 0; font-size: 12.5px }
+.mkt-bar.side{background:color-mix(in srgb,#d4a017 14%,transparent);border-color:#d4a017}
+.mood-weak{border-left:4px solid var(--down)}.mood-sideways{border-left:4px solid #d4a017}.mood-up{border-left:4px solid var(--up)}
+.mood-tips,.news{margin:6px 0 0;padding-left:18px}.mood-tips li,.news li{margin:3px 0}.news a{color:inherit}
+.glob{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:8px 0}.glob>div{display:flex;flex-direction:column;gap:1px}
+.mkt-bar { margin-top: 8px; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255, 77, 109, .5); background: rgba(255, 77, 109, .1); color: var(--ink); font-size: 13px; font-weight: 600 }
+.asof-bar .nse { margin-top: 4px; font-size: 12px; color: var(--up) } .asof-bar .nse.warn { color: var(--wait) }
+.subtabs button { font-size: 12.5px }
+.home-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; margin-top: 8px; text-align: left; background: transparent; color: var(--ink); width: 100%; cursor: pointer; font: inherit }
+.home-row b { font-size: 15px } .home-row .hint { font-size: 12px; grid-column: 1 / -1 }
+.home-link { margin-top: 10px }
 .asof-bar { margin-top: 8px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line2); background: var(--surface); font-size: 13px; line-height: 1.45 }
 .asof-bar b { font-size: 15px; font-weight: 800; color: var(--ink) } .asof-bar span { color: var(--ink2) }
 .asof-bar.old { border-color: rgba(255, 176, 32, .55); background: rgba(255, 176, 32, .1) } .asof-bar.old em { color: var(--wait); font-style: normal; font-weight: 700 }
@@ -314,7 +327,7 @@ input::placeholder { color: var(--muted) }
     <div class="brand">
       <div class="logo">
         <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#0a0f1d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 3 8-9"/><path d="M15 6h5v5"/></svg></div>
-        <div><h1>Sharan <em>Swing Trading</em></h1><div class="sub" id="asof">Loading the latest scan…</div><div class="sub" id="refresh" style="opacity:.75;font-size:.85em;margin-top:2px"></div><div class="asof-bar" id="asofBar" hidden></div></div>
+        <div><h1>Sharan <em>Swing Trading</em></h1><div class="sub" id="asof">Loading the latest scan…</div><div class="sub" id="refresh" style="opacity:.75;font-size:.85em;margin-top:2px"></div><div class="asof-bar" id="asofBar" hidden></div><div class="mkt-bar" id="mktBar" hidden></div></div>
       </div>
       <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px 0"><span class="live" id="live">Loading</span><button class="install" id="installBtn" hidden>Install app</button><span class="offline-tag">Offline · last saved scan</span></div>
     </div>
@@ -343,14 +356,18 @@ input::placeholder { color: var(--muted) }
   <div class="max gut" style="padding-block:14px 18px;display:grid;gap:22px">
     <div style="display:grid;gap:10px">
       <div class="tabs" role="tablist" aria-label="Stock list">
-        <button role="tab" id="tab-n100" aria-selected="true" data-tab="n100">Nifty 100 <b id="n100Count">–</b></button>
-        <button role="tab" id="tab-mid" aria-selected="false" data-tab="mid">Midcap top 20 <b id="midCount">–</b></button>
-        <button role="tab" id="tab-small" aria-selected="false" data-tab="small">Smallcap top 20 <b id="smallCount">–</b></button>
-        <button role="tab" id="tab-watch" aria-selected="false" data-tab="watch">★ Watchlist <b id="watchCount">0</b></button>
-        <button role="tab" id="tab-track" aria-selected="false" data-tab="track">Track record</button>
+        <button role="tab" id="tab-home" aria-selected="true" data-tab="home">Home</button>
+        <button role="tab" id="tab-picks" aria-selected="false" data-tab="n100" data-group="picks">Picks</button>
         <button role="tab" id="tab-sr" aria-selected="false" data-tab="sr">Support &amp; Resistance <b id="srCount">–</b></button>
         <button role="tab" id="tab-pf" aria-selected="false" data-tab="pf">My portfolio</button>
         <button role="tab" id="tab-paper" aria-selected="false" data-tab="paper">Paper trades <b id="paperCount">0</b></button>
+        <button role="tab" id="tab-watch" aria-selected="false" data-tab="watch">★ Watchlist <b id="watchCount">0</b></button>
+        <button role="tab" id="tab-track" aria-selected="false" data-tab="track">Track record</button>
+      </div>
+      <div class="tabs subtabs" id="picksSub" role="tablist" aria-label="Which list" hidden>
+        <button role="tab" id="tab-n100" aria-selected="false" data-tab="n100">Nifty 100 <b id="n100Count">–</b></button>
+        <button role="tab" id="tab-mid" aria-selected="false" data-tab="mid">Midcap top 20 <b id="midCount">–</b></button>
+        <button role="tab" id="tab-small" aria-selected="false" data-tab="small">Smallcap top 20 <b id="smallCount">–</b></button>
       </div>
       <div class="tabnote" id="tabnote"></div>
     </div>
@@ -361,6 +378,7 @@ input::placeholder { color: var(--muted) }
     </section>
     <section class="sec" id="trackSec" hidden></section>
     <section class="sec" id="srSec" hidden></section>
+    <section class="sec" id="homeSec" hidden></section>
     <section class="sec" id="pfSec" hidden></section>
     <section class="sec" id="paperSec" hidden></section>
     <section class="sec" id="topSec" hidden>
@@ -441,7 +459,7 @@ const svgEl = (svg, name, a) => { const n = document.createElementNS(NS, name); 
 const vstyle = s => `--vc:${V[s.verdict].c}`;
 const ret = (s, n) => (s.closes && s.closes.length > n ? 100 * (s.close / s.closes[s.closes.length - 1 - n] - 1) : null);
 
-const state = { tab: "n100", filter: null, q: "", sort: "score", sector: null };
+const state = { tab: "home", filter: null, q: "", sort: "score", sector: null };
 let DATA = null;
 // Per-phone conveniences (watchlist, last-seen calls, position-size inputs). Kept only in this browser.
 const store = {
@@ -468,7 +486,7 @@ const all = () => DATA.stocks.concat(sec("midcap"), sec("smallcap"));
 const srList = () => DATA.stocks.concat(sec("midcap"), sec("sr_midcap_more"));
 const everyone = () => all().concat(sec("sr_midcap_more"), sec("portfolio"));
 const list = () => state.tab === "mid" ? sec("midcap") : state.tab === "small" ? sec("smallcap")
-  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" || state.tab === "pf" || state.tab === "paper" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
+  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" || state.tab === "pf" || state.tab === "paper" || state.tab === "home" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
 const daysTo = iso => Math.round((new Date(iso + "T00:00:00+05:30") - new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30")) / 864e5);
 const fdate = iso => new Date(iso + "T00:00:00+05:30").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 function resultsChip(s) {
@@ -532,7 +550,7 @@ function card(s, compact = false) {
     el("div", {}, el("div", { class: "lbl", text: "Entry" }), el("div", { class: "v", style: "color:var(--dip)", text: `${fx(s.entry[0], 0)}–${fx(s.entry[1], 0)}` })),
     el("div", {}, el("div", { class: "lbl", text: "Stop" }), el("div", { class: "v down", text: fx(s.stop, 1) })),
     el("div", {}, el("div", { class: "lbl", text: "Target" }), el("div", { class: "v up", text: fx(s.targets[0], 1) }))));
-  const chips = el("div", { class: "chips" }, resultsChip(s), el("span", { class: "chip", text: `Grade ${s.grade}` }), el("span", { class: "chip", text: `RSI ${Math.round(s.rsi)}` }),
+  const chips = el("div", { class: "chips" }, agreeChip(s), resultsChip(s), el("span", { class: "chip", text: `Grade ${s.grade}` }), el("span", { class: "chip", text: `RSI ${Math.round(s.rsi)}` }),
     !compact ? el("span", { class: "chip", text: s.trend }) : null, ...fundChips(f).slice(0, compact ? 1 : 3));
   if (b && b.status === "breakout") chips.append(el("span", { class: "chip bo", text: "⚡ Breakout" }));
   else if (b && b.status === "near") chips.append(el("span", { class: "chip bo", text: `${b.gap_pct}% to breakout` }));
@@ -864,6 +882,7 @@ function sheet(s) {
   const m1 = ret(s, 21), m3 = ret(s, 63);
   f("Moves", `1 month ${m1 == null ? "–" : pct(m1)} · 3 months ${m3 == null ? "–" : pct(m3)}`);
   f("Day range", `${inr(s.day_low)} – ${inr(s.day_high)} · prices for ${s.date}`);
+  if (s.nse_close != null) f("NSE official close", `${inr(s.nse_close)}${Math.abs(s.close / s.nse_close - 1) > 0.005 ? " ⚠ differs from the board's price" : " ✓ matches"}`);
   if (s.volume_ratio) f("Volume", `${fx(s.volume_ratio, 2)}× its 50-day average` + (s.date === new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) ? " (part of the day if the market is open)" : ""));
   if (s.sector) f("Sector", s.sector);
   f("Next results", s.results_date ? `${fdate(s.results_date)} (${daysTo(s.results_date)} days) · from Yahoo Finance, can be an estimate` : "No date published yet");
@@ -890,7 +909,9 @@ function sheet(s) {
         el("div", { class: "lbl", style: "position:relative;z-index:1", text: "Final recommendation" }),
         el("div", { class: "v", style: "position:relative;z-index:1", text: v.label.toUpperCase() }),
         el("div", { class: "meta" }, meter(s.confidence), el("span", { text: `Confidence ${s.confidence}/10` }), el("span", { text: `Trade quality ${s.grade}` }), el("span", { text: `Reward:risk to T1 ${s.rr1}` })),
+        el("div", { class: "agree-row" }, agreeChip(s), (g0 => g0 ? el("span", { class: "hint", text: `Swing rules: ${v.label} · S/R rule: ${SRS[g0.k].label}` }) : null)(s.levels && s.levels.support ? srSignal(s) : null)),
         el("p", { class: "next", text: s.next }),
+        recordLine(s),
         el("p", { class: "why", text: s.reasons.join(" · ") })),
       el("div", { class: "kpis" },
         kpi("Entry zone", `${fx(s.entry[0])}–${fx(s.entry[1])}`, "en"), kpi("Stop-loss", fx(s.stop), "sl"), kpi("Target 1", fx(s.targets[0]), "tg"),
@@ -941,7 +962,7 @@ function sizer(s) {
 function drawChanges(st) {
   const box = document.getElementById("chgSec"), c = DATA.changes;
   const syms = new Set(st.map(s => s.symbol));
-  if (!c || state.tab === "track" || state.tab === "pf" || state.tab === "paper") { box.hidden = true; return; }
+  if (!c || state.tab === "track" || state.tab === "pf" || state.tab === "paper" || state.tab === "home") { box.hidden = true; return; }
   const moves = c.moves.filter(m => syms.has(m.symbol)), bos = c.new_breakouts.filter(x => syms.has(x));
   box.hidden = false;
   const since = c.since ? new Date(c.since).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", hour: "numeric", minute: "2-digit" }) : null;
@@ -1166,10 +1187,12 @@ function setFilter(v) { state.filter = state.filter === v ? null : v; drawGrid()
 
 function drawTab() {
   if (state.tab === "track") state.filter = null;
-  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr" || state.tab === "pf" || state.tab === "paper";
+  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr" || state.tab === "pf" || state.tab === "paper" || state.tab === "home";
   for (const id of ["fbar", "gridWrap"]) document.getElementById(id).hidden = track || srTab;
-  drawTrack(); drawSR(); drawPF(); drawPaper(); drawChanges(st); drawHeat(srTab ? [] : st);
-  for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === state.tab));
+  drawTrack(); drawSR(); drawPF(); drawPaper(); drawHome(); drawChanges(st); drawHeat(srTab ? [] : st);
+  const picks = ["n100", "mid", "small"].includes(state.tab);
+  for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.group === "picks" ? picks : b.dataset.tab === state.tab));
+  document.getElementById("picksSub").hidden = !picks;
   document.getElementById("rank").hidden = !mid;
   if (!mid && state.sort === "rank") state.sort = "score";
   if (mid && state.sort === "score" && !state._midSorted) { state.sort = "rank"; state._midSorted = true; }
@@ -1179,11 +1202,11 @@ function drawTab() {
   document.getElementById("tabnote").textContent = mid
     ? `The 20 strongest ${idx} stocks by your daily scan's ranking (trend + fundamentals + 6-month performance, ₹5 crore+ daily turnover), each run through the same swing-trading chart rules. #1 is the strongest.`
     : state.tab === "watch" ? "Stocks you starred, from every list. Saved on this phone only. Changes to their calls show up as alerts at the top."
-    : track || state.tab === "pf" || state.tab === "paper" ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
+    : track || state.tab === "pf" || state.tab === "paper" || state.tab === "home" ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
   const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100", sr: "Nifty 100 + Midcap 30", pf: "Nifty 100" }[state.tab];
   document.getElementById("breadthLbl").textContent = `Breadth today · ${lbl}`;
   document.getElementById("mixLbl").textContent = `Final recommendation mix · ${lbl}`;
-  const stx = track || state.tab === "pf" || state.tab === "paper" ? DATA.stocks : st;
+  const stx = track || state.tab === "pf" || state.tab === "paper" || state.tab === "home" ? DATA.stocks : st;
   const up = stx.filter(s => s.change_pct > 0).length, dn = stx.filter(s => s.change_pct < 0).length, fl = stx.length - up - dn, n = stx.length || 1;
   document.getElementById("adv").replaceChildren(el("span", { class: "up", text: String(up) }), el("span", { style: "color:var(--muted)", text: " / " }), el("span", { class: "down", text: String(dn) }));
   document.getElementById("breadth").replaceChildren(el("i", { style: `width:${100 * up / n}%;background:var(--up)` }), el("i", { style: `width:${100 * fl / n}%;background:var(--line2)` }), el("i", { style: `width:${100 * dn / n}%;background:var(--down)` }));
@@ -1309,11 +1332,120 @@ function drawPaper() {
     el("div", { class: "panel" }, ...rows));
 }
 
+// One combined verdict: do the swing rules and the support & resistance rule point the same way?
+const SWING_DIR = { "BUY NOW": 1, "BUY ON DIP": 1, WAIT: 0, AVOID: -1 }, SR_DIR = { bo: 1, buy: 1, care: 0, mid: 0, res: -1 };
+function agree(s) {
+  if (!s || !s.levels || !s.levels.support) return null;
+  const g = srSignal(s), a = SWING_DIR[s.verdict] ?? 0, b = SR_DIR[g.k] ?? 0;
+  if (a > 0 && b > 0) return { k: "yes", label: "Both rules agree: buy", c: "var(--up)", g };
+  if (a > 0 || b > 0) return { k: "mixed", label: "Rules disagree: careful", c: "var(--wait)", g };
+  if (a < 0 || b < 0) return { k: "no", label: "Don't buy now", c: "var(--down)", g };
+  return { k: "wait", label: "Both rules: wait", c: "var(--muted)", g };
+}
+function agreeChip(s) { const a = agree(s); return a ? el("span", { class: "agree", style: `--ac:${a.c}`, title: `Swing rules: ${V[s.verdict].label} · S/R rule: ${SRS[a.g.k].label}`, text: a.label }) : null; }
+// How past calls of the same kind have done (scored automatically each scan from closing prices).
+function recordLine(s) {
+  const part = (name, r) => { if (!r || !r.calls) return null; const o = r.outcomes, d = r["10"] || r["5"], bits = [];
+    if (o) bits.push(`target first ${o.target}, stop first ${o.stopped}, still open ${o.neither}`);
+    if (d) bits.push(`${d.win}% were up after ${r["10"] ? 10 : 5} days (avg ${d.avg > 0 ? "+" : ""}${d.avg}%, ${d.n} scored)`);
+    return `${name}: ${bits.length ? bits.join(" · ") : `${r.calls} so far, too new to score`}`; };
+  const t = DATA.track_record, t2 = DATA.sr_track_record, g = s.levels && s.levels.support ? srSignal(s) : null;
+  const a = part(`Past "${V[s.verdict].label}" calls`, t && t.by_verdict && t.by_verdict[s.verdict]);
+  const b = g ? part(`past "${SRS[g.k].label}" signals`, t2 && t2.by_signal && t2.by_signal[g.k]) : null;
+  const txt = [a, b].filter(Boolean).join("; ");
+  return el("p", { class: "hint rec", text: (txt ? txt + ". " : "Track record is building: every call is scored 5, 10 and 20 trading days later. ") +
+    (t && t.since ? `Record since ${fdate(t.since)}; trust it more after 20+ scored calls.` : "") });
+}
+function goTab(t) { state.tab = t; state.filter = null; state.sector = null; drawTab(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+// Market mood from the Nifty 50 (trend vs its 50-day average, 20-day range) and India VIX, and what
+// it means for swing trades. Uses only what the scan fetched; unknown pieces are left out.
+function mood() {
+  const C = DATA && DATA.context, R = C && C.regime, X = C && C.vix;
+  let k = R ? R.mood : DATA && DATA.market ? (DATA.market.up ? "up" : "weak") : null;
+  if (!k) return null;
+  const vx = X ? `India VIX ${X.close.toFixed(1)} (${X.chg_pct > 0 ? "+" : ""}${X.chg_pct}%${X.level === "high" ? ", high fear" : X.level === "elevated" ? ", nervous" : ", calm"})` : "";
+  const size = C && C.size || (k === "weak" ? "half" : k === "sideways" ? "reduced" : "normal");
+  const nf = R ? `Nifty 50 ${inr(R.close)} on ${fdate(R.date)}, ${R.gap_pct >= 0 ? "+" : ""}${R.gap_pct}% from its 50-day average, 20-day range ${R.range20_pct}%` : "";
+  const T = {
+    up: ["Market trending up", "Normal conditions for swing buys. Breakouts with strong volume work best now.",
+      ["Follow Buy now and breakout calls as planned.", "Keep every stop-loss; trends can turn."]],
+    weak: ["Market weak", "The Nifty 50 is below its 50-day average, so breakouts fail more often. Use half size and only take stocks where both rules agree.",
+      ["Use half your normal position size.", "Only take setups where both rules say buy (the green \u201cBoth agree\u201d chip).", "Skip fresh breakouts; wait for the Nifty to close back above its 50-day average.", "Protect holdings that break support."]],
+    sideways: ["Market sideways", "The Nifty 50 is stuck in a narrow range. Buy near support, book profits near resistance, and skip breakouts that lack strong volume.",
+      ["Buy near support (S/R tab: \u201cBuy zone\u201d), not after big up days.", "Book profit at the first target or resistance; don't wait for target 2.", "Skip breakouts unless volume is clearly above normal.", "Use a slightly smaller size than usual."]],
+  }[k];
+  const tips = T[2].slice();
+  if (X && X.level === "high") tips.unshift("VIX is high (20 or more): expect big swings. Use half size and keep stops a little wider so normal noise doesn't hit them.");
+  else if (X && X.level === "elevated") tips.unshift("VIX is above 16: swings are bigger than usual, so trim size a little.");
+  const sizeTxt = { half: "half your normal size", reduced: "a bit less than your normal size", normal: "your normal size" }[size];
+  return { k, size, title: T[0], short: T[1] + (X && X.level !== "calm" && k === "up" ? ` ${vx}: use ${sizeTxt}.` : ""), tips, nf, vx, sizeTxt };
+}
+
+function drawHome() {
+  const box = document.getElementById("homeSec");
+  box.hidden = state.tab !== "home";
+  if (box.hidden) return;
+  const seen = new Set(), pool = all().concat(sec("sr_midcap_more")).filter(x => !seen.has(x.symbol) && seen.add(x.symbol));
+  const best = pool.map(x => ({ x, a: agree(x) })).filter(o => o.a && o.a.k === "yes")
+    .sort((p, q) => (q.x.verdict === "BUY NOW") - (p.x.verdict === "BUY NOW") || q.x.confidence - p.x.confidence || q.x.score - p.x.score);
+  const row = (x, extra) => el("button", { class: "home-row", onclick: () => open(x.symbol) },
+    el("div", {}, el("b", { text: x.symbol }), " ", el("span", { class: "hint", text: x.name && x.name !== x.symbol ? x.name : "" })),
+    el("div", { class: "num", style: "text-align:right" }, inr(x.close), " ", el("span", { class: "chg " + dir(x.change_pct), text: pct(x.change_pct) })),
+    el("div", { class: "hint" }, extra || `${V[x.verdict].label} · ${SRS[srSignal(x).k].label} · entry ${fx(x.entry[0])}–${fx(x.entry[1])} · stop ${fx(x.stop)} · target ${fx(x.targets[0])}`));
+  const panel = (title, hint, ...kids) => el("div", { class: "panel" }, el("div", { class: "sec-h", style: "margin:0" }, el("h2", { style: "font-size:17px", text: title }), hint ? el("span", { class: "hint", text: hint }) : null), ...kids);
+  const link = (t, tab) => el("button", { class: "pf-btn home-link", text: t, onclick: () => goTab(tab) });
+  const m = mood(), C = DATA.context || {};
+  const weak = m && m.size !== "normal";
+  const kids = [];
+  if (m) kids.push(el("div", { class: "panel mood mood-" + m.k }, el("div", { class: "sec-h", style: "margin:0" }, el("h2", { style: "font-size:17px", text: m.title }), el("span", { class: "hint", text: "Size: " + m.sizeTxt })),
+    el("p", { class: "hint", style: "margin:4px 0", text: [m.nf, m.vx].filter(Boolean).join(" · ") }),
+    el("ul", { class: "mood-tips" }, ...m.tips.map(t => el("li", { text: t })))));
+  const G = C.global || [], N = C.news || [];
+  if (G.length || N.length) {
+    const sgn = v => (v > 0 ? "+" : "") + v.toFixed(2) + "%";
+    const up = G.filter(g => !/INR|crude/i.test(g.name)), avg = up.length ? up.reduce((a, g) => a + g.chg_pct, 0) / up.length : null;
+    const tone = avg == null ? "" : avg > 0.4 ? "Overnight markets were positive, so an up start is likely." : avg < -0.4 ? "Overnight markets were negative, so a weak start is likely. Avoid buying in the first 15 minutes." : "Overnight markets were mixed, so no strong cue for the open.";
+    kids.push(panel("Morning: global markets & news", C.fetched_at ? `as of ${new Date(C.fetched_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} IST` : "",
+      tone ? el("p", { class: "hint", style: "margin:4px 0", text: tone }) : null,
+      G.length ? el("div", { class: "glob" }, ...G.map(g => el("div", {}, el("span", { class: "lbl", text: g.name }), el("b", { class: "num", text: g.close.toLocaleString("en-IN", { maximumFractionDigits: 2 }) }),
+        el("span", { class: "chg " + dir(/INR/.test(g.symbol) ? -g.chg_pct : g.chg_pct), text: sgn(g.chg_pct) }), el("small", { class: "hint", text: fdate(g.date) })))) : null,
+      N.length ? el("ul", { class: "news" }, ...N.map(n => el("li", {}, el("a", { href: n.link, target: "_blank", rel: "noopener", text: n.title }), n.source ? el("small", { class: "hint", text: " · " + n.source }) : null))) : null,
+      el("p", { class: "hint", style: "font-size:12px", text: "Prices from Yahoo Finance (daily close, can be delayed); headlines from Google News. A rupee falling (USD/INR up) is shown red." })));
+  }
+  kids.push(panel("Best setups today", best.length ? `${best.length} where both rules say buy` : "",
+    ...(best.length ? best.slice(0, 3).map(o => row(o.x)) : [el("p", { class: "hint", text: "No stock has both rules agreeing on a buy right now. Waiting is a valid answer." })]),
+    weak ? el("p", { class: "hint", style: "color:var(--down)", text: `${m.title}: use ${m.sizeTxt}.` }) : null,
+    link("See all picks", "n100")));
+  const p = pfLoad();
+  if (p) {
+    const board = new Map(everyone().map(x => [x.symbol, x]));
+    let v0 = 0, v1 = 0; const look = [];
+    for (const h of p.stocks) { const b = board.get(h.sym); if (!b) continue; v0 += h.cas_value; v1 += h.qty * b.close;
+      if (b.levels && b.levels.support && b.close < b.levels.support[0]) look.push([b, `Broke below support ${fx(b.levels.support[0])} · swing call ${V[b.verdict].label}`]);
+      else if (b.verdict === "AVOID") look.push([b, `Swing call Avoid · S/R ${SRS[srSignal(b).k].label}`]); }
+    kids.push(panel("Your stocks", v0 ? `${v1 >= v0 ? "+" : "−"}${inr(Math.abs(v1 - v0), 0)} (${pct(100 * (v1 / v0 - 1))}) since your ${fdate(p.as_of)} statement` : "",
+      ...(look.length ? [el("p", { class: "hint", style: "margin:6px 0 0", text: `${look.length} holding${look.length > 1 ? "s" : ""} worth a look:` }), ...look.slice(0, 5).map(([b, t]) => row(b, t))]
+        : [el("p", { class: "hint", text: "None of your stocks has broken its support or turned Avoid." })]),
+      link("Open My portfolio", "pf")));
+  }
+  const L = paperAll(), openT = L.filter(t => t.exit == null);
+  const pl = openT.reduce((a, t) => { const b = everyone().find(x => x.symbol === t.sym); return a + ((b ? b.close : t.entry) - t.entry) * t.qty; }, 0);
+  kids.push(panel("Paper trades", L.length ? `${openT.length} open · ${pl >= 0 ? "+" : "−"}${inr(Math.abs(pl), 0)} on paper` : "",
+    el("p", { class: "hint", text: L.length ? `${L.length - openT.length} closed so far. Practise for 4 to 6 weeks before using real money.` : "None yet. Open any stock and tap Paper buy to practise with pretend money." }),
+    link("Open Paper trades", "paper")));
+  const t = DATA.track_record, r = t && t.by_verdict && t.by_verdict["BUY NOW"], o = r && r.outcomes, d = r && (r["10"] || r["5"]);
+  kids.push(panel("How the Buy now calls have done", t && t.since ? `since ${fdate(t.since)}` : "",
+    el("p", { class: "hint", text: o || d ? [o ? `${o.target} reached the target first, ${o.stopped} hit the stop first, ${o.neither} still open` : "", d ? `${d.win}% were up after ${r["10"] ? 10 : 5} trading days (avg ${d.avg > 0 ? "+" : ""}${d.avg}%)` : ""].filter(Boolean).join(". ") + ". Trust grows after 20+ scored calls."
+      : "Every call is saved and scored 5, 10 and 20 trading days later. The first results appear about a week after the record started." }),
+    link("Open Track record", "track")));
+  box.replaceChildren(...kids);
+}
+
 function drawPF() {
   const box = document.getElementById("pfSec");
   box.hidden = state.tab !== "pf";
   if (box.hidden) return;
-  const head = el("div", { class: "sec-h" }, el("h2", { text: "My portfolio" }), el("span", { class: "hint", text: store.get("pf", null) ? "Loaded on this phone" : "From your statement" }));
+  const head = el("div", { class: "sec-h" }, el("h2", { text: "My portfolio" }), el("span", { class: "hint", text: store.get("pf", null) ? "Saved on this phone" : "From your statement" }));
   const p = pfLoad();
   if (!p) return box.replaceChildren(head, el("div", { class: "panel" },
     el("p", { class: "hint", style: "margin-top:0", text: "Loading your holdings… If nothing appears, load a holdings file (.json) here. Stocks the board scans get today's price and its call." }),
@@ -1375,7 +1507,7 @@ function drawPF() {
 
 function nextRefresh() {
   // Scheduled scans (IST minutes after midnight), Monday to Friday; GitHub can start them a few minutes late.
-  const slots = [675, 825, 980];
+  const slots = [510, 675, 825, 980];
   const ist = new Date(Date.now() + 330 * 6e4);
   for (let d = 0; d < 8; d++) {
     const day = new Date(ist.getTime() + d * 864e5), wd = day.getUTCDay();
@@ -1404,11 +1536,18 @@ function drawAsOf(data, date) {
   const dayTxt = new Date(date + "T12:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
   const mins = Math.max(0, Math.round((Date.now() - when.getTime()) / 6e4));
   const ago = mins < 60 ? `${mins} min ago` : mins < 2880 ? `${Math.round(mins / 60)} h ago` : `${Math.round(mins / 1440)} days ago`;
-  const old = date < expIso;
+  const O = data.official || null;
+  const old = O && O.last_trading_day ? date < O.last_trading_day : date < expIso;
   bar.hidden = false; bar.classList.toggle("old", old); document.getElementById("asof").hidden = true;
   bar.replaceChildren(el("b", { text: `Prices as of ${dayTxt}${midday ? `, ${scanIST.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })} (market open, about 15 min delayed)` : " close"}` }), el("br"),
     el("span", { text: `Last refreshed ${isNaN(when) ? data.generated_at : ist(when)} IST · ${ago}` }),
-    old ? el("em", { text: ` · Older than the last trading day (${new Date(expIso + "T12:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}) unless that was a market holiday, so these numbers may be stale.` }) : null);
+    old ? el("em", { text: ` · Older than the last trading day (${new Date(((O && O.last_trading_day) || expIso) + "T12:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })})${O ? "" : " unless that was a market holiday"}, so these numbers may be stale.` }) : null,
+    O && O.checked ? el("div", { class: O.n_mismatch ? "nse warn" : "nse", text: O.n_mismatch ? `⚠ ${O.n_mismatch} of ${O.checked} prices differ from NSE's official ${fdate(O.date)} close: ${O.mismatches.slice(0, 6).map(m => m.symbol).join(", ")}${O.n_mismatch > 6 ? "…" : ""}`
+      : `✓ All ${O.checked} prices match NSE's official ${fdate(O.date)} close` }) : null);
+  const mk = document.getElementById("mktBar");
+  if (mk) { const m = mood(); mk.hidden = !m || m.k === "up" && m.size === "normal";
+    mk.className = "mkt-bar" + (m && m.k === "sideways" ? " side" : "");
+    mk.textContent = m ? `${m.title}: ${m.short}` : ""; }
 }
 setInterval(() => { if (DATA) drawAsOf(DATA, [...new Set(DATA.stocks.map(s => s.date))].sort().reverse()[0]); }, 60000);
 
@@ -1448,7 +1587,9 @@ function render(data) {
   drawTab();
   route();
   if (!PF_SITE) fetch(`pf.json?v=${encodeURIComponent(data.generated_at || "")}`, { cache: "no-store" }).then(r => (r.ok ? r.json() : null))
-    .then(p => { if (p && Array.isArray(p.stocks)) { for (const k of ["funds", "bonds", "gold"]) p[k] = p[k] || []; PF_SITE = p; drawPF(); } }).catch(() => {});
+    .then(p => { if (p && Array.isArray(p.stocks)) { for (const k of ["funds", "bonds", "gold"]) p[k] = p[k] || []; PF_SITE = p;
+      // Keep a copy on this phone, so the holdings can be removed from the public site.
+      if (!store.get("pf", null)) store.set("pf", p); drawPF(); drawHome(); } }).catch(() => {});
 }
 
 for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => { state.tab = b.dataset.tab; state.filter = null; state.sector = null; drawTab(); });

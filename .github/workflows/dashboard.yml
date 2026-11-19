@@ -2,11 +2,13 @@ name: Nifty 100 swing board
 
 on:
   schedule:
+    - cron: "0 3 * * 1-5"     # 08:30 IST, before the open: overnight global markets, India VIX and news
     - cron: "45 5 * * 1-5"    # 11:15 IST
     - cron: "15 8 * * 1-5"    # 13:45 IST
     - cron: "50 10 * * 1-5"   # 16:20 IST, after the NSE close
     # Back-up starts. GitHub's timer often starts scheduled runs late or skips them, so each scan has
     # two spare starts at off-peak minutes; the "gate" job below lets only the first one through.
+    - cron: "27 3 * * 1-5"    # 08:57 IST
     - cron: "7 6 * * 1-5"     # 11:37 IST
     - cron: "31 6 * * 1-5"    # 12:01 IST
     - cron: "37 8 * * 1-5"    # 14:07 IST
