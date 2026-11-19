@@ -358,6 +358,7 @@ input::placeholder { color: var(--muted) }
       <div class="tabs" role="tablist" aria-label="Stock list">
         <button role="tab" id="tab-home" aria-selected="true" data-tab="home">Home</button>
         <button role="tab" id="tab-picks" aria-selected="false" data-tab="n100" data-group="picks">Picks</button>
+        <button role="tab" id="tab-radar" aria-selected="false" data-tab="radar">Market radar</button>
         <button role="tab" id="tab-sr" aria-selected="false" data-tab="sr">Support &amp; Resistance <b id="srCount">–</b></button>
         <button role="tab" id="tab-pf" aria-selected="false" data-tab="pf">My portfolio</button>
         <button role="tab" id="tab-paper" aria-selected="false" data-tab="paper">Paper trades <b id="paperCount">0</b></button>
@@ -379,6 +380,7 @@ input::placeholder { color: var(--muted) }
     <section class="sec" id="trackSec" hidden></section>
     <section class="sec" id="srSec" hidden></section>
     <section class="sec" id="homeSec" hidden></section>
+    <section class="sec" id="radarSec" hidden></section>
     <section class="sec" id="pfSec" hidden></section>
     <section class="sec" id="paperSec" hidden></section>
     <section class="sec" id="topSec" hidden>
@@ -484,9 +486,9 @@ const sec = k => (DATA[k] && DATA[k].stocks) || [];
 const all = () => DATA.stocks.concat(sec("midcap"), sec("smallcap"));
 // Support & Resistance tab: Nifty 100 plus the Midcap top 30 (the Midcap tab's 20 and ranks 21-30, which are only on this tab).
 const srList = () => DATA.stocks.concat(sec("midcap"), sec("sr_midcap_more"));
-const everyone = () => all().concat(sec("sr_midcap_more"), sec("portfolio"));
+const everyone = () => all().concat(sec("sr_midcap_more"), sec("portfolio"), (DATA && DATA.radar && DATA.radar.top) || []);
 const list = () => state.tab === "mid" ? sec("midcap") : state.tab === "small" ? sec("smallcap")
-  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" || state.tab === "pf" || state.tab === "paper" || state.tab === "home" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
+  : state.tab === "watch" ? all().filter(s => WATCH.has(s.symbol)) : state.tab === "track" || state.tab === "pf" || state.tab === "paper" || state.tab === "home" || state.tab === "radar" ? [] : state.tab === "sr" ? srList() : DATA.stocks;
 const daysTo = iso => Math.round((new Date(iso + "T00:00:00+05:30") - new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30")) / 864e5);
 const fdate = iso => new Date(iso + "T00:00:00+05:30").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 function resultsChip(s) {
@@ -962,7 +964,7 @@ function sizer(s) {
 function drawChanges(st) {
   const box = document.getElementById("chgSec"), c = DATA.changes;
   const syms = new Set(st.map(s => s.symbol));
-  if (!c || state.tab === "track" || state.tab === "pf" || state.tab === "paper" || state.tab === "home") { box.hidden = true; return; }
+  if (!c || state.tab === "track" || state.tab === "pf" || state.tab === "paper" || state.tab === "home" || state.tab === "radar") { box.hidden = true; return; }
   const moves = c.moves.filter(m => syms.has(m.symbol)), bos = c.new_breakouts.filter(x => syms.has(x));
   box.hidden = false;
   const since = c.since ? new Date(c.since).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", hour: "numeric", minute: "2-digit" }) : null;
@@ -1188,9 +1190,9 @@ function setFilter(v) { state.filter = state.filter === v ? null : v; drawGrid()
 
 function drawTab() {
   if (state.tab === "track") state.filter = null;
-  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr" || state.tab === "pf" || state.tab === "paper" || state.tab === "home";
+  const st = list(), mid = state.tab === "mid" || state.tab === "small", track = state.tab === "track", srTab = state.tab === "sr" || state.tab === "pf" || state.tab === "paper" || state.tab === "home" || state.tab === "radar";
   for (const id of ["fbar", "gridWrap"]) document.getElementById(id).hidden = track || srTab;
-  drawTrack(); drawSR(); drawPF(); drawPaper(); drawHome(); drawChanges(st); drawHeat(srTab ? [] : st);
+  drawTrack(); drawSR(); drawPF(); drawPaper(); drawHome(); drawRadar(); drawChanges(st); drawHeat(srTab ? [] : st);
   const picks = ["n100", "mid", "small"].includes(state.tab);
   for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.group === "picks" ? picks : b.dataset.tab === state.tab));
   document.getElementById("picksSub").hidden = !picks;
@@ -1203,11 +1205,11 @@ function drawTab() {
   document.getElementById("tabnote").textContent = mid
     ? `The 20 strongest ${idx} stocks by your daily scan's ranking (trend + fundamentals + 6-month performance, ₹5 crore+ daily turnover), each run through the same swing-trading chart rules. #1 is the strongest.`
     : state.tab === "watch" ? "Stocks you starred, from every list. Saved on this phone only. Changes to their calls show up as alerts at the top."
-    : track || state.tab === "pf" || state.tab === "paper" || state.tab === "home" ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
+    : track || state.tab === "pf" || state.tab === "paper" || state.tab === "home" || state.tab === "radar" ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
   const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100", sr: "Nifty 100 + Midcap 30", pf: "Nifty 100" }[state.tab];
   document.getElementById("breadthLbl").textContent = `Breadth today · ${lbl}`;
   document.getElementById("mixLbl").textContent = `Final recommendation mix · ${lbl}`;
-  const stx = track || state.tab === "pf" || state.tab === "paper" || state.tab === "home" ? DATA.stocks : st;
+  const stx = track || state.tab === "pf" || state.tab === "paper" || state.tab === "home" || state.tab === "radar" ? DATA.stocks : st;
   const up = stx.filter(s => s.change_pct > 0).length, dn = stx.filter(s => s.change_pct < 0).length, fl = stx.length - up - dn, n = stx.length || 1;
   document.getElementById("adv").replaceChildren(el("span", { class: "up", text: String(up) }), el("span", { style: "color:var(--muted)", text: " / " }), el("span", { class: "down", text: String(dn) }));
   document.getElementById("breadth").replaceChildren(el("i", { style: `width:${100 * up / n}%;background:var(--up)` }), el("i", { style: `width:${100 * fl / n}%;background:var(--line2)` }), el("i", { style: `width:${100 * dn / n}%;background:var(--down)` }));
@@ -1442,6 +1444,61 @@ function alertsPanel() {
     el("p", { class: "hint", style: "margin:4px 0", text: syms.length ? `Also watched automatically (starred, paper traded or opened in the last 14 days): ${syms.join(", ")}.${last.t ? ` Last sent ${new Date(last.t).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}.` : ""}` : "Star, paper trade or open a stock and it's watched automatically: you'll hear when it enters its buy zone, turns Buy now or breaks support." }),
     topic ? null : el("p", { class: "hint", style: "margin:4px 0", text: "To switch on the automatic watchlist, type the topic name you subscribed to in the ntfy app once:" }),
     inp, save, msg);
+}
+
+// Market radar: the evening whole-NSE scan (radar.py). Shown as saved; its date is on every section.
+function drawRadar() {
+  const box = document.getElementById("radarSec");
+  box.hidden = state.tab !== "radar";
+  if (box.hidden) return;
+  const R = DATA.radar;
+  const head = el("div", { class: "sec-h" }, el("h2", { text: "Market radar" }), el("span", { class: "hint", text: R && R.as_of ? `NSE close of ${fdate(R.as_of)} · updated each evening` : "" }));
+  if (!R || R.error || !R.as_of) return box.replaceChildren(head, el("div", { class: "panel" }, el("p", { class: "hint", style: "margin:0", text:
+    R && R.error ? R.error : "The first market radar arrives after this evening's NSE close (around 7:30 PM). It scans every NSE stock, ranks sectors, and lists 52-week highs, big deals and upcoming events." })));
+  const panel = (title, hint, ...kids) => el("div", { class: "panel" }, el("div", { class: "sec-h", style: "margin:0" }, el("h2", { style: "font-size:17px", text: title }), hint ? el("span", { class: "hint", text: hint }) : null), ...kids);
+  const tbl = (hs, rows) => el("div", { class: "tablewrap" }, el("table", { class: "tr-table" }, el("thead", {}, el("tr", {}, ...hs.map(h => el("th", { text: h })))), el("tbody", {}, ...rows)));
+  const sg = v => v == null ? "–" : (v > 0 ? "+" : "") + v.toFixed(1) + "%";
+  const symCell = sym => { const on = everyone().some(x => x.symbol === sym); return el("td", { class: "pf-name" }, on ? el("a", { href: "#" + sym, text: sym }) : el("b", { text: sym })); };
+  const U = R.universe || {};
+  const kids = [head, el("p", { class: "hint", text: `Step 1 checked all ${U.eq || "?"} NSE stocks: ${U.liquid || "?"} trade at least ₹${R.rules.min_value_cr} crore a day above ₹${R.rules.min_price}, and ${U.near_high || "?"} closed within ${R.rules.near_high_pct}% of their 20-day high. Step 2 ran the full chart rules on the strongest ${(R.top || []).length}. From NSE's own end-of-day files and Yahoo prices; information, not advice.` })];
+  const top = R.top || [];
+  kids.push(panel("Whole-NSE top picks", `${top.length} stocks · tap for the chart`,
+    top.length ? tbl(["Stock", "Close", "Call", "From 20d high", "Volume", "1 month"], top.map(s => el("tr", {},
+      el("td", { class: "pf-name" }, el("a", { href: "#" + s.symbol, text: s.symbol }), el("small", { text: `entry ${fx(s.entry[0])}–${fx(s.entry[1])} · stop ${fx(s.stop)}` })),
+      el("td", { class: "num", text: inr(s.close) }), el("td", {}, el("span", { class: "sig", style: `--sc:${V[s.verdict].c}`, text: V[s.verdict].label }), agreeChip(s)),
+      el("td", { class: "num", text: s.radar.gap_pct <= 0 ? "above" : "−" + s.radar.gap_pct.toFixed(1) + "%" }), el("td", { class: "num", text: s.radar.vol_ratio.toFixed(1) + "x" }),
+      el("td", { class: "num " + dir(s.radar.r1m), text: sg(s.radar.r1m) }))))
+      : el("p", { class: "hint", text: "No stock passed both steps today." })));
+  const S = R.sectors || [];
+  if (S.length) kids.push(panel("Sector rotation", "Nifty 500 industries by 1- and 3-month strength",
+    ...S.filter(x => x.leaders).map(x => el("div", { class: "home-row", style: "cursor:default" }, el("div", {}, el("b", { text: `#${x.rank} ${x.sector}` })),
+      el("div", { class: "num", style: "text-align:right" }, `1m ${sg(x.r1m)} · 3m ${sg(x.r3m)}`),
+      el("div", { class: "hint" }, `Strongest: ${x.leaders.map(l => `${l.symbol} (${sg(l.r3m)} in 3m)`).join(", ") || "none above their 50-day average"} · ${x.above50_pct}% of its stocks above their 50-day average`))),
+    el("details", {}, el("summary", { class: "hint", style: "cursor:pointer;margin-top:8px", text: `All ${S.length} sectors` }),
+      tbl(["#", "Sector", "1 month", "3 months", "Above 50d avg"], S.map(x => el("tr", {}, el("td", { text: String(x.rank) }), el("td", { text: `${x.sector} (${x.stocks})` }),
+        el("td", { class: "num " + dir(x.r1m), text: sg(x.r1m) }), el("td", { class: "num " + dir(x.r3m), text: sg(x.r3m) }), el("td", { class: "num", text: x.above50_pct + "%" })))))));
+  const H = R.highs || [];
+  kids.push(panel("Near 52-week highs on strong volume", `${H.length} stocks within 5% of the high on 1.5x+ volume`,
+    H.length ? tbl(["Stock", "Close", "52w high", "Below high", "Volume"], H.slice(0, 25).map(h => el("tr", {}, symCell(h.symbol), el("td", { class: "num", text: inr(h.close) }),
+      el("td", { class: "num", text: inr(h.hi52) }), el("td", { class: "num", text: h.from_hi52_pct.toFixed(1) + "%" }), el("td", { class: "num", text: h.vol_ratio.toFixed(1) + "x" }))))
+      : el("p", { class: "hint", text: "None today." })));
+  const B = R.bigmoney || {}, D = B.deals || [], DV = B.delivery || [];
+  kids.push(panel("Big money", "bulk and block deals · unusually high delivery",
+    D.length ? tbl(["Stock", "Deal", "Who", "Value"], D.slice(0, 15).map(d => el("tr", {}, symCell(d.symbol),
+      el("td", { class: d.side && d.side.toUpperCase().startsWith("B") ? "up" : "down", text: `${d.kind} ${d.side === "BUY" || d.side === "B" ? "buy" : d.side === "SELL" || d.side === "S" ? "sell" : d.side || ""}` }),
+      el("td", { class: "hint", text: d.client || "" }), el("td", { class: "num", text: `₹${d.value_cr.toFixed(1)} cr @ ${fx(d.price)}` })))) : el("p", { class: "hint", text: "No bulk or block deals in NSE's latest file." }),
+    DV.length ? el("p", { class: "hint", style: "margin:10px 0 4px", text: "Delivery at least 2x normal daily volume, with 60%+ taken as delivery (buyers keeping the shares):" }) : null,
+    DV.length ? tbl(["Stock", "Close", "Delivery", "vs normal", "Day"], DV.map(x => el("tr", {}, symCell(x.symbol), el("td", { class: "num", text: inr(x.close) }),
+      el("td", { class: "num", text: x.deliv_pct.toFixed(0) + "%" }), el("td", { class: "num", text: x.deliv_x + "x" }), el("td", { class: "num " + dir(x.change_pct), text: sg(x.change_pct) })))) : null));
+  const E = R.events || [];
+  const held = new Set(((pfLoad() || {}).stocks || []).map(h => h.sym));
+  kids.push(panel("Event radar", "results, bonus and splits in the next 7 days",
+    E.length ? tbl(["Date", "Stock", "Event"], E.slice(0, 40).map(e => el("tr", {}, el("td", { text: e.date ? fdate(e.date) : "–" }),
+      el("td", { class: "pf-name" }, e.on_board || held.has(e.symbol) ? el("b", { text: e.symbol }) : e.symbol, held.has(e.symbol) ? el("small", { text: "you hold it" }) : null),
+      el("td", { text: e.kind === "results" ? "Results" : e.kind === "bonus" ? "Bonus (ex-date)" : "Split (ex-date)" }))))
+      : el("p", { class: "hint", text: "NSE's calendars couldn't be read this time, or nothing is due." })));
+  if ((R.notes || []).length) kids.push(el("p", { class: "hint", style: "font-size:12px", text: "Couldn't fetch: " + R.notes.slice(0, 6).join("; ") }));
+  box.replaceChildren(...kids);
 }
 
 function drawHome() {

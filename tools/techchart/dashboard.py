@@ -383,6 +383,7 @@ def main():
     ap.add_argument("--limit", type=int, default=0, help="only the first N stocks (for a quick test)")
     ap.add_argument("--skip-midcap", action="store_true", help="leave out the Midcap and Smallcap top 20")
     ap.add_argument("--history", default="", help="history.json from the swing-history branch (read and updated)")
+    ap.add_argument("--radar", default="", help="folder with the evening market radar (radar.json, charts, reports)")
     ap.add_argument("--alerts", default="", help="write watchlist alerts (for the ntfy push) to this file")
     args = ap.parse_args()
     rules = bo.load_rules(args.rules)
@@ -516,12 +517,24 @@ def main():
             seen.add(r["symbol"])
             board_rows.append(r)
     official = official_check(board_rows, now)
+    radar = None
+    if args.radar and os.path.exists(os.path.join(args.radar, "radar.json")):
+        try:
+            with open(os.path.join(args.radar, "radar.json"), encoding="utf-8") as f:
+                radar = json.load(f)
+            for sub in ("charts", "reports"):
+                if os.path.isdir(os.path.join(args.radar, sub)):
+                    shutil.copytree(os.path.join(args.radar, sub), os.path.join(out, "radar", sub), dirs_exist_ok=True)
+            print(f"Market radar from {radar.get('as_of')}: {len(radar.get('top') or [])} top stocks")
+        except Exception as e:
+            notes.append(f"Market radar unavailable ({type(e).__name__}).")
+            radar = None
     data = {"generated_at": now.isoformat(timespec="minutes"),
             "source": "Yahoo Finance (NSE). Prices can be about 15 minutes behind.",
             "market": None if market is None else {k: (round(v, 4) if isinstance(v, float) else bool(v)) for k, v in market.items()},
             "rules": {k: rules[k] for k in ("volume_multiple", "require_above_ema", "max_below_52w_high_pct") if k in rules},
             "stocks": rows, "errors": errors, "notes": notes, "midcap": midcap, "smallcap": smallcap,
-            "sr_midcap_more": sr_midcap_more, "portfolio": portfolio, "official": official, "context": context, "changes": changes, "track_record": record,
+            "sr_midcap_more": sr_midcap_more, "portfolio": portfolio, "official": official, "context": context, "radar": radar, "changes": changes, "track_record": record,
             "sr_track_record": sr_record}
     with open(os.path.join(out, "data.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
