@@ -61,7 +61,8 @@ def bhavcopy(d):
         try:
             out[row["TckrSymb"].strip()] = {"o": float(row["OpnPric"]), "h": float(row["HghPric"]), "l": float(row["LwPric"]),
                                             "c": float(row["ClsPric"]), "pc": float(row["PrvsClsgPric"]),
-                                            "vol": float(row["TtlTradgVol"]), "val": float(row["TtlTrfVal"])}
+                                            "vol": float(row["TtlTradgVol"]), "val": float(row["TtlTrfVal"]),
+                                            "name": (row.get("FinInstrmNm") or "").strip()}
         except (KeyError, ValueError):
             continue
     return out or None
@@ -83,13 +84,21 @@ def sessions(today, n=22, max_back=45):
     return out
 
 
+def is_fund(sym, name=""):
+    """ETFs and index funds trade in the EQ series too; they aren't stocks."""
+    u, n = sym.upper(), f" {name.upper()} "
+    if " ETF" in n or "EXCHANGE TRADED" in n or " FUND" in n or " INDEX" in n or "BHARAT BOND" in n:
+        return True
+    return "BEES" in u or u.endswith("ETF") or u.endswith("IETF") or u.startswith("ETF") or "NIFTY" in u or "SENSEX" in u or u.endswith("CASE")
+
+
 def quick_filter(days):
     """Step 1 over the whole NSE: liquid stocks, and the ones near or above their 20-day high."""
     latest_day, latest = days[0]
     liquid, near = {}, []
     for sym, t in latest.items():
         hist = [b[sym] for _, b in days if sym in b]
-        if len(hist) < 15 or t["c"] < MIN_PRICE:
+        if len(hist) < 15 or t["c"] < MIN_PRICE or is_fund(sym, t.get("name", "")):
             continue
         avg_val = st.mean(x["val"] for x in hist[1:]) / 1e7   # Rs crore
         if avg_val < MIN_VALUE_CR:
@@ -301,8 +310,10 @@ def main():
         syms = [x["symbol"] for x in syms]
     frames = yahoo_year(syms)
     mets = {}
+    cut = dt.date.fromisoformat(day)
     for s, f in frames.items():
         try:
+            f = f[[d.date() <= cut for d in f.index]]   # same session as NSE's file (no part-day bar)
             mets[s] = metrics(f)
         except Exception:
             pass
@@ -373,6 +384,17 @@ def main():
         elif p:
             focus.add(p.upper())
     ev, enotes = events(now.date(), focus)
+    if not any(e["kind"] == "results" for e in ev):
+        # NSE's website often refuses cloud servers; fall back to Yahoo's results dates for the stocks that matter here.
+        import dashboard as db
+        for sym in sorted(focus)[:120]:
+            rd = db.results_date(sym, now.date())
+            if rd and (dt.date.fromisoformat(rd) - now.date()).days <= 7:
+                ev.append({"symbol": sym, "date": rd, "kind": "results", "detail": "Yahoo Finance date (may be an estimate)", "on_board": True})
+            time.sleep(0.1)
+        ev.sort(key=lambda e: (e["date"] or "", e["symbol"] or ""))
+        if enotes:
+            enotes.append("results dates from Yahoo for the radar, 52-week-high and portfolio stocks; bonus and split dates need NSE's site")
     data["events"] = ev
     notes += enotes
 
