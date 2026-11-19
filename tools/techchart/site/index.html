@@ -182,6 +182,10 @@ input::placeholder { color: var(--muted) }
 .lwc-tog button[aria-pressed="true"] { color: var(--tc); border-color: color-mix(in srgb, var(--tc) 55%, transparent); background: color-mix(in srgb, var(--tc) 12%, transparent) }
 .lwc-tog button[aria-pressed="false"] { text-decoration: line-through; opacity: .6 }
 .pf-sr { display: block; font: 600 10.5px var(--mono); margin-top: 3px; white-space: nowrap }
+.lwc-wrap .fs-x { display: none }
+.lwc-wrap.fs { position: fixed; inset: 0; z-index: 1000; border-radius: 0; border: 0; background: #0b1020; overflow: hidden; padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left) }
+.lwc-wrap.fs .fs-x { display: block; position: absolute; top: calc(6px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); z-index: 6; font: 700 12px inherit; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line2); background: rgba(11,16,32,.85); color: var(--ink) }
+.fs-btn { font: 700 12px inherit; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line2); background: transparent; color: var(--ink2); cursor: pointer }
 .lwc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap }
 .lwc-mode { display: inline-flex; border: 1px solid var(--line2); border-radius: 999px; overflow: hidden }
 .lwc-mode button { font: 700 12px var(--sans, inherit); padding: 5px 14px; border: 0; background: transparent; color: var(--ink2); cursor: pointer }
@@ -713,15 +717,33 @@ function proChart(s) {
   const tog = el("div", { class: "lwc-tog", role: "group", "aria-label": "Show or hide indicators" }, ...IND.map(([k, t, c]) => {
     const b = el("button", { type: "button", style: `--tc:${c}`, "aria-pressed": String(isOn(k)), text: t });
     b.addEventListener("click", () => { on[k] = !isOn(k); b.setAttribute("aria-pressed", String(isOn(k)));
-      try { localStorage.setItem("sb.ind", JSON.stringify(on)); } catch (e) {} if (apply[k]) apply[k](isOn(k)); if (apply.leg) apply.leg(); });
+      try { localStorage.setItem("sb.ind", JSON.stringify(on)); } catch (e) {} if (apply[k]) apply[k](isOn(k)); if (apply.leg) apply.leg(); if (apply.fit) apply.fit(); });
     return b; }));
   const legend = el("div", { class: "lwc-leg" }), box = el("div", { class: "lwc" }), rbox = el("div", { class: "lwc rsi" });
   const where = s.close >= L.resistance[0] ? "at resistance: a place to book profit, or wait for a close above it" : s.close <= L.support[1] ? "at support: the buy zone if it holds" : "between support and resistance";
   const key = el("div", { class: "lwc-key" }, el("span", { style: "--kc:rgba(22,199,132,.35)", text: bo ? "Pullback buy zone" : "Buy zone" }),
     bo ? null : el("span", { style: "--kc:rgba(56,189,248,.35)", text: "Take-profit zone" }), el("span", { class: "ln", style: "--kc:#ea3943", text: "Stop" }), el("span", { class: "ln", style: "--kc:#22d3ee", text: bo ? "Target" : "Book profit" }));
-  panel = el("div", { class: "panel" }, el("div", { class: "lwc-top" }, el("div", { class: "lbl", text: "Support & resistance chart · daily, up to 2 years" }), modes), sentence,
+  // Full screen: real fullscreen where the browser allows it (plus landscape on Android); otherwise the chart
+  // is moved to a fixed layer over the whole page. Rotate the phone for landscape.
+  const fsX = el("button", { type: "button", class: "fs-x", "aria-label": "Exit full screen", text: "✕ Exit" });
+  const wrap = el("div", { class: "lwc-wrap" }, fsX, legend, box, rbox);
+  let home = null;
+  const fsEnter = () => { if (wrap.classList.contains("fs")) return; home = el("div"); wrap.replaceWith(home); document.body.append(wrap); wrap.classList.add("fs");
+    document.body.style.overflow = "hidden";
+    const rq = wrap.requestFullscreen || wrap.webkitRequestFullscreen; if (rq) Promise.resolve(rq.call(wrap)).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock("landscape")).catch(() => {});
+    window.addEventListener("hashchange", fsExit, { once: true });
+    requestAnimationFrame(() => apply.fit && apply.fit()); };
+  const fsExit = () => { if (!wrap.classList.contains("fs")) return; wrap.classList.remove("fs"); if (home) home.replaceWith(wrap); home = null;
+    if (document.getElementById("scrim").hidden) document.body.style.overflow = "";
+    try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+    const fe = document.fullscreenElement || document.webkitFullscreenElement; if (fe) (document.exitFullscreen || document.webkitExitFullscreen).call(document).catch?.(() => {});
+    requestAnimationFrame(() => apply.fit && apply.fit()); };
+  fsX.addEventListener("click", fsExit);
+  for (const ev of ["fullscreenchange", "webkitfullscreenchange"]) document.addEventListener(ev, () => { if (!(document.fullscreenElement || document.webkitFullscreenElement)) fsExit(); });
+  const fsBtn = el("button", { type: "button", class: "fs-btn", "aria-label": "Show the chart full screen", text: "⛶ Full screen", onclick: fsEnter });
+  panel = el("div", { class: "panel" }, el("div", { class: "lwc-top" }, el("div", { class: "lbl", text: "Support & resistance chart · daily, up to 2 years" }), el("div", { style: "display:flex;gap:8px;align-items:center" }, fsBtn, modes)), sentence,
     pro ? chips : null, srLadder(s, { g, zone, tgt, stp, bo }),
-    pro ? tog : null, key, el("div", { class: "lwc-wrap" }, legend, box, rbox),
+    pro ? tog : null, key, wrap,
     el("div", { class: "hint", text: pro ? `${SG.label}: ${g.why}. ${SG.rule} Purple = EMA 20, orange = EMA 50, grey = EMA 200 (trend filters). Supertrend (10, 3) is green under the price in an uptrend and red above it in a downtrend; a close below the green line is a trailing-stop exit. Tap the buttons to switch indicators on or off.`
       : `${SG.rule} Pinch or drag to zoom, tap a candle for its prices, scroll left for up to 2 years. Switch to Pro for EMAs, volume, RSI and Supertrend.` }));
   const build = LW => {
@@ -801,7 +823,12 @@ function proChart(s) {
     const onMove = p => { const t = p && p.time; const key = t && typeof t === "object" ? `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day).padStart(2, "0")}` : t;
       legendAt(key && idx.has(key) ? idx.get(key) : n - 1); };
     ch.subscribeCrosshairMove(onMove); rc.subscribeCrosshairMove(onMove);
-    if (window.ResizeObserver) new ResizeObserver(() => { const w = box.clientWidth; if (w) { ch.applyOptions({ width: w }); rc.applyOptions({ width: w }); } }).observe(box);
+    apply.fit = () => { const w = box.clientWidth; if (!w) return;
+      if (wrap.classList.contains("fs")) { const H = window.innerHeight, rh = show("r") ? Math.max(70, Math.round(H * 0.2)) : 0, mh = Math.max(160, H - legend.offsetHeight - rh);
+        box.style.height = mh + "px"; rbox.style.height = rh + "px"; ch.applyOptions({ width: w, height: mh }); if (rh) rc.applyOptions({ width: w, height: rh }); }
+      else { box.style.height = ""; rbox.style.height = ""; ch.applyOptions({ width: w, height: 320 }); rc.applyOptions({ width: w, height: 96 }); } };
+    if (window.ResizeObserver) new ResizeObserver(() => apply.fit()).observe(box);
+    window.addEventListener("resize", () => { if (box.isConnected) apply.fit(); });
   };
   const getBars = fetch(`bars/${s.symbol}.json?v=${encodeURIComponent((DATA && DATA.generated_at) || "")}`).then(r => (r.ok ? r.json() : null)).catch(() => null)
     .then(b => b && b.c && b.c.length > 10 ? b : s.bars && s.bars.c ? s.bars : null);
