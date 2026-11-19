@@ -23,6 +23,9 @@ import time
 
 import yfinance as yf
 
+sys.path.insert(0, __import__("os").path.dirname(__import__("os").path.abspath(__file__)))
+import techchart as tc  # noqa: E402
+
 TOL = 0.005  # 0.5%
 
 
@@ -56,6 +59,11 @@ def check_stock(s, today):
     except Exception as e:
         return probs + [f"{sym}: fresh download failed ({type(e).__name__})"]
     h = h.dropna(subset=["Close"])
+    try:  # same repair as the scan: rebuild a session missing from Yahoo's daily prices from its hourly prices
+        hh = yf.Ticker(sym + ".NS").history(period="5d", interval="60m", auto_adjust=False)
+        h = tc._complete_daily(h[["Open", "High", "Low", "Close", "Volume"]], hh, sym)
+    except Exception:
+        pass
     if len(h) < 2:
         return probs + [f"{sym}: fresh download returned no prices"]
     last_date = h.index[-1].date()

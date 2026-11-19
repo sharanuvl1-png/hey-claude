@@ -50,13 +50,41 @@ def fetch(symbol):
     for frame in (daily, hourly):
         if isinstance(frame.columns, pd.MultiIndex):
             frame.columns = frame.columns.get_level_values(0)
-    daily = daily[["Open", "High", "Low", "Close", "Volume"]].dropna()
+    daily = daily[["Open", "High", "Low", "Close", "Volume"]].dropna(subset=["Open", "High", "Low", "Close"])
+    daily = _complete_daily(daily, hourly, symbol)
     if daily.empty or len(daily) < 60:
         raise SystemExit(f"DATA ERROR: no usable price history found for '{symbol}'. Check the company name or give the NSE symbol.")
     age = (pd.Timestamp.now().normalize() - daily.index[-1].tz_localize(None).normalize()).days
     if age > 6:
         raise SystemExit(f"DATA ERROR: latest price for {symbol} is from {daily.index[-1]:%d %b %Y} ({age} days old); refusing to analyse stale data.")
     return daily, to_h4(hourly)
+
+
+def _complete_daily(daily, hourly, symbol):
+    """Yahoo's daily series for NSE stocks sometimes lags: the latest session is missing, or its row has no
+    volume, for hours after the close. The 60-minute series usually has it, so rebuild those days from it.
+    Without this the board shows the previous day's close and change as if it were the latest."""
+    if hourly is None or hourly.empty or daily.empty:
+        return daily
+    h = hourly[["Open", "High", "Low", "Close", "Volume"]].dropna(subset=["Open", "High", "Low", "Close"])
+    if h.empty:
+        return daily
+    idx = h.index.tz_convert("Asia/Kolkata") if h.index.tz is not None else h.index
+    h = h.set_axis(idx)
+    days = h.groupby(idx.date).agg(Open=("Open", "first"), High=("High", "max"), Low=("Low", "min"),
+                                   Close=("Close", "last"), Volume=("Volume", "sum"))
+    dix = daily.index.tz_localize(None) if daily.index.tz is not None else daily.index
+    daily = daily.set_axis(dix)
+    last = dix[-1].date()
+    for d, row in days.iterrows():
+        ts = pd.Timestamp(d)
+        if d > last:
+            daily.loc[ts] = row.values
+            print(f"{symbol}: {d} was missing from Yahoo's daily prices; built it from hourly prices (close {row['Close']:.2f})", file=sys.stderr)
+        elif ts in daily.index and (pd.isna(daily.at[ts, "Volume"]) or daily.at[ts, "Volume"] == 0) and row["Volume"] > 0:
+            daily.at[ts, "Volume"] = row["Volume"]
+    daily["Volume"] = daily["Volume"].fillna(0)
+    return daily.sort_index()
 
 
 def to_h4(hourly):
