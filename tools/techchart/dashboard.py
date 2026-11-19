@@ -469,6 +469,7 @@ def main():
         changes = hi.changes(h.get("last_scan"), every)
         hi.record(h, every, now.isoformat(timespec="minutes"))
         record = hi.track_record(h, prices, nifty)
+        record["auto_paper"] = hi.auto_paper(h, prices)
         # Support & Resistance tab: its own signals and track record (Nifty 100 + Midcap top 30).
         hi.sr_record(h, rows + midcap["stocks"] + sr_midcap_more["stocks"])
         sr_record = hi.sr_track_record(h, prices, nifty)

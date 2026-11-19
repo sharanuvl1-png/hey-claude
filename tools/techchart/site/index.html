@@ -1295,6 +1295,37 @@ function paperEval(t, now) {
   if (now.close >= t.target) return { ...t, exit: t.target, exitDate: now.date, how: "Target hit" };
   return t;
 }
+// Automatic paper trades: the scan turns every new Buy now call into a pretend buy (that day's close, the
+// board's stop and T1) and judges it on later closes. Shares are sized here from the Position size settings.
+function autoPaperStats() {
+  const T = (DATA.track_record && DATA.track_record.auto_paper) || [], size = store.get("size", { cap: 100000, risk: 1 });
+  const rows = T.map(t => { const risk = t.entry - t.stop, qty = Math.max(1, Math.min(Math.floor(size.cap * size.risk / 100 / risk), Math.floor(size.cap / t.entry)));
+    const px = t.exit != null ? t.exit : t.now != null ? t.now : t.entry; return { ...t, qty, px, pl: (px - t.entry) * qty, r: (px - t.entry) / risk }; });
+  const done = rows.filter(t => t.exit != null), open = rows.filter(t => t.exit == null);
+  return { rows, done, open, wins: done.filter(t => t.pl > 0).length, plDone: done.reduce((a, t) => a + t.pl, 0), plOpen: open.reduce((a, t) => a + t.pl, 0),
+    avgR: done.length ? done.reduce((a, t) => a + t.r, 0) / done.length : null, since: rows.length ? rows[0].date : null };
+}
+function autoPaperPanel() {
+  const S = autoPaperStats(), sg = v => `${v >= 0 ? "+" : "−"}${inr(Math.abs(v), 0)}`;
+  const kp = (l, v, sub, c) => el("div", {}, el("span", { class: "lbl", text: l }), el("b", { class: c || "", text: v }), sub ? el("span", { class: "hint", text: sub }) : null);
+  const HOW = { stop: "Stop hit", target: "Target hit", time: "20 days, closed" };
+  if (!S.rows.length) return el("div", { class: "panel" }, el("div", { class: "lbl", text: "Automatic: every Buy now call" }),
+    el("p", { class: "hint", style: "margin:0", text: "Starts with the next scan: each new Buy now call becomes a pretend trade on its own." }));
+  const list = S.rows.slice().sort((a, b) => (a.exit != null) - (b.exit != null) || (b.exit_date || b.date).localeCompare(a.exit_date || a.date)).map(t =>
+    el("div", { class: "pp-row" },
+      el("header", {}, el("b", {}, el("a", { href: "#" + t.sym, text: t.sym })), el("span", { class: "pp-st", style: `color:${t.exit == null ? "var(--ink2)" : t.pl >= 0 ? "var(--up)" : "var(--down)"}`, text: t.exit == null ? "Open" : HOW[t.how] })),
+      el("div", { class: "num " + dir(t.pl), style: "font-weight:700", text: `${sg(t.pl)} · ${pct(100 * (t.px / t.entry - 1))} · ${t.r >= 0 ? "+" : ""}${t.r.toFixed(1)}R` }),
+      el("div", { class: "hint", text: `${t.qty} sh at ${inr(t.entry)} on ${fdate(t.date)} · stop ${fx(t.stop)} · target ${fx(t.target)} · ${t.exit != null ? `closed ${fdate(t.exit_date)} at ${inr(t.exit)}` : t.now != null ? `now ${inr(t.now)} (${fdate(t.now_date)})` : "no newer price yet"}` })));
+  const more = el("details", {}, el("summary", { class: "hint", style: "cursor:pointer;margin-top:8px", text: `Show all ${S.rows.length} automatic trades` }), ...list);
+  return el("div", { class: "panel" }, el("div", { class: "lbl", style: "margin-bottom:6px", text: `Automatic: every Buy now call since ${fdate(S.since)}` }),
+    el("div", { class: "pf-kpis" },
+      kp("Closed", String(S.done.length), S.done.length ? `${S.wins} won · ${Math.round(100 * S.wins / S.done.length)}% win rate` : "none closed yet"),
+      kp("Closed profit / loss", sg(S.plDone), S.avgR != null ? `average ${S.avgR.toFixed(2)}R per trade` : "", dir(S.plDone)),
+      kp("Open", String(S.open.length), `${sg(S.plOpen)} on paper right now`, dir(S.plOpen))),
+    el("p", { class: "hint", style: "margin:10px 0 0", text: `Added by the scan, not by you: each new Buy now call is bought at that day's close and sold at the first close at or below the stop, at or above target 1, or after 20 trading days. Shares follow your Position size settings (${inr(store.get("size", { cap: 100000, risk: 1 }).cap, 0)}, ${store.get("size", { cap: 100000, risk: 1 }).risk}% risk). Closing prices only. Pretend money: no order is ever placed.` }),
+    more);
+}
+
 function drawPaper() {
   const box = document.getElementById("paperSec");
   box.hidden = state.tab !== "paper";
@@ -1302,9 +1333,10 @@ function drawPaper() {
   let L = paperAll(); const L2 = L.map(t => paperEval(t, board.get(t.sym)));
   if (JSON.stringify(L2) !== JSON.stringify(L)) { L = L2; paperSave(L); } else paperSave(L);
   if (box.hidden) return;
-  const head = el("div", { class: "sec-h" }, el("h2", { text: "Paper trades" }), el("span", { class: "hint", text: "Pretend money · saved on this phone only" }));
-  if (!L.length) return box.replaceChildren(head, el("div", { class: "panel" }, el("p", { class: "hint", style: "margin:0", text:
-    "No paper trades yet. Open any stock and tap Paper buy. It records today's price, the stop and the target, and each scan checks whether the stop or the target was reached first (on closing prices). Try it for 4 to 6 weeks before risking real money." })));
+  const head = el("div", { class: "sec-h" }, el("h2", { text: "Paper trades" }), el("span", { class: "hint", text: "Pretend money · no real orders" }));
+  const auto = autoPaperPanel();
+  if (!L.length) return box.replaceChildren(head, auto, el("div", { class: "panel" }, el("div", { class: "lbl", text: "Your own paper trades" }), el("p", { class: "hint", style: "margin:0", text:
+    "None yet. Open any stock and tap Paper buy. It records today's price, the stop and the target, and each scan checks whether the stop or the target was reached first (on closing prices). Try it for 4 to 6 weeks before risking real money." })));
   const R = t => (t.entry - t.stop) * t.qty;
   const rows = L.slice().sort((a, b) => (!!a.exit - !!b.exit) || b.id - a.id).map(t => {
     const b = board.get(t.sym), px = t.exit != null ? t.exit : b ? b.close : t.entry, pl = (px - t.entry) * t.qty, r = R(t) > 0 ? pl / R(t) : 0;
@@ -1323,8 +1355,8 @@ function drawPaper() {
   const plOpen = L.filter(t => t.exit == null).reduce((a, t) => { const b = board.get(t.sym); return a + ((b ? b.close : t.entry) - t.entry) * t.qty; }, 0);
   const kp = (l, v, sub, c) => el("div", {}, el("span", { class: "lbl", text: l }), el("b", { class: c || "", text: v }), sub ? el("span", { class: "hint", text: sub }) : null);
   const sg = v => `${v >= 0 ? "+" : "−"}${inr(Math.abs(v), 0)}`;
-  box.replaceChildren(head,
-    el("div", { class: "panel" }, el("div", { class: "pf-kpis" },
+  box.replaceChildren(head, auto,
+    el("div", { class: "panel" }, el("div", { class: "lbl", style: "margin-bottom:6px", text: "Your own paper trades" }), el("div", { class: "pf-kpis" },
       kp("Closed trades", String(done.length), done.length ? `${wins.length} won · ${Math.round(100 * wins.length / done.length)}% win rate` : "none closed yet"),
       kp("Closed profit / loss", sg(plDone), done.length ? `average ${(rDone / done.length).toFixed(2)}R per trade` : "", dir(plDone)),
       kp("Open trades", String(L.length - done.length), `${sg(plOpen)} on paper right now`, dir(plOpen))),
@@ -1430,8 +1462,10 @@ function drawHome() {
   }
   const L = paperAll(), openT = L.filter(t => t.exit == null);
   const pl = openT.reduce((a, t) => { const b = everyone().find(x => x.symbol === t.sym); return a + ((b ? b.close : t.entry) - t.entry) * t.qty; }, 0);
-  kids.push(panel("Paper trades", L.length ? `${openT.length} open · ${pl >= 0 ? "+" : "−"}${inr(Math.abs(pl), 0)} on paper` : "",
-    el("p", { class: "hint", text: L.length ? `${L.length - openT.length} closed so far. Practise for 4 to 6 weeks before using real money.` : "None yet. Open any stock and tap Paper buy to practise with pretend money." }),
+  const AP = autoPaperStats(), sgn = v => `${v >= 0 ? "+" : "−"}${inr(Math.abs(v), 0)}`;
+  kids.push(panel("Paper trades", L.length ? `${openT.length} open · ${sgn(pl)} on paper` : "",
+    AP.rows.length ? el("p", { class: "hint", text: `Automatic (every Buy now call): ${AP.open.length} open (${sgn(AP.plOpen)}), ${AP.done.length} closed${AP.done.length ? ` with ${AP.wins} won, ${sgn(AP.plDone)}` : ""}.` }) : null,
+    el("p", { class: "hint", text: L.length ? `Yours: ${L.length - openT.length} closed so far. Practise for 4 to 6 weeks before using real money.` : "Yours: none yet. Open any stock and tap Paper buy to practise with pretend money." }),
     link("Open Paper trades", "paper")));
   const t = DATA.track_record, r = t && t.by_verdict && t.by_verdict["BUY NOW"], o = r && r.outcomes, d = r && (r["10"] || r["5"]);
   kids.push(panel("How the Buy now calls have done", t && t.since ? `since ${fdate(t.since)}` : "",

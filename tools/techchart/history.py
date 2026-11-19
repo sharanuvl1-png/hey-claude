@@ -158,6 +158,34 @@ def track_record(h, prices, nifty):
     return summary
 
 
+def auto_paper(h, prices, horizon=20, keep=150):
+    """Automatic paper trades: every new BUY NOW call is a pretend buy at that day's close with the board's
+    stop and T1. On later closing prices it exits at the first close at or below the stop ("stop"), at or
+    above T1 ("target"), or after `horizon` trading days ("time"). One open trade per stock at a time.
+    Recomputed from the saved calls and prices on every scan; nothing is ever ordered."""
+    series = {s: _series(*v) for s, v in prices.items()}
+    trades, busy = [], {}
+    for d, sym, c in _new_calls(h):
+        if c["v"] != "BUY NOW" or not (c["sl"] < c["c"] < c["t1"]):
+            continue
+        if busy.get(sym, "") >= d:
+            continue
+        s = series.get(sym)
+        t = {"sym": sym, "date": d, "group": c["g"], "entry": c["c"], "stop": c["sl"], "target": c["t1"]}
+        if s and d in s["idx"]:
+            i0 = s["idx"][d]
+            later = list(zip(s["dates"][i0 + 1:], s["closes"][i0 + 1:]))
+            for k, (dd, cc) in enumerate(later[:horizon], 1):
+                how = "stop" if cc <= c["sl"] else "target" if cc >= c["t1"] else "time" if k == horizon else None
+                if how:
+                    t.update(exit=cc, exit_date=dd, how=how, days=k)
+                    break
+            t["now"], t["now_date"] = s["closes"][-1], s["dates"][-1]
+        busy[sym] = t.get("exit_date") or "9999"
+        trades.append(t)
+    return trades[-keep:]
+
+
 # ---------------------------------------------------------------------------------------------
 # Support & Resistance tab: its own track record, kept apart from the verdict calls above.
 # Stored in history.json as "sr_calls": {"YYYY-MM-DD": {SYM: {"k": signal, "c": close, "sl": stop,
