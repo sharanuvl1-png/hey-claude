@@ -1,25 +1,4 @@
 {
  "date": "2026-11-19",
- "alerts": [
-  {
-   "id": "buyzone:EICHERMOT:2026-11-19",
-   "title": "Eicher Motors is in the buy zone",
-   "text": "Eicher Motors moved from buy on dip to buy now at ₹8,058.5."
-  },
-  {
-   "id": "buyzone:AXISBANK:2026-11-19",
-   "title": "Axis Bank is in the buy zone",
-   "text": "Axis Bank moved from buy on dip to buy now at ₹1,380.8."
-  },
-  {
-   "id": "buyzone:MARICO:2026-11-19",
-   "title": "Marico is in the buy zone",
-   "text": "Marico moved from buy on dip to buy now at ₹918.8."
-  },
-  {
-   "id": "target:CEMPRO:2026-11-19",
-   "title": "Cemindia Projects reached its target",
-   "text": "Cemindia Projects closed at ₹1,378.5, at or above the target of ₹1,343.2."
-  }
- ]
+ "alerts": []
 }
