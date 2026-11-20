@@ -1,0 +1,207 @@
+{
+ "date": "2026-11-19",
+ "checked_at": "2026-11-21 00:08 IST",
+ "alerts": [
+  {
+   "id": "breakout-close:PNB:2026-11-19",
+   "title": "PNB broke out at the close",
+   "text": "PNB ₹154.9 (close 19 Nov) is above its breakout level ₹153.6. Volume 3.2x usual, RSI 87, +27% vs Nifty over 3 months. Chart: 🟡 BUY ON DIP, grade A, confidence 9/10. Trend uptrend (daily), uptrend (4H); MACD above signal. Entry ₹152.1–₹155.3 or retest ₹157.6–₹159.7. Chart stop-loss ₹113.0 (aggressive ₹119.9). Targets ₹214.8 / ₹255.5 / ₹296.2. Support ₹120.0–₹122.2, strong support ₹112.8–₹119.2, next resistance ₹155.4–₹157.6. Signals: Inverse Head & Shoulders, Pin Bar (bearish rejection), Strong Bullish Candle, Pin Bar (bullish rejection). Why: Daily uptrend (higher highs and higher lows); EMAs stacked bullishly. Next: Wait for a pullback to ₹152.1–₹155.3, or a breakout above ₹157.6. Breakout stop ₹149.6 (3.4% risk, 1 ATR under the level, max 8%). Exit plan (best in the backtest): keep the stop, then sell on a daily close under the 10-day low, now ₹123.1, instead of a fixed target.",
+   "image": "https://raw.githubusercontent.com/sharanuvl1-png/hey-claude/breakouts/charts/PNB/2026-11-20-close.png",
+   "link": "https://github.com/sharanuvl1-png/hey-claude/blob/breakouts/charts/PNB/2026-11-20-close.md"
+  },
+  {
+   "id": "breakout-close:SBIN:2026-11-19",
+   "title": "SBIN broke out at the close",
+   "text": "SBIN ₹1,156.0 (close 19 Nov) is above its breakout level ₹1,148.6. Volume 2.3x usual, RSI 81, +4% vs Nifty over 3 months. Chart: 🟡 BUY ON DIP, grade A, confidence 9/10. Trend uptrend (daily), uptrend (4H); MACD above signal. Entry ₹1,146.7–₹1,165.1 or retest ₹1,181.0–₹1,193.2. Chart stop-loss ₹937.3 (aggressive ₹959.9). Targets ₹1,483.9 / ₹1,702.5 / ₹1,921.1. Support ₹980.8–₹1,017.5, strong support ₹927.8–₹950.6, next resistance ₹1,168.7–₹1,181.0. Signals: Double Bottom, Breakout, Strong Bullish Candle. Why: Daily uptrend (price above rising EMAs); EMAs stacked bullishly. Next: Wait for a pullback to ₹1146.7–₹1165.1, or a breakout above ₹1181.0. Breakout stop ₹1,124.7 (2.7% risk, 1 ATR under the level, max 8%). Exit plan (best in the backtest): keep the stop, then sell on a daily close under the 10-day low, now ₹987.2, instead of a fixed target.",
+   "image": "https://raw.githubusercontent.com/sharanuvl1-png/hey-claude/breakouts/charts/SBIN/2026-11-20-close.png",
+   "link": "https://github.com/sharanuvl1-png/hey-claude/blob/breakouts/charts/SBIN/2026-11-20-close.md"
+  }
+ ],
+ "near": [
+  {
+   "symbol": "GAIL",
+   "price": 192.1,
+   "level": 192.34,
+   "gap_pct": 0.13
+  },
+  {
+   "symbol": "IOC",
+   "price": 147.8,
+   "level": 147.99,
+   "gap_pct": 0.13
+  },
+  {
+   "symbol": "ASIANPAINT",
+   "price": 2595.0,
+   "level": 2598.76,
+   "gap_pct": 0.14
+  },
+  {
+   "symbol": "TITAN",
+   "price": 4700.0,
+   "level": 4710.2,
+   "gap_pct": 0.22
+  },
+  {
+   "symbol": "ULTRACEMCO",
+   "price": 12560.0,
+   "level": 12596.21,
+   "gap_pct": 0.29
+  },
+  {
+   "symbol": "HDFCBANK",
+   "price": 821.8,
+   "level": 825.08,
+   "gap_pct": 0.4
+  },
+  {
+   "symbol": "UNIONBANK",
+   "price": 210.0,
+   "level": 210.89,
+   "gap_pct": 0.42
+  },
+  {
+   "symbol": "KOTAKBANK",
+   "price": 503.0,
+   "level": 505.56,
+   "gap_pct": 0.51
+  },
+  {
+   "symbol": "RELIANCE",
+   "price": 1375.6,
+   "level": 1383.62,
+   "gap_pct": 0.58
+  },
+  {
+   "symbol": "BAJAJ-AUTO",
+   "price": 10817.0,
+   "level": 10893.0,
+   "gap_pct": 0.7
+  },
+  {
+   "symbol": "TATACAP",
+   "price": 345.55,
+   "level": 348.43,
+   "gap_pct": 0.83
+  },
+  {
+   "symbol": "ADANIGREEN",
+   "price": 1425.0,
+   "level": 1437.83,
+   "gap_pct": 0.89
+  },
+  {
+   "symbol": "ICICIBANK",
+   "price": 1608.9,
+   "level": 1623.64,
+   "gap_pct": 0.91
+  },
+  {
+   "symbol": "MAXHEALTH",
+   "price": 1040.65,
+   "level": 1050.29,
+   "gap_pct": 0.92
+  },
+  {
+   "symbol": "BANKBARODA",
+   "price": 285.9,
+   "level": 288.75,
+   "gap_pct": 0.99
+  },
+  {
+   "symbol": "MOTHERSON",
+   "price": 165.44,
+   "level": 167.64,
+   "gap_pct": 1.31
+  },
+  {
+   "symbol": "DLF",
+   "price": 768.0,
+   "level": 778.25,
+   "gap_pct": 1.32
+  },
+  {
+   "symbol": "SUNPHARMA",
+   "price": 1900.0,
+   "level": 1927.05,
+   "gap_pct": 1.4
+  },
+  {
+   "symbol": "DRREDDY",
+   "price": 1400.9,
+   "level": 1421.44,
+   "gap_pct": 1.45
+  },
+  {
+   "symbol": "TRENT",
+   "price": 3225.0,
+   "level": 3282.77,
+   "gap_pct": 1.76
+  },
+  {
+   "symbol": "BHARTIARTL",
+   "price": 2144.0,
+   "level": 2183.54,
+   "gap_pct": 1.81
+  },
+  {
+   "symbol": "BOSCHLTD",
+   "price": 49400.0,
+   "level": 50311.1,
+   "gap_pct": 1.81
+  },
+  {
+   "symbol": "JINDALSTEL",
+   "price": 1114.5,
+   "level": 1135.53,
+   "gap_pct": 1.85
+  },
+  {
+   "symbol": "LT",
+   "price": 4211.0,
+   "level": 4291.92,
+   "gap_pct": 1.89
+  },
+  {
+   "symbol": "BAJFINANCE",
+   "price": 1092.85,
+   "level": 1114.51,
+   "gap_pct": 1.94
+  }
+ ],
+ "rules": {
+  "index_csv": "ind_nifty100list.csv",
+  "level": "resistance",
+  "volume_multiple": 1.5,
+  "volume_avg_days": 50,
+  "require_above_ema": [
+   50,
+   200
+  ],
+  "require_ema200_rising": true,
+  "rsi_min": null,
+  "rsi_max": null,
+  "max_below_52w_high_pct": 25,
+  "min_rs_vs_nifty_pct": 0,
+  "require_market_uptrend": true,
+  "min_close_in_range": null,
+  "max_base_depth_pct": null,
+  "base_days": 15,
+  "max_extension_pct": 4.0,
+  "max_risk_pct": 8,
+  "min_turnover_cr": 5,
+  "stop_atr_below_level": 1.0,
+  "extra_symbols": []
+ },
+ "notes": [],
+ "source": "Yahoo Finance; intraday prices can be up to 15 minutes behind NSE.",
+ "mode": "close",
+ "as_of": "19 Nov",
+ "scanned": 99,
+ "market": {
+  "close": 25514.30078125,
+  "ema50": 23875.52330100829,
+  "up": true,
+  "ret3m": 0.056278451520860306
+ }
+}
