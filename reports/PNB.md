@@ -1,0 +1,85 @@
+📌 **PNB (PNB) – Multi-Timeframe Technical Analysis (Daily + 4H Combined)**
+_Data up to 20 Nov 2026 · Close ₹155.33_
+
+**📍 Daily Timeframe Trend**
+- Trend: **Uptrend** (higher highs and higher lows)
+- Recent swing highs: ₹118.2, ₹119.4, ₹125.2 · swing lows: ₹114.5, ₹109.4, ₹114.1
+- EMAs: EMA20 ₹136.7, EMA50 ₹126.6, EMA200 ₹116.9; bullish stack (EMA20 > EMA50 > EMA200); price above EMA20, EMA50, EMA200
+- MACD 9.07 above signal 6.52 (above zero); histogram falling
+- RSI(14) 86.9; no divergence on the last two swings
+
+**📍 4-Hour Timeframe Trend**
+- Structure: **Uptrend** (higher highs and higher lows)
+- Pullback/support area: recent 4H swing lows ₹118.2, ₹120.2; EMA20 ₹144.5
+- EMA20/50: bullish stack (EMA20 > EMA50); price above EMA20, EMA50
+- MACD 7.60 above signal 6.96 (above zero); histogram falling
+- RSI(14) 82.4; Hidden bullish divergence
+
+**📍 Pattern Detection (Both Timeframes)**
+- Daily: **Inverse Head & Shoulders** – head ₹109.4, neckline ₹119.6
+- 4H: **Double Bottom** – bottoms near ₹118.2/₹120.2, neckline ₹125.1, confirmed (closed above neckline)
+- 4H: **Bull Flag** – 18% pole then a tight 8% flag; trigger above ₹156.5
+
+**📍 Candlestick Patterns (last 3 daily candles)**
+- **Pin Bar (bearish rejection)** – 18 Nov: long upper wick shows selling near ₹152.6
+- **Strong Bullish Candle** – 19 Nov: wide-range green candle, buyers in control
+- **Pin Bar (bullish rejection)** – 20 Nov: long lower wick shows dip-buying near ₹151.1
+
+**📍 Price Action Key Levels (Daily Structure)**
+
+| Zone | Price Level (₹) | Context |
+|------|-----------------|---------|
+| Strong Support | ₹112.8 – ₹119.2 | Cluster of earlier swing lows (demand) |
+| Immediate Support | ₹120.0 – ₹122.2 | Nearest swing-low / wick area |
+| Resistance | ₹155.4 – ₹157.6 | Nearest swing-high supply |
+| Breakout Level | Above ₹157.6 | Swing continuation trigger (52-week high ₹156.5) |
+
+**📍 Swing Trade Setup**
+
+🟢 **Entry Zone**
+- Primary: ₹152.1 – ₹155.3 (daily support / EMA20 area; enter on a bullish 4H candle)
+- Alternate: ₹157.6 – ₹159.7 (breakout retest)
+
+🎯 **Profit Targets**
+- T1: ₹214.8
+- T2: ₹255.5
+- T3: ₹296.2
+
+🛑 **Stop-Loss**
+- Conservative: below daily swing low (₹113.0)
+- Aggressive: below 4H structure (₹119.9)
+- Risk per share ≈ ₹40.7; reward:risk to T1 ≈ 1.5
+- Time to T1: it never rose this much within 60 trading days in the price history
+- Time to T2: it never rose this much within 60 trading days in the price history
+
+**📌 Strategy Notes**
+- Higher timeframe: daily trend is uptrend; only take longs while price holds above ₹112.8.
+- Entry timing: wait for a bullish 4H candle (engulfing/hammer) inside ₹152.1 – ₹155.3 rather than buying mid-range.
+- EMA stacking: bullish stack (EMA20 > EMA50 > EMA200); price above EMA20, EMA50, EMA200.
+- Breakout rule: a daily close above ₹157.6 with volume above its 20-day average (≈35,913,544) opens T2/T3.
+- Momentum: RSI 87 – elevated, prefer dips; no divergence on the last two swings.
+- Exit discipline: move the stop to entry once T1 is hit; book partial profits at each target.
+
+**STEP 2 — Marked Up Chart**
+![chart](2026-11-20.png)
+
+**✅ Trade Validation Checklist**
+- Trend + momentum aligned: Yes · Price at entry zone: Yes
+- Stop defined (₹113.0) · Reward:risk ≥ 1.5 to T1: Yes
+
+## 📌 Final Verdict
+
+Recommendation: **🟡 BUY ON DIP**
+
+Confidence: **9/10**
+
+Trade Quality: **A**
+
+Reason:
+• Daily uptrend (higher highs and higher lows)
+• EMAs stacked bullishly
+
+Next Action:
+• Wait for a pullback to ₹152.1–₹155.3, or a breakout above ₹157.6
+
+_Rules-based analysis from end-of-day data. Educational only, not investment advice. Never place orders without your own confirmation._
