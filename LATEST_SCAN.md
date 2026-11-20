@@ -1,4 +1,4 @@
-# Mehitha daily stock scan, 2026-11-19
+# Mehitha daily stock scan, 2026-11-20
 
 Prices and fundamentals from Yahoo Finance (end of day). Not investment advice; check before you trade.
 
@@ -10,69 +10,69 @@ Time to T1: the median number of trading days this stock took, in the last 2 yea
 
 | Group | Stock | Close | Verdict | Grade | Entry | Stop-loss (risk) | Target 1 | Chart | Target 2 | Target 3 | Time to T1 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Your picks | PCJEWELLER.NS | ₹14.5 | 🟠 WAIT | C | ₹12.8–14.5 | ₹12.4 (9%) | ₹16.2 | PCJEWELLER/2026-11-19.png | ₹16.9 | ₹18.2 | ~18 trading days (42% of the time) |
-| Nifty 50 | Eicher Motors Limited | ₹8058.5 | 🟢 BUY NOW | A | ₹7898.1–8058.5 | ₹6857.5 (14%) | ₹9659.4 | EICHERMOT/2026-11-19.png | ₹10780.2 | ₹11901.0 | ~38 trading days (13% of the time) |
-| Nifty 50 | Bajaj Finance Limited | ₹1092.8 | 🟡 BUY ON DIP | A | ₹1063.6–1078.0 | ₹891.9 (17%) | ₹1339.1 | BAJFINANCE/2026-11-19.png | ₹1518.0 | ₹1696.9 | ~46 trading days (18% of the time) |
-| Nifty 50 | Trent Limited | ₹3225.0 | 🟡 BUY ON DIP | A | ₹3061.7–3074.3 | ₹2655.8 (13%) | ₹3686.4 | TRENT/2026-11-19.png | ₹4098.6 | ₹4318.0 | ~29 trading days (15% of the time) |
-| Nifty 50 | BSE Limited | ₹3765.0 | 🟡 BUY ON DIP | A | ₹3601.3–3684.8 | ₹3160.7 (13%) | ₹4190.6 | BSE/2026-11-19.png | ₹4848.9 | ₹5331.2 | ~16 trading days (60% of the time) |
-| Nifty 50 | Kotak Mahindra Bank Limited | ₹503.0 | 🟡 BUY ON DIP | A | ₹495.4–503.0 | ₹425.2 (15%) | ₹610.3 | KOTAKBANK/2026-11-19.png | ₹684.3 | ₹758.3 | ~55 trading days (5% of the time) |
-| Nifty 50 | Bharti Airtel Limited | ₹2144.0 | 🟡 BUY ON DIP | A | ₹2060.7–2082.5 | ₹1745.3 (16%) | ₹2561.1 | BHARTIARTL/2026-11-19.png | ₹2887.4 | ₹3213.7 | not within 60 days |
-| Nifty 50 | Tech Mahindra Limited | ₹1723.0 | 🟡 BUY ON DIP | B | ₹1633.8–1723.0 | ₹1611.5 (4%) | ₹1778.7 | TECHM/2026-11-19.png | ₹1833.9 | ₹1912.5 | ~14 trading days (66% of the time) |
-| Nifty 50 | Adani Ports and Special Economic Zone Limited | ₹1917.1 | 🟡 BUY ON DIP | A | ₹1825.0–1870.9 | ₹1676.4 (9%) | ₹2105.3 | ADANIPORTS/2026-11-19.png | ₹2276.9 | ₹2448.5 | ~31 trading days (37% of the time) |
-| Nifty 50 | JSW Steel Limited | ₹1336.8 | 🟡 BUY ON DIP | A | ₹1277.7–1309.7 | ₹1150.6 (11%) | ₹1508.4 | JSWSTEEL/2026-11-19.png | ₹1651.5 | ₹1794.6 | ~44 trading days (11% of the time) |
-| Nifty 50 | Titan Company Limited | ₹4700.0 | 🟡 BUY ON DIP | B | ₹4573.1–4700.0 | ₹4178.0 (10%) | ₹5137.0 | TITAN/2026-11-19.png | ₹5782.9 | ₹6241.5 | ~30 trading days (51% of the time) |
-| Nifty 50 | Eternal Limited | ₹366.9 | 🟡 BUY ON DIP | A | ₹347.0–353.2 | ₹299.3 (15%) | ₹426.4 | ETERNAL/2026-11-19.png | ₹477.3 | ₹528.1 | ~38 trading days (31% of the time) |
-| Nifty 50 | Apollo Hospitals Enterprise Limited | ₹8738.0 | 🟡 BUY ON DIP | A | ₹8347.6–8467.1 | ₹7416.2 (12%) | ₹9894.0 | APOLLOHOSP/2026-11-19.png | ₹10885.2 | ₹11876.3 | ~48 trading days (4% of the time) |
-| Nifty 50 | HCL Technologies Limited | ₹1332.9 | 🔴 AVOID | C | ₹1313.3–1332.9 | ₹1294.9 (2%) | ₹1378.4 | HCLTECH/2026-11-19.png | ₹1415.2 | ₹1458.3 | ~10 trading days (74% of the time) |
-| Nifty 50 | HDFC Bank Limited | ₹821.8 | 🟡 BUY ON DIP | A | ₹809.5–821.8 | ₹665.1 (18%) | ₹989.9 | HDFCBANK/2026-11-19.png | ₹1192.0 | ₹1342.6 | ~57 trading days (0% of the time) |
-| Nifty 50 | Bajaj Auto Limited | ₹10817.0 | 🟡 BUY ON DIP | A | ₹10321.4–10668.5 | ₹9844.0 (6%) | ₹11794.0 | BAJAJ-AUTO/2026-11-19.png | ₹12408.0 | ₹12773.2 | ~31 trading days (39% of the time) |
-| Nifty 50 | ICICI Bank Limited | ₹1608.9 | 🟡 BUY ON DIP | A | ₹1586.4–1608.9 | ₹1353.9 (15%) | ₹1963.3 | ICICIBANK/2026-11-19.png | ₹2207.0 | ₹2450.7 | not within 60 days |
-| Nifty 50 | Axis Bank Limited | ₹1380.8 | 🟢 BUY NOW | A | ₹1360.2–1380.8 | ₹1190.0 (13%) | ₹1641.2 | AXISBANK/2026-11-19.png | ₹1821.7 | ₹2002.2 | ~39 trading days (13% of the time) |
-| Nifty 50 | Larsen & Toubro Limited | ₹4211.0 | 🟡 BUY ON DIP | A | ₹4151.0–4211.0 | ₹3575.0 (14%) | ₹5090.0 | LT/2026-11-19.png | ₹5696.0 | ₹6302.0 | ~56 trading days (2% of the time) |
-| Nifty 50 | Mahindra & Mahindra Limited | ₹3509.0 | 🟡 BUY ON DIP | A | ₹3348.6–3393.6 | ₹2721.8 (19%) | ₹4345.1 | M&M/2026-11-19.png | ₹4994.4 | ₹5643.8 | ~52 trading days (0% of the time) |
-| Nifty 50 | UltraTech Cement Limited | ₹12560.0 | 🟡 BUY ON DIP | A | ₹12126.9–12255.1 | ₹10361.9 (15%) | ₹14934.6 | ULTRACEMCO/2026-11-19.png | ₹16763.7 | ₹18592.8 | not within 60 days |
-| Midcap 150 | The Federal Bank Limited | ₹364.5 | 🟡 BUY ON DIP | A | ₹347.5–353.0 | ₹327.3 (7%) | ₹376.0 | FEDERALBNK/2026-11-19.png | ₹407.6 | ₹430.5 | ~19 trading days (70% of the time) |
-| Midcap 150 | K.P.R. Mill Limited | ₹1190.0 | 🟡 BUY ON DIP | A | ₹1106.3–1150.7 | ₹980.7 (13%) | ₹1323.5 | KPRMILL/2026-11-19.png | ₹1497.8 | ₹1645.6 | ~17 trading days (39% of the time) |
-| Midcap 150 | Lodha Developers Limited | ₹1202.7 | 🟢 BUY NOW | A | ₹1174.2–1195.8 | ₹926.3 (22%) | ₹1573.1 | LODHA/2026-11-19.png | ₹1831.8 | ₹2090.5 | ~35 trading days (18% of the time) |
-| Midcap 150 | Aurobindo Pharma Limited | ₹1805.7 | 🟡 BUY ON DIP | A | ₹1721.5–1753.6 | ₹1537.2 (12%) | ₹2038.1 | AUROPHARMA/2026-11-19.png | ₹2238.5 | ₹2438.8 | ~45 trading days (23% of the time) |
-| Midcap 150 | Billionbrains Garage Ventures Limited | ₹220.5 | 🟡 BUY ON DIP | A | ₹205.0–212.2 | ₹175.6 (16%) | ₹258.1 | GROWW/2026-11-19.png | ₹291.1 | ₹324.1 | ~31 trading days (36% of the time) |
-| Midcap 150 | Hero MotoCorp Limited | ₹5556.0 | 🟢 BUY NOW | A | ₹5475.7–5556.0 | ₹4939.2 (10%) | ₹6351.2 | HEROMOTOCO/2026-11-19.png | ₹6957.4 | ₹7534.1 | ~34 trading days (47% of the time) |
-| Midcap 150 | Laurus Labs Limited | ₹2306.0 | 🟡 BUY ON DIP | A | ₹2139.8–2277.7 | ₹1912.7 (13%) | ₹2652.8 | LAURUSLABS/2026-11-19.png | ₹2948.9 | ₹3244.9 | ~34 trading days (57% of the time) |
-| Midcap 150 | Marico Limited | ₹918.8 | 🟢 BUY NOW | A | ₹904.1–918.8 | ₹752.0 (17%) | ₹1150.7 | MARICO/2026-11-19.png | ₹1310.2 | ₹1469.7 | not within 60 days |
-| Midcap 150 | Gujarat Fluorochemicals Limited | ₹4978.6 | 🟡 BUY ON DIP | A | ₹4637.4–4646.4 | ₹4044.0 (13%) | ₹5538.7 | FLUOROCHEM/2026-11-19.png | ₹6136.5 | ₹6734.3 | ~33 trading days (21% of the time) |
-| Midcap 150 | APL Apollo Tubes Limited | ₹2147.9 | 🟠 WAIT | C | ₹2114.2–2147.9 | ₹2085.4 (2%) | ₹2210.1 | APLAPOLLO/2026-11-19.png | ₹2275.0 | ₹2332.5 | ~7 trading days (83% of the time) |
-| Smallcap 100 | Sona BLW Precision Forgings Limited | ₹902.1 | 🟡 BUY ON DIP | A | ₹851.2–882.7 | ₹734.9 (15%) | ₹1064.9 | SONACOMS/2026-11-19.png | ₹1196.8 | ₹1328.8 | ~33 trading days (26% of the time) |
-| Smallcap 100 | Acutaas Chemicals Limited | ₹3972.6 | 🟡 BUY ON DIP | A | ₹3666.1–3794.0 | ₹3588.5 (4%) | ₹4006.5 | ACUTAAS/2026-11-19.png | ₹4118.2 | ₹4273.4 | ~8 trading days (89% of the time) |
-| Smallcap 100 | Cemindia Projects Limited | ₹1378.5 | 🟡 BUY ON DIP | A | ₹1263.5–1292.5 | ₹1225.2 (4%) | ₹1364.3 | CEMPRO/2026-11-19.png | ₹1399.9 | ₹1479.3 | ~9 trading days (78% of the time) |
-| Smallcap 100 | Gland Pharma Limited | ₹3292.9 | 🟡 BUY ON DIP | A | ₹3089.1–3183.4 | ₹2744.3 (12%) | ₹3724.2 | GLAND/2026-11-19.png | ₹4116.1 | ₹4508.1 | ~30 trading days (46% of the time) |
-| Smallcap 100 | Angel One Limited | ₹336.5 | 🟡 BUY ON DIP | A | ₹316.0–331.0 | ₹270.3 (16%) | ₹403.4 | ANGELONE/2026-11-19.png | ₹456.6 | ₹509.8 | ~28 trading days (33% of the time) |
-| Smallcap 100 | Cupid Limited | ₹366.0 | 🟡 BUY ON DIP | A | ₹332.9–348.9 | ₹298.2 (13%) | ₹388.9 | CUPID/2026-11-19.png | ₹447.6 | ₹490.3 | ~10 trading days (88% of the time) |
-| Smallcap 100 | Navin Fluorine International Limited | ₹10203.0 | 🟡 BUY ON DIP | A | ₹9965.8–10203.0 | ₹7431.4 (26%) | ₹14063.8 | NAVINFLUOR/2026-11-19.png | ₹16716.8 | ₹19369.8 | not within 60 days |
-| Smallcap 100 | The Karur Vysya Bank Limited | ₹384.0 | 🟡 BUY ON DIP | A | ₹357.3–368.4 | ₹332.8 (8%) | ₹408.1 | KARURVYSYA/2026-11-19.png | ₹438.2 | ₹468.3 | ~26 trading days (71% of the time) |
-| Smallcap 100 | KFin Technologies Limited | ₹936.0 | 🟡 BUY ON DIP | A | ₹903.8–919.6 | ₹776.1 (15%) | ₹1106.1 | KFINTECH/2026-11-19.png | ₹1250.8 | ₹1386.5 | ~15 trading days (21% of the time) |
-| Smallcap 100 | Sai Life Sciences Limited | ₹1788.4 | 🟡 BUY ON DIP | A | ₹1630.0–1696.1 | ₹1340.8 (19%) | ₹2146.4 | SAILIFE/2026-11-19.png | ₹2468.7 | ₹2791.0 | ~50 trading days (21% of the time) |
+| Your picks | PCJEWELLER.NS | ₹14.1 | 🔴 AVOID | C | ₹12.4–14.1 | ₹11.9 (10%) | ₹15.1 | PCJEWELLER/2026-11-20.png | ₹16.2 | ₹17.6 | ~13 trading days (56% of the time) |
+| Nifty 50 | Eicher Motors Limited | ₹8113.0 | 🟢 BUY NOW | A | ₹7954.0–8113.0 | ₹7398.5 (8%) | ₹8986.0 | EICHERMOT/2026-11-20.png | ₹9621.0 | ₹10256.0 | ~34 trading days (52% of the time) |
+| Nifty 50 | Bajaj Finance Limited | ₹1122.0 | 🟡 BUY ON DIP | A | ₹1063.2–1078.4 | ₹891.6 (17%) | ₹1339.6 | BAJFINANCE/2026-11-20.png | ₹1518.8 | ₹1698.1 | ~46 trading days (18% of the time) |
+| Nifty 50 | Trent Limited | ₹3256.1 | 🟡 BUY ON DIP | A | ₹3091.1–3091.6 | ₹2655.6 (14%) | ₹3745.0 | TRENT/2026-11-20.png | ₹4317.8 | ₹4616.6 | ~29 trading days (13% of the time) |
+| Nifty 50 | BSE Limited | ₹3781.0 | 🟡 BUY ON DIP | A | ₹3601.5–3693.9 | ₹3160.9 (13%) | ₹4190.8 | BSE/2026-11-20.png | ₹4864.7 | ₹5351.5 | ~16 trading days (60% of the time) |
+| Nifty 50 | Kotak Mahindra Bank Limited | ₹515.8 | 🟡 BUY ON DIP | A | ₹507.8–515.8 | ₹425.0 (17%) | ₹642.0 | KOTAKBANK/2026-11-20.png | ₹728.7 | ₹815.5 | ~59 trading days (2% of the time) |
+| Nifty 50 | Bharti Airtel Limited | ₹2161.7 | 🟡 BUY ON DIP | A | ₹2075.7–2082.4 | ₹1745.4 (16%) | ₹2579.4 | BHARTIARTL/2026-11-20.png | ₹2913.0 | ₹3246.5 | not within 60 days |
+| Nifty 50 | Tech Mahindra Limited | ₹1746.2 | 🟡 BUY ON DIP | B | ₹1721.6–1746.2 | ₹1698.4 (2%) | ₹1803.5 | TECHM/2026-11-20.png | ₹1833.4 | ₹1896.2 | ~8 trading days (75% of the time) |
+| Nifty 50 | Adani Ports and Special Economic Zone Limited | ₹1917.0 | 🟡 BUY ON DIP | A | ₹1827.4–1875.3 | ₹1676.7 (9%) | ₹2113.4 | ADANIPORTS/2026-11-20.png | ₹2288.1 | ₹2462.8 | ~32 trading days (36% of the time) |
+| Nifty 50 | JSW Steel Limited | ₹1337.0 | 🟡 BUY ON DIP | A | ₹1274.5–1312.3 | ₹1150.2 (11%) | ₹1508.3 | JSWSTEEL/2026-11-20.png | ₹1651.5 | ₹1794.7 | ~44 trading days (11% of the time) |
+| Nifty 50 | Titan Company Limited | ₹4620.0 | 🟡 BUY ON DIP | B | ₹4572.1–4620.0 | ₹4177.0 (9%) | ₹5024.6 | TITAN/2026-11-20.png | ₹5643.7 | ₹6062.7 | ~24 trading days (61% of the time) |
+| Nifty 50 | Eternal Limited | ₹364.0 | 🟡 BUY ON DIP | A | ₹344.7–354.2 | ₹299.3 (14%) | ₹424.7 | ETERNAL/2026-11-20.png | ₹474.8 | ₹524.9 | ~37 trading days (32% of the time) |
+| Nifty 50 | Apollo Hospitals Enterprise Limited | ₹9200.0 | 🟡 BUY ON DIP | A | ₹8759.7–8799.0 | ₹7410.0 (16%) | ₹10833.5 | APOLLOHOSP/2026-11-20.png | ₹12202.8 | ₹13572.2 | not within 60 days |
+| Nifty 50 | HCL Technologies Limited | ₹1344.4 | 🟠 WAIT | C | ₹1313.1–1344.4 | ₹1294.4 (3%) | ₹1385.0 | HCLTECH/2026-11-20.png | ₹1422.5 | ₹1458.1 | ~11 trading days (74% of the time) |
+| Nifty 50 | HDFC Bank Limited | ₹846.0 | 🟡 BUY ON DIP | A | ₹832.7–846.0 | ₹664.8 (21%) | ₹1101.2 | HDFCBANK/2026-11-20.png | ₹1275.8 | ₹1450.4 | not within 60 days |
+| Nifty 50 | Bajaj Auto Limited | ₹10765.0 | 🟢 BUY NOW | A | ₹10274.8–10677.7 | ₹9844.7 (6%) | ₹11111.7 | BAJAJ-AUTO/2026-11-20.png | ₹11794.7 | ₹12408.7 | ~18 trading days (78% of the time) |
+| Nifty 50 | ICICI Bank Limited | ₹1640.0 | 🟡 BUY ON DIP | A | ₹1616.7–1640.0 | ₹1353.6 (17%) | ₹2040.4 | ICICIBANK/2026-11-20.png | ₹2315.1 | ₹2589.9 | not within 60 days |
+| Nifty 50 | Axis Bank Limited | ₹1446.0 | 🟡 BUY ON DIP | A | ₹1422.5–1446.0 | ₹1189.1 (17%) | ₹1802.1 | AXISBANK/2026-11-20.png | ₹2047.2 | ₹2292.4 | ~54 trading days (2% of the time) |
+| Nifty 50 | Larsen & Toubro Limited | ₹4209.1 | 🟡 BUY ON DIP | A | ₹4149.0–4209.1 | ₹3575.0 (14%) | ₹5085.2 | LT/2026-11-20.png | ₹5689.2 | ₹6293.3 | ~56 trading days (2% of the time) |
+| Nifty 50 | Mahindra & Mahindra Limited | ₹3545.0 | 🟡 BUY ON DIP | A | ₹3363.4–3393.8 | ₹2721.6 (19%) | ₹4364.1 | M&M/2026-11-20.png | ₹5021.1 | ₹5678.1 | ~53 trading days (0% of the time) |
+| Nifty 50 | UltraTech Cement Limited | ₹12939.0 | 🟡 BUY ON DIP | A | ₹12511.7–12644.3 | ₹10359.7 (18%) | ₹15905.5 | ULTRACEMCO/2026-11-20.png | ₹18123.8 | ₹20342.1 | not within 60 days |
+| Midcap 150 | The Federal Bank Limited | ₹373.5 | 🟢 BUY NOW | A | ₹366.7–373.5 | ₹327.2 (12%) | ₹434.4 | FEDERALBNK/2026-11-20.png | ₹477.3 | ₹520.1 | ~43 trading days (36% of the time) |
+| Midcap 150 | K.P.R. Mill Limited | ₹1191.3 | 🟡 BUY ON DIP | A | ₹1108.5–1154.5 | ₹1087.8 (4%) | ₹1197.0 | KPRMILL/2026-11-20.png | ₹1237.0 | ₹1284.4 | ~8 trading days (80% of the time) |
+| Midcap 150 | Lodha Developers Limited | ₹1218.7 | 🟡 BUY ON DIP | A | ₹1174.1–1195.9 | ₹926.2 (22%) | ₹1573.3 | LODHA/2026-11-20.png | ₹1832.1 | ₹2091.0 | ~35 trading days (18% of the time) |
+| Midcap 150 | Aurobindo Pharma Limited | ₹1799.0 | 🟡 BUY ON DIP | A | ₹1716.6–1757.9 | ₹1537.4 (12%) | ₹2037.0 | AUROPHARMA/2026-11-20.png | ₹2236.9 | ₹2436.7 | ~44 trading days (23% of the time) |
+| Midcap 150 | Billionbrains Garage Ventures Limited | ₹224.6 | 🟡 BUY ON DIP | A | ₹208.8–213.4 | ₹175.5 (17%) | ₹264.4 | GROWW/2026-11-20.png | ₹300.0 | ₹335.6 | ~31 trading days (35% of the time) |
+| Midcap 150 | Hero MotoCorp Limited | ₹5536.0 | 🟡 BUY ON DIP | A | ₹5262.2–5411.3 | ₹4940.2 (7%) | ₹6012.7 | HEROMOTOCO/2026-11-20.png | ₹6352.2 | ₹6724.8 | ~32 trading days (53% of the time) |
+| Midcap 150 | Laurus Labs Limited | ₹2294.6 | 🟢 BUY NOW | A | ₹2135.4–2279.3 | ₹1913.6 (13%) | ₹2648.0 | LAURUSLABS/2026-11-20.png | ₹2941.7 | ₹3235.4 | ~34 trading days (57% of the time) |
+| Midcap 150 | Marico Limited | ₹917.0 | 🟢 BUY NOW | A | ₹902.6–917.0 | ₹752.1 (17%) | ₹1146.4 | MARICO/2026-11-20.png | ₹1304.2 | ₹1461.9 | not within 60 days |
+| Midcap 150 | Gujarat Fluorochemicals Limited | ₹4932.7 | 🟡 BUY ON DIP | A | ₹4590.5–4673.7 | ₹4043.9 (13%) | ₹5514.3 | FLUOROCHEM/2026-11-20.png | ₹6102.5 | ₹6690.6 | ~31 trading days (21% of the time) |
+| Midcap 150 | APL Apollo Tubes Limited | ₹2121.6 | 🟠 WAIT | C | ₹1998.9–2121.6 | ₹1968.2 (4%) | ₹2198.3 | APLAPOLLO/2026-11-20.png | ₹2290.3 | ₹2382.3 | ~15 trading days (73% of the time) |
+| Smallcap 100 | Sona BLW Precision Forgings Limited | ₹892.5 | 🟡 BUY ON DIP | A | ₹842.5–883.6 | ₹735.0 (15%) | ₹1055.0 | SONACOMS/2026-11-20.png | ₹1183.0 | ₹1311.0 | ~30 trading days (26% of the time) |
+| Smallcap 100 | Acutaas Chemicals Limited | ₹3833.5 | 🟡 BUY ON DIP | B | ₹3665.5–3798.2 | ₹3586.7 (4%) | ₹4005.9 | ACUTAAS/2026-11-20.png | ₹4125.9 | ₹4283.6 | ~8 trading days (90% of the time) |
+| Smallcap 100 | Cemindia Projects Limited | ₹1415.9 | 🟡 BUY ON DIP | A | ₹1298.9–1304.3 | ₹1225.0 (6%) | ₹1416.5 | CEMPRO/2026-11-20.png | ₹1493.1 | ₹1569.7 | ~11 trading days (70% of the time) |
+| Smallcap 100 | Gland Pharma Limited | ₹3331.9 | 🟡 BUY ON DIP | A | ₹3133.2–3197.6 | ₹2745.0 (13%) | ₹3796.0 | GLAND/2026-11-20.png | ₹4216.4 | ₹4636.8 | ~30 trading days (43% of the time) |
+| Smallcap 100 | Angel One Limited | ₹348.3 | 🟡 BUY ON DIP | A | ₹319.4–331.2 | ₹270.2 (17%) | ₹408.0 | ANGELONE/2026-11-20.png | ₹463.1 | ₹518.2 | ~31 trading days (32% of the time) |
+| Smallcap 100 | Cupid Limited | ₹365.6 | 🟡 BUY ON DIP | A | ₹333.8–350.5 | ₹298.3 (13%) | ₹389.0 | CUPID/2026-11-20.png | ₹451.7 | ₹495.6 | ~10 trading days (89% of the time) |
+| Smallcap 100 | Navin Fluorine International Limited | ₹10077.0 | 🟢 BUY NOW | A | ₹9840.7–10077.0 | ₹7431.7 (25%) | ₹13749.5 | NAVINFLUOR/2026-11-20.png | ₹16276.6 | ₹18803.8 | not within 60 days |
+| Smallcap 100 | The Karur Vysya Bank Limited | ₹377.0 | 🟡 BUY ON DIP | A | ₹350.4–369.3 | ₹332.8 (8%) | ₹387.5 | KARURVYSYA/2026-11-20.png | ₹427.4 | ₹454.5 | ~16 trading days (81% of the time) |
+| Smallcap 100 | KFin Technologies Limited | ₹934.9 | 🟡 BUY ON DIP | A | ₹903.8–919.6 | ₹776.1 (15%) | ₹1106.1 | KFINTECH/2026-11-20.png | ₹1250.8 | ₹1386.4 | ~16 trading days (21% of the time) |
+| Smallcap 100 | Sai Life Sciences Limited | ₹1800.7 | 🟡 BUY ON DIP | A | ₹1645.6–1706.0 | ₹1341.2 (20%) | ₹2177.8 | SAILIFE/2026-11-20.png | ₹2512.4 | ₹2847.0 | ~51 trading days (18% of the time) |
 
 ## Top 5 buy setups today: Nifty 50
 
 | # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Eicher Motors Limited (EICHERMOT) | ₹7700.0 | 🟢 BUY NOW | ₹7898.1–8058.5 | ₹6857.5 (14%) | ₹9659.4 | 25% | 0.02 | 15% | 20% | 37 |
-| 2 | Adani Ports and Special Economic Zone Limited (ADANIPORTS) | ₹1902.6 | 🟡 BUY ON DIP | ₹1825.0–1870.9 | ₹1676.4 (9%) | ₹2105.3 | 16% | 0.63 | 9% | 24% | 32 |
-| 3 | JSW Steel Limited (JSWSTEEL) | ₹1315.9 | 🟡 BUY ON DIP | ₹1277.7–1309.7 | ₹1150.6 (11%) | ₹1508.4 | 32% | 0.62 | 225% | 21% | 11 |
-| 4 | Axis Bank Limited (AXISBANK) | ₹1360.0 | 🟢 BUY NOW | ₹1360.2–1380.8 | ₹1190.0 (13%) | ₹1641.2 | 14% | n/a | 39% | 21% | 14 |
-| 5 | Asian Paints Limited (ASIANPAINT) | ₹2580.3 | 🟡 BUY ON DIP | ₹2464.0–2489.3 | ₹2200.7 (11%) | ₹2808.3 | 23% | 0.21 | 8% | 17% | 51 |
+| 1 | Eicher Motors Limited (EICHERMOT) | ₹8113.0 | 🟢 BUY NOW | ₹7954.0–8113.0 | ₹7398.5 (8%) | ₹8986.0 | 25% | 0.02 | 15% | 20% | 37 |
+| 2 | JSW Steel Limited (JSWSTEEL) | ₹1337.0 | 🟡 BUY ON DIP | ₹1274.5–1312.3 | ₹1150.2 (11%) | ₹1508.3 | 32% | 0.62 | 225% | 21% | 11 |
+| 3 | Bharat Electronics Limited (BEL) | ₹402.0 | 🟡 BUY ON DIP | ₹387.6–392.4 | ₹352.6 (10%) | ₹427.9 | 27% | 0.00 | 20% | 26% | 46 |
+| 4 | Adani Ports and Special Economic Zone Limited (ADANIPORTS) | ₹1917.0 | 🟡 BUY ON DIP | ₹1827.4–1875.3 | ₹1676.7 (9%) | ₹2113.4 | 16% | 0.63 | 9% | 24% | 32 |
+| 5 | Bajaj Auto Limited (BAJAJ-AUTO) | ₹10765.0 | 🟢 BUY NOW | ₹10274.8–10677.7 | ₹9844.7 (6%) | ₹11111.7 | 36% | 0.70 | 64% | 57% | 23 |
 
-50 liquid stocks scanned; 12 had a buy setup with risk under 12%.
+50 liquid stocks scanned; 14 had a buy setup with risk under 12%.
 
 ## Top 5 buy setups today: Midcap 150
 
 | # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | The Federal Bank Limited (FEDERALBNK) | ₹360.4 | 🟡 BUY ON DIP | ₹347.5–353.0 | ₹327.3 (7%) | ₹376.0 | 13% | n/a | 46% | 36% | 18 |
-| 2 | Indian Bank (INDIANB) | ₹937.0 | 🟢 BUY NOW | ₹930.6–947.0 | ₹813.8 (13%) | ₹1126.3 | 16% | n/a | 14% | 14% | 10 |
-| 3 | Radico Khaitan Limited (RADICO) | ₹4665.0 | 🟡 BUY ON DIP | ₹4392.4–4497.6 | ₹4023.2 (9%) | ₹5077.6 | 24% | 0.11 | 66% | 17% | 78 |
-| 4 | Gujarat Fluorochemicals Limited (FLUOROCHEM) | ₹4820.4 | 🟡 BUY ON DIP | ₹4637.4–4646.4 | ₹4044.0 (13%) | ₹5538.7 | 8% | 0.26 | 36% | 46% | 81 |
-| 5 | Narayana Hrudayalaya Limited (NH) | ₹1891.3 | 🟢 BUY NOW | ₹1789.2–1862.8 | ₹1764.7 (3%) | ₹1927.7 | 19% | 1.21 | 16% | 73% | 44 |
+| 1 | The Federal Bank Limited (FEDERALBNK) | ₹373.5 | 🟢 BUY NOW | ₹366.7–373.5 | ₹327.2 (12%) | ₹434.4 | 13% | n/a | 46% | 36% | 18 |
+| 2 | Aurobindo Pharma Limited (AUROPHARMA) | ₹1799.0 | 🟡 BUY ON DIP | ₹1716.6–1757.9 | ₹1537.4 (12%) | ₹2037.0 | 11% | 0.22 | 34% | 24% | 26 |
+| 3 | Radico Khaitan Limited (RADICO) | ₹4665.0 | 🟡 BUY ON DIP | ₹4406.0–4513.5 | ₹4024.3 (10%) | ₹5112.9 | 24% | 0.11 | 66% | 17% | 79 |
+| 4 | Indian Bank (INDIANB) | ₹950.0 | 🟡 BUY ON DIP | ₹904.8–905.7 | ₹813.6 (10%) | ₹1042.7 | 16% | n/a | 14% | 14% | 10 |
+| 5 | Hero MotoCorp Limited (HEROMOTOCO) | ₹5536.0 | 🟡 BUY ON DIP | ₹5262.2–5411.3 | ₹4940.2 (7%) | ₹6012.7 | 27% | 0.06 | 42% | 22% | 18 |
 
 150 liquid stocks scanned; 27 had a buy setup with risk under 12%.
 
@@ -80,11 +80,11 @@ Time to T1: the median number of trading days this stock took, in the last 2 yea
 
 | # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Cupid Limited (CUPID) | ₹363.2 | 🟡 BUY ON DIP | ₹332.9–348.9 | ₹298.2 (13%) | ₹388.9 | 36% | 0.20 | 130% | 123% | 293 |
-| 2 | Gland Pharma Limited (GLAND) | ₹3230.5 | 🟡 BUY ON DIP | ₹3089.1–3183.4 | ₹2744.3 (12%) | ₹3724.2 | 12% | 0.02 | 58% | 23% | 44 |
-| 3 | Acutaas Chemicals Limited (ACUTAAS) | ₹3991.3 | 🟡 BUY ON DIP | ₹3666.1–3794.0 | ₹3588.5 (4%) | ₹4006.5 | 26% | 0.01 | 73% | 43% | 74 |
-| 4 | Cemindia Projects Limited (CEMPRO) | ₹1354.4 | 🟡 BUY ON DIP | ₹1263.5–1292.5 | ₹1225.2 (4%) | ₹1364.3 | 27% | 0.35 | 21% | 26% | 38 |
-| 5 | The Karur Vysya Bank Limited (KARURVYSYA) | ₹387.0 | 🟡 BUY ON DIP | ₹357.3–368.4 | ₹332.8 (8%) | ₹408.1 | 21% | n/a | 37% | 21% | 13 |
+| 1 | Cemindia Projects Limited (CEMPRO) | ₹1415.9 | 🟡 BUY ON DIP | ₹1298.9–1304.3 | ₹1225.0 (6%) | ₹1416.5 | 27% | 0.35 | 21% | 26% | 39 |
+| 2 | Sagility Limited (SAGILITY) | ₹45.2 | 🟡 BUY ON DIP | ₹43.1–44.2 | ₹41.4 (5%) | ₹47.1 | 11% | 0.09 | 15% | 22% | 21 |
+| 3 | Wockhardt Limited (WOCKPHARMA) | ₹2184.4 | 🟡 BUY ON DIP | ₹2016.2–2019.7 | ₹1783.2 (12%) | ₹2339.0 | 8% | 0.41 | 1% | 24% | 87 |
+| 4 | The Karur Vysya Bank Limited (KARURVYSYA) | ₹377.0 | 🟡 BUY ON DIP | ₹350.4–369.3 | ₹332.8 (8%) | ₹387.5 | 21% | n/a | 37% | 21% | 12 |
+| 5 | Dr. Lal PathLabs Limited (LALPATHLAB) | ₹2006.0 | 🟡 BUY ON DIP | ₹1876.1–1964.2 | ₹1781.6 (7%) | ₹2062.8 | 23% | 0.08 | 27% | 20% | 58 |
 
-97 liquid stocks scanned; 19 had a buy setup with risk under 12%.
+97 liquid stocks scanned; 18 had a buy setup with risk under 12%.
 
