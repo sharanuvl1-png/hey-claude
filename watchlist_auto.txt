@@ -1,42 +1,42 @@
 # Strongest stocks by trend, fundamentals and 6-month performance
 # generated 2026-11-23
-Nifty 50|ICICIBANK.NS|ICICI Bank Limited
 Nifty 50|BAJFINANCE.NS|Bajaj Finance Limited
-Nifty 50|BHARTIARTL.NS|Bharti Airtel Limited
-Nifty 50|EICHERMOT.NS|Eicher Motors Limited
+Nifty 50|ICICIBANK.NS|ICICI Bank Limited
 Nifty 50|KOTAKBANK.NS|Kotak Mahindra Bank Limited
+Nifty 50|APOLLOHOSP.NS|Apollo Hospitals Enterprise Limited
+Nifty 50|BHARTIARTL.NS|Bharti Airtel Limited
+Nifty 50|TRENT.NS|Trent Limited
+Nifty 50|EICHERMOT.NS|Eicher Motors Limited
+Nifty 50|ETERNAL.NS|Eternal Limited
 Nifty 50|HDFCBANK.NS|HDFC Bank Limited
 Nifty 50|LT.NS|Larsen & Toubro Limited
-Nifty 50|TRENT.NS|Trent Limited
-Nifty 50|AXISBANK.NS|Axis Bank Limited
-Nifty 50|ULTRACEMCO.NS|UltraTech Cement Limited
-Nifty 50|APOLLOHOSP.NS|Apollo Hospitals Enterprise Limited
-Nifty 50|M&M.NS|Mahindra & Mahindra Limited
-Nifty 50|TECHM.NS|Tech Mahindra Limited
-Nifty 50|RELIANCE.NS|Reliance Industries Limited
-Nifty 50|ASIANPAINT.NS|Asian Paints Limited
-Nifty 50|BSE.NS|BSE Limited
+Nifty 50|JSWSTEEL.NS|JSW Steel Limited
 Nifty 50|SBIN.NS|State Bank of India
 Nifty 50|ADANIPORTS.NS|Adani Ports and Special Economic Zone Limited
-Nifty 50|ETERNAL.NS|Eternal Limited
-Nifty 50|ITC.NS|ITC Limited
-Midcap 150|INDHOTEL.NS|The Indian Hotels Company Limited
+Nifty 50|AXISBANK.NS|Axis Bank Limited
+Nifty 50|M&M.NS|Mahindra & Mahindra Limited
+Nifty 50|ULTRACEMCO.NS|UltraTech Cement Limited
+Nifty 50|BAJAJ-AUTO.NS|Bajaj Auto Limited
+Nifty 50|ASIANPAINT.NS|Asian Paints Limited
+Nifty 50|BSE.NS|BSE Limited
+Nifty 50|BEL.NS|Bharat Electronics Limited
 Midcap 150|FEDERALBNK.NS|The Federal Bank Limited
 Midcap 150|GROWW.NS|Billionbrains Garage Ventures Limited
+Midcap 150|INDHOTEL.NS|The Indian Hotels Company Limited
 Midcap 150|LODHA.NS|Lodha Developers Limited
 Midcap 150|MARICO.NS|Marico Limited
 Midcap 150|ANTHEM.NS|Anthem Biosciences Limited
-Midcap 150|AUROPHARMA.NS|Aurobindo Pharma Limited
 Midcap 150|UNOMINDA.NS|Uno Minda Limited
-Midcap 150|KPRMILL.NS|K.P.R. Mill Limited
-Midcap 150|PERSISTENT.NS|Persistent Systems Limited
+Midcap 150|MANKIND.NS|Mankind Pharma Limited
+Midcap 150|RADICO.NS|Radico Khaitan Limited
+Midcap 150|AUROPHARMA.NS|Aurobindo Pharma Limited
 Smallcap 100|GLAND.NS|Gland Pharma Limited
-Smallcap 100|CUB.NS|City Union Bank Limited
-Smallcap 100|KARURVYSYA.NS|The Karur Vysya Bank Limited
 Smallcap 100|NAVINFLUOR.NS|Navin Fluorine International Limited
-Smallcap 100|SAILIFE.NS|Sai Life Sciences Limited
+Smallcap 100|CUB.NS|City Union Bank Limited
 Smallcap 100|CEMPRO.NS|Cemindia Projects Limited
-Smallcap 100|KFINTECH.NS|KFin Technologies Limited
+Smallcap 100|SAILIFE.NS|Sai Life Sciences Limited
+Smallcap 100|ANGELONE.NS|Angel One Limited
+Smallcap 100|WOCKPHARMA.NS|Wockhardt Limited
 Smallcap 100|AFFLE.NS|Affle 3i Limited
-Smallcap 100|CDSL.NS|Central Depository Services (India) Limited
-Smallcap 100|LALPATHLAB.NS|Dr. Lal PathLabs Limited
+Smallcap 100|KARURVYSYA.NS|The Karur Vysya Bank Limited
+Smallcap 100|KFINTECH.NS|KFin Technologies Limited

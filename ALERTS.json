@@ -2,29 +2,9 @@
  "date": "2026-11-23",
  "alerts": [
   {
-   "id": "buyzone:ULTRACEMCO:2026-11-23",
-   "title": "UltraTech Cement is in the buy zone",
-   "text": "UltraTech Cement moved from buy on dip to buy now at ₹12,650.0."
-  },
-  {
-   "id": "buyzone:APOLLOHOSP:2026-11-23",
-   "title": "Apollo Hospitals Enterprise is in the buy zone",
-   "text": "Apollo Hospitals Enterprise moved from buy on dip to buy now at ₹9,257.0."
-  },
-  {
-   "id": "target:KPRMILL:2026-11-23",
-   "title": "K.P.R. Mill reached its target",
-   "text": "K.P.R. Mill closed at ₹1,206.9, at or above the target of ₹1,196.8."
-  },
-  {
-   "id": "target:CEMPRO:2026-11-23",
-   "title": "Cemindia Projects reached its target",
-   "text": "Cemindia Projects closed at ₹1,438.8, at or above the target of ₹1,399.7."
-  },
-  {
-   "id": "buyzone:CEMPRO:2026-11-23",
-   "title": "Cemindia Projects is in the buy zone",
-   "text": "Cemindia Projects moved from buy on dip to buy now at ₹1,438.8."
+   "id": "news:INDHOTEL:20bbaacdf5",
+   "title": "News: The Indian Hotels Company",
+   "text": "IHCL opens new Bengaluru hotel with Krishna GVK Luxury Hotels"
   }
  ]
 }
