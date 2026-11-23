@@ -1281,7 +1281,7 @@ function drawTab() {
     ? `The 20 strongest ${idx} stocks by your daily scan's ranking (trend + fundamentals + 6-month performance, ₹5 crore+ daily turnover), each run through the same swing-trading chart rules. #1 is the strongest.`
     : state.tab === "watch" ? "Stocks you starred, from every list. Saved on this phone only. Changes to their calls show up as alerts at the top."
     : track || state.tab === "pf" || state.tab === "paper" || state.tab === "home" || state.tab === "radar" ? "" : srTab ? "Nifty 100 and the Nifty Midcap 150's top 30 in one table, judged only by the support & resistance rule: buy near a floor that held, take profit near a ceiling, buy a breakout on volume." : "Every Nifty 100 stock run through your swing-trading chart rules, with the breakout rules on top.";
-  const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100", sr: "Nifty 100 + Midcap 30", pf: "Nifty 100" }[state.tab];
+  const lbl = { n100: "Nifty 100", mid: "Midcap 20", small: "Smallcap 20", watch: "Watchlist", track: "Nifty 100", sr: "Nifty 100 + Midcap 30" }[state.tab] || "Nifty 100";
   document.getElementById("breadthLbl").textContent = `Breadth today · ${lbl}`;
   document.getElementById("mixLbl").textContent = `Final recommendation mix · ${lbl}`;
   const stx = track || state.tab === "pf" || state.tab === "paper" || state.tab === "home" || state.tab === "radar" ? DATA.stocks : st;
@@ -1803,11 +1803,11 @@ function drawAsOf(data, date) {
   const O = data.official || null;
   const old = O && O.last_trading_day ? date < O.last_trading_day : date < expIso;
   bar.hidden = false; bar.classList.toggle("old", old); document.getElementById("asof").hidden = true;
-  bar.replaceChildren(el("b", { text: `Prices as of ${dayTxt}${midday ? `, ${scanIST.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })} (market open, about 15 min delayed)` : " close"}` }), el("br"),
+  bar.replaceChildren(...[el("b", { text: `Prices as of ${dayTxt}${midday ? `, ${scanIST.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })} (market open, about 15 min delayed)` : " close"}` }), el("br"),
     el("span", { text: `Last refreshed ${isNaN(when) ? data.generated_at : ist(when)} IST · ${ago}` }),
     old ? el("em", { text: ` · Older than the last trading day (${new Date(((O && O.last_trading_day) || expIso) + "T12:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })})${O ? "" : " unless that was a market holiday"}, so these numbers may be stale.` }) : null,
     O && O.checked ? el("div", { class: O.n_mismatch ? "nse warn" : "nse", text: O.n_mismatch ? `⚠ ${O.n_mismatch} of ${O.checked} prices differ from NSE's official ${fdate(O.date)} close: ${O.mismatches.slice(0, 6).map(m => m.symbol).join(", ")}${O.n_mismatch > 6 ? "…" : ""}`
-      : `✓ All ${O.checked} prices match NSE's official ${fdate(O.date)} close` }) : null);
+      : `✓ All ${O.checked} prices match NSE's official ${fdate(O.date)} close` }) : null, refreshRow()].filter(Boolean));
   const mk = document.getElementById("mktBar");
   if (mk) { const m = mood(); mk.hidden = !m || m.k === "up" && m.size === "normal";
     mk.className = "mkt-bar" + (m && m.k === "sideways" ? " side" : "");
@@ -1862,9 +1862,28 @@ document.getElementById("sort").addEventListener("change", e => { state.sort = e
 document.getElementById("scrim").addEventListener("click", e => { if (e.target.id === "scrim") close(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !document.getElementById("scrim").hidden) close(); });
 window.addEventListener("hashchange", route);
-fetch("data.json", { cache: "no-store" })
-  .then(r => (r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status))))
-  .then(render)
+// Refresh: load the newest saved scan without reinstalling. Also done by itself when the app comes back to
+// the screen after 10 minutes. A scan itself runs on GitHub; if GitHub's timer is late, the link starts one.
+let LOADED = 0;
+const SCAN_URL = "https://github.com/sharanuvl1-png/hey-claude/actions/workflows/dashboard.yml";
+function loadData() {
+  return fetch(`data.json?t=${Date.now()}`, { cache: "no-store" }).then(r => (r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status))))
+    .then(d => { LOADED = Date.now(); const changed = !DATA || d.generated_at !== DATA.generated_at; if (changed) render(d); return changed; });
+}
+let REFRESH_MSG = "";
+function refreshRow() {
+  const ageH = DATA ? (Date.now() - new Date(DATA.generated_at).getTime()) / 36e5 : 0;
+  const msg = el("span", { class: "hint", style: "font-size:12px", text: REFRESH_MSG });
+  const btn = el("button", { type: "button", class: "pf-btn", style: "padding:6px 14px", text: "↻ Refresh", onclick: () => {
+    btn.disabled = true; btn.textContent = "Checking…";
+    loadData().then(ch => { REFRESH_MSG = ch ? "Loaded the newest scan." : "This is already the newest scan."; if (!ch) { btn.disabled = false; btn.textContent = "↻ Refresh"; msg.textContent = REFRESH_MSG; } else if (DATA) drawAsOf(DATA, [...new Set(DATA.stocks.map(s => s.date))].sort().reverse()[0]); })
+      .catch(() => { btn.disabled = false; btn.textContent = "↻ Refresh"; msg.textContent = "Couldn't reach the site. Check your internet."; }); } });
+  return el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px" }, btn,
+    ageH > 2 ? el("a", { class: "pf-btn", style: "padding:6px 14px;text-decoration:none", href: SCAN_URL, target: "_blank", rel: "noopener", title: "Opens GitHub: tap Run workflow, then Run workflow again. Takes about 8 minutes." }, "▶ Start a new scan") : null, msg,
+    ageH > 2 ? el("div", { class: "hint", style: "font-size:11.5px;flex-basis:100%", text: "GitHub sometimes starts the timed scans hours late. \u201cStart a new scan\u201d opens GitHub (you need to be signed in): tap Run workflow, then Run workflow again. The new prices arrive in about 8 minutes; tap Refresh then." }) : null);
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && LOADED && Date.now() - LOADED > 10 * 6e4) loadData().catch(() => {}); });
+loadData()
   .catch(e => {
     document.getElementById("live").textContent = "No scan";
     document.getElementById("grid").replaceChildren(el("div", { class: "empty", text: `The latest scan could not be loaded (${e.message}). It is rebuilt after each scheduled run.` }));
