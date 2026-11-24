@@ -54,13 +54,37 @@ Time to T1: the median number of trading days this stock took, in the last 2 yea
 
 ## Top 5 buy setups today: Nifty 50
 
-Could not get the index list (https://www.niftyindices.com/IndexConstituent/: HTTP Error 403: Forbidden; https://archives.nseindia.com/content/indices/: HTTP Error 403: Forbidden). No picks today.
+| # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | ICICI Bank Limited (ICICIBANK) | ₹1585.5 | 🟡 BUY ON DIP | ₹1519.4–1530.4 | ₹1353.1 (11%) | ₹1782.5 | 16% | n/a | 22% | 16% | 19 |
+| 2 | Eicher Motors Limited (EICHERMOT) | ₹8172.5 | 🟢 BUY NOW | ₹8016.2–8172.5 | ₹7399.4 (9%) | ₹9136.8 | 25% | 0.02 | 15% | 20% | 38 |
+| 3 | Larsen & Toubro Limited (LT) | ₹4099.9 | 🟡 BUY ON DIP | ₹3932.2–4047.1 | ₹3574.0 (10%) | ₹4419.0 | 18% | 1.05 | 32% | 17% | 32 |
+| 4 | Axis Bank Limited (AXISBANK) | ₹1388.6 | 🟡 BUY ON DIP | ₹1320.5–1324.6 | ₹1188.4 (10%) | ₹1523.8 | 14% | n/a | 39% | 21% | 14 |
+| 5 | Kotak Mahindra Bank Limited (KOTAKBANK) | ₹502.9 | 🟡 BUY ON DIP | ₹480.2–480.2 | ₹424.9 (12%) | ₹563.2 | 12% | n/a | 26% | 21% | 23 |
+
+50 liquid stocks scanned; 15 had a buy setup with risk under 12%.
 
 ## Top 5 buy setups today: Midcap 150
 
-Could not get the index list (https://www.niftyindices.com/IndexConstituent/: HTTP Error 403: Forbidden; https://archives.nseindia.com/content/indices/: HTTP Error 403: Forbidden). No picks today.
+| # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | The Federal Bank Limited (FEDERALBNK) | ₹359.8 | 🟡 BUY ON DIP | ₹347.3–353.6 | ₹327.1 (7%) | ₹385.4 | 13% | n/a | 46% | 36% | 18 |
+| 2 | Aurobindo Pharma Limited (AUROPHARMA) | ₹1796.5 | 🟡 BUY ON DIP | ₹1714.7–1761.6 | ₹1537.5 (12%) | ₹2039.1 | 11% | 0.22 | 34% | 24% | 26 |
+| 3 | K.P.R. Mill Limited (KPRMILL) | ₹1206.9 | 🟡 BUY ON DIP | ₹1125.6–1159.5 | ₹1105.2 (3%) | ₹1203.5 | 18% | 0.05 | 58% | 19% | 40 |
+| 4 | Narayana Hrudayalaya Limited (NH) | ₹1974.2 | 🟢 BUY NOW | ₹1939.0–1965.0 | ₹1820.0 (7%) | ₹2150.0 | 19% | 1.21 | 16% | 73% | 46 |
+| 5 | Persistent Systems Limited (PERSISTENT) | ₹6282.5 | 🟡 BUY ON DIP | ₹5969.9–6154.1 | ₹5448.4 (10%) | ₹6982.4 | 23% | 0.07 | -26% | 30% | 55 |
+
+150 liquid stocks scanned; 22 had a buy setup with risk under 12%.
 
 ## Top 5 buy setups today: Smallcap 100
 
-Could not get the index list (https://www.niftyindices.com/IndexConstituent/: HTTP Error 403: Forbidden; https://archives.nseindia.com/content/indices/: HTTP Error 403: Forbidden). No picks today.
+| # | Stock | Close | Verdict | Entry | Stop-loss (risk) | Target 1 | ROE | Debt/Eq | Profit growth | Sales growth | P/E |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | City Union Bank Limited (CUB) | ₹245.5 | 🟡 BUY ON DIP | ₹226.8–230.2 | ₹204.1 (11%) | ₹258.7 | 14% | n/a | 27% | 27% | 15 |
+| 2 | The Karur Vysya Bank Limited (KARURVYSYA) | ₹384.1 | 🟡 BUY ON DIP | ₹356.9–370.7 | ₹332.7 (9%) | ₹410.4 | 21% | n/a | 37% | 21% | 13 |
+| 3 | The Great Eastern Shipping Company Limited (GESHIP) | ₹1538.3 | 🟡 BUY ON DIP | ₹1447.1–1519.7 | ₹1396.0 (6%) | ₹1634.1 | 26% | 0.04 | 119% | 47% | 5 |
+| 4 | Sagility Limited (SAGILITY) | ₹46.1 | 🟡 BUY ON DIP | ₹43.3–44.4 | ₹42.6 (3%) | ₹45.9 | 11% | 0.09 | 15% | 22% | 21 |
+| 5 | Dr. Lal PathLabs Limited (LALPATHLAB) | ₹2040.5 | 🟡 BUY ON DIP | ₹1910.2–1971.5 | ₹1781.5 (8%) | ₹2179.8 | 23% | 0.08 | 27% | 20% | 59 |
+
+97 liquid stocks scanned; 16 had a buy setup with risk under 12%.
 
