@@ -2,54 +2,14 @@
  "date": "2026-11-25",
  "alerts": [
   {
-   "id": "buyzone:ICICIBANK:2026-11-25",
-   "title": "ICICI Bank is in the buy zone",
-   "text": "ICICI Bank moved from buy on dip to buy now at ₹1,640.0."
-  },
-  {
-   "id": "buyzone:KOTAKBANK:2026-11-25",
-   "title": "Kotak Mahindra Bank is in the buy zone",
-   "text": "Kotak Mahindra Bank moved from buy on dip to buy now at ₹509.0."
-  },
-  {
-   "id": "buyzone:TRENT:2026-11-25",
-   "title": "Trent is in the buy zone",
-   "text": "Trent moved from buy on dip to buy now at ₹3,319.6."
-  },
-  {
-   "id": "buyzone:HDFCBANK:2026-11-25",
-   "title": "HDFC Bank is in the buy zone",
-   "text": "HDFC Bank moved from buy on dip to buy now at ₹846.2."
-  },
-  {
-   "id": "buyzone:AXISBANK:2026-11-25",
-   "title": "Axis Bank is in the buy zone",
-   "text": "Axis Bank moved from buy on dip to buy now at ₹1,418.1."
-  },
-  {
-   "id": "buyzone:FEDERALBNK:2026-11-25",
-   "title": "The Federal Bank is in the buy zone",
-   "text": "The Federal Bank moved from buy on dip to buy now at ₹356.2."
-  },
-  {
-   "id": "buyzone:LODHA:2026-11-25",
-   "title": "Lodha Developers is in the buy zone",
-   "text": "Lodha Developers moved from buy on dip to buy now at ₹1,202.0."
-  },
-  {
-   "id": "news:HDFCBANK:e2fb9831e8",
-   "title": "News: HDFC Bank",
-   "text": "India’s Largest Private Lender Is Lagging – HDFC (HDB) Made into Our 2027 Bargain List"
-  },
-  {
-   "id": "news:ICICIBANK:dcb6546d9b",
-   "title": "News: ICICI Bank",
-   "text": "SBI, HDFC, and ICICI retain systemically important bank status"
-  },
-  {
-   "id": "news:SBIN:dcb6546d9b",
+   "id": "news:SBIN:261f680c85",
    "title": "News: State Bank of India",
-   "text": "SBI, HDFC, and ICICI retain systemically important bank status"
+   "text": "Japan's largest financial institutions tap Solana for stablecoin payments and tokenization"
+  },
+  {
+   "id": "news:HDFCBANK:4a2e44e719",
+   "title": "News: HDFC Bank",
+   "text": "Asian Equities Traded in the US as American Depositary Receipts Tumble in Wednesday Trading"
   }
  ]
 }
