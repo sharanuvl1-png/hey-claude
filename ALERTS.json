@@ -1,4 +1,60 @@
 {
- "date": "2026-11-26",
- "alerts": []
+ "date": "2026-11-27",
+ "alerts": [
+  {
+   "id": "buyzone:BAJFINANCE:2026-11-27",
+   "title": "Bajaj Finance is in the buy zone",
+   "text": "Bajaj Finance moved from buy on dip to buy now at ₹1,080.0."
+  },
+  {
+   "id": "buyzone:HDFCBANK:2026-11-27",
+   "title": "HDFC Bank is in the buy zone",
+   "text": "HDFC Bank moved from buy on dip to buy now at ₹857.2."
+  },
+  {
+   "id": "buyzone:LT:2026-11-27",
+   "title": "Larsen & Toubro is in the buy zone",
+   "text": "Larsen & Toubro moved from buy on dip to buy now at ₹4,108.5."
+  },
+  {
+   "id": "buyzone:JSWSTEEL:2026-11-27",
+   "title": "JSW Steel is in the buy zone",
+   "text": "JSW Steel moved from wait to buy now at ₹1,321.2."
+  },
+  {
+   "id": "buyzone:ADANIPORTS:2026-11-27",
+   "title": "Adani Ports and Special Economic Zone is in the buy zone",
+   "text": "Adani Ports and Special Economic Zone moved from buy on dip to buy now at ₹1,880.0."
+  },
+  {
+   "id": "target:BEL:2026-11-27",
+   "title": "Bharat Electronics reached its target",
+   "text": "Bharat Electronics closed at ₹411.5, at or above the target of ₹404.7."
+  },
+  {
+   "id": "buyzone:BEL:2026-11-27",
+   "title": "Bharat Electronics is in the buy zone",
+   "text": "Bharat Electronics moved from buy on dip to buy now at ₹411.5."
+  },
+  {
+   "id": "target:ANTHEM:2026-11-27",
+   "title": "Anthem Biosciences reached its target",
+   "text": "Anthem Biosciences closed at ₹984.2, at or above the target of ₹970.9."
+  },
+  {
+   "id": "buyzone:ANTHEM:2026-11-27",
+   "title": "Anthem Biosciences is in the buy zone",
+   "text": "Anthem Biosciences moved from buy on dip to buy now at ₹984.2."
+  },
+  {
+   "id": "target:GLAND:2026-11-27",
+   "title": "Gland Pharma reached its target",
+   "text": "Gland Pharma closed at ₹3,362.0, at or above the target of ₹3,355.6."
+  },
+  {
+   "id": "buyzone:CUB:2026-11-27",
+   "title": "City Union Bank is in the buy zone",
+   "text": "City Union Bank moved from buy on dip to buy now at ₹233.1."
+  }
+ ]
 }
