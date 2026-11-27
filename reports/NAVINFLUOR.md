@@ -1,0 +1,83 @@
+📌 **NAVINFLUOR (NAVINFLUOR) – Multi-Timeframe Technical Analysis (Daily + 4H Combined)**
+_Data up to 27 Nov 2026 · Close ₹10456.50_
+
+**📍 Daily Timeframe Trend**
+- Trend: **Uptrend** (price above rising EMAs)
+- Recent swing highs: ₹8740.0, ₹8949.5, ₹8605.0 · swing lows: ₹8100.0, ₹8035.0, ₹7510.5
+- EMAs: EMA20 ₹9633.6, EMA50 ₹9014.6, EMA200 ₹7714.8; bullish stack (EMA20 > EMA50 > EMA200); price above EMA20, EMA50, EMA200
+- MACD 487.78 above signal 433.73 (above zero); histogram falling
+- RSI(14) 70.9; no divergence on the last two swings
+
+**📍 4-Hour Timeframe Trend**
+- Structure: **Uptrend** (higher highs and higher lows)
+- Pullback/support area: recent 4H swing lows ₹9756.0, ₹9814.0; EMA20 ₹10023.4
+- EMA20/50: bullish stack (EMA20 > EMA50); price above EMA20, EMA50
+- MACD 290.95 below signal 310.97 (above zero); histogram rising
+- RSI(14) 69.9; Hidden bullish divergence; Regular bearish divergence
+
+**📍 Pattern Detection (Both Timeframes)**
+- Daily: **Bull Flag** – 18% pole then a tight 7% flag; trigger above ₹10506.5
+- Daily: **Breakout** – closed above the 60-session high ₹10360.0 (volume not confirming yet)
+- 4H: **Bull Flag** – 18% pole then a tight 7% flag; trigger above ₹10506.5
+
+**📍 Candlestick Patterns (last 3 daily candles)**
+- No notable candlestick signal in the last 3 sessions.
+
+**📍 Price Action Key Levels (Daily Structure)**
+
+| Zone | Price Level (₹) | Context |
+|------|-----------------|---------|
+| Strong Support | ₹7209.1 – ₹7590.4 | Cluster of earlier swing lows (demand) |
+| Immediate Support | ₹7955.1 – ₹8189.9 | Nearest swing-low / wick area |
+| Resistance | ₹10426.6 – ₹10586.4 | Nearest swing-high supply |
+| Breakout Level | Above ₹10586.4 | Swing continuation trigger (52-week high ₹10506.5) |
+
+**📍 Swing Trade Setup**
+
+🟢 **Entry Zone**
+- Primary: ₹10216.8 – ₹10456.5 (daily support / EMA20 area; enter on a bullish 4H candle)
+- Alternate: ₹10586.4 – ₹10746.2 (breakout retest)
+
+🎯 **Profit Targets**
+- T1: ₹14695.7
+- T2: ₹17601.7
+- T3: ₹20507.8
+
+🛑 **Stop-Loss**
+- Conservative: below daily swing low (₹7430.6)
+- Aggressive: below 4H structure (₹9794.0)
+- Risk per share ≈ ₹2906.0; reward:risk to T1 ≈ 1.5
+- Time to T1: it never rose this much within 60 trading days in the price history
+- Time to T2: it never rose this much within 60 trading days in the price history
+
+**📌 Strategy Notes**
+- Higher timeframe: daily trend is uptrend; only take longs while price holds above ₹7209.1.
+- Entry timing: wait for a bullish 4H candle (engulfing/hammer) inside ₹10216.8 – ₹10456.5 rather than buying mid-range.
+- EMA stacking: bullish stack (EMA20 > EMA50 > EMA200); price above EMA20, EMA50, EMA200.
+- Breakout rule: a daily close above ₹10586.4 with volume above its 20-day average (≈261,120) opens T2/T3.
+- Momentum: RSI 71 – elevated, prefer dips; no divergence on the last two swings.
+- Exit discipline: move the stop to entry once T1 is hit; book partial profits at each target.
+
+**STEP 2 — Marked Up Chart**
+![chart](2026-11-27.png)
+
+**✅ Trade Validation Checklist**
+- Trend + momentum aligned: Yes · Price at entry zone: Yes
+- Stop defined (₹7430.6) · Reward:risk ≥ 1.5 to T1: Yes
+
+## 📌 Final Verdict
+
+Recommendation: **🟢 BUY NOW**
+
+Confidence: **10/10**
+
+Trade Quality: **A**
+
+Reason:
+• Daily uptrend (price above rising EMAs)
+• EMAs stacked bullishly
+
+Next Action:
+• Buy now within the entry zone, with the stop-loss in place
+
+_Rules-based analysis from end-of-day data. Educational only, not investment advice. Never place orders without your own confirmation._
