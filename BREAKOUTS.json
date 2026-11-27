@@ -1,0 +1,90 @@
+{
+ "date": "2026-11-26",
+ "checked_at": "2026-11-28 00:59 IST",
+ "alerts": [],
+ "near": [
+  {
+   "symbol": "HDFCBANK",
+   "price": 862.0,
+   "level": 864.86,
+   "gap_pct": 0.33
+  },
+  {
+   "symbol": "RELIANCE",
+   "price": 1396.2,
+   "level": 1401.86,
+   "gap_pct": 0.4
+  },
+  {
+   "symbol": "TECHM",
+   "price": 1854.7,
+   "level": 1871.74,
+   "gap_pct": 0.91
+  },
+  {
+   "symbol": "ADANIPOWER",
+   "price": 208.3,
+   "level": 210.9,
+   "gap_pct": 1.23
+  },
+  {
+   "symbol": "BEL",
+   "price": 404.5,
+   "level": 409.58,
+   "gap_pct": 1.24
+  },
+  {
+   "symbol": "BHARTIARTL",
+   "price": 2102.5,
+   "level": 2136.16,
+   "gap_pct": 1.58
+  },
+  {
+   "symbol": "TORNTPHARM",
+   "price": 5019.1,
+   "level": 5111.52,
+   "gap_pct": 1.81
+  },
+  {
+   "symbol": "JINDALSTEL",
+   "price": 1114.8,
+   "level": 1136.17,
+   "gap_pct": 1.88
+  }
+ ],
+ "rules": {
+  "index_csv": "ind_nifty100list.csv",
+  "level": "resistance",
+  "volume_multiple": 1.5,
+  "volume_avg_days": 50,
+  "require_above_ema": [
+   50,
+   200
+  ],
+  "require_ema200_rising": true,
+  "rsi_min": null,
+  "rsi_max": null,
+  "max_below_52w_high_pct": 25,
+  "min_rs_vs_nifty_pct": 0,
+  "require_market_uptrend": true,
+  "min_close_in_range": null,
+  "max_base_depth_pct": null,
+  "base_days": 15,
+  "max_extension_pct": 4.0,
+  "max_risk_pct": 8,
+  "min_turnover_cr": 5,
+  "stop_atr_below_level": 1.0,
+  "extra_symbols": []
+ },
+ "notes": [],
+ "source": "Yahoo Finance; intraday prices can be up to 15 minutes behind NSE.",
+ "mode": "close",
+ "as_of": "26 Nov",
+ "scanned": 99,
+ "market": {
+  "close": 25884.5,
+  "ema50": 24147.863848682893,
+  "up": true,
+  "ret3m": 0.06876608145350449
+ }
+}
